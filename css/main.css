@@ -1,0 +1,231 @@
+/**
+* Main stylesheet.
+*/
+@charset "utf-8";
+* {
+	padding: 0;
+	margin: 0;
+}
+body {
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 100%;
+	text-align: center;
+	background-color: #FFFFFF;
+}
+.container {
+	width: 80%;
+	min-width: 1000px;
+	margin: 10px auto;
+}
+.content {
+	padding: 10px;
+	background-color: #9A9A9A;
+	border-top-right-radius: 25px;
+	border-bottom-left-radius: 25px;
+}
+.inner-content {
+	padding: 10px;
+	background-color: #F5F5F5;
+	border-top-right-radius: 15px;
+	border-bottom-left-radius: 15px;
+	box-shadow: 0px 0px 17px #000000;
+}
+@-moz-document url-prefix() {
+.inner-content {
+	padding: 10px;
+	background-color: #F5F5F5;
+	border-top-right-radius: 15px;
+	border-bottom-left-radius: 15px;
+	box-shadow: 0px 0px 8px #000000;
+}
+}
+
+.error, #error {
+	color: red;
+	padding-left: 5px;
+	padding-right: 5px;
+}
+
+#chat {
+	margin: 10px;
+	margin-bottom: 10px;
+}
+
+#links {
+	margin-left: 10px;
+	text-align: left;
+}
+
+#messages {
+	display: inline-block;
+	width: 80%;
+	min-height: 150px;
+	overflow-y: auto;
+	padding: 4px;
+	border: 1px dashed #9A9A9A;
+	background-color: #F1F1F1;
+	border-radius: 10px;
+	margin-bottom: 5px;
+}
+#messages span {
+	display: block;
+	padding: 1px 2px;
+	color: #000000;
+	font-size: 80%;
+	text-align: left;
+	white-space: pre;
+}
+#messages span:hover {
+	background-color: #D1CFCF;
+}
+#messages span#whisper {
+	color: #0099FF;
+}
+#messages span a#nick {
+	text-decoration: none;
+	color: #000000;
+}
+#messages div#error {
+	display: block;
+	padding: 1px 2px;
+	font-size: 80%;
+	text-align: left;
+	color: red;
+}
+
+#inputs {
+	display: inline-block;
+	margin: 0 auto;
+	height: 40px;
+	width: 600px;
+}
+[type=button],[type=submit] {
+	height: 31px;
+	font-size: 90%;
+}
+#inputs input[type=text] {
+	display: inline-block;
+	color: #000000;
+	vertical-align: bottom;
+	font-size: 100%;
+	white-space: pre;
+	background: #FFFFFF;
+	border: 1px solid #CCCCCC;
+	border-radius: 4px;
+	padding: 5px 13px;
+}
+#inputs textarea {
+	display: inline-block;
+	color: #000000;
+	vertical-align: bottom;
+	font-size: 100%;
+	white-space: nowrap;
+	background: #FFFFFF;
+	border: 1px solid #CCCCCC;
+	border-radius: 4px;
+	padding: 5px 13px;
+}
+#inputs #input_user {
+	width: 80px;
+	height: 19px;
+	text-align: center;
+	white-space: nowrap;
+	font-family: Arial, Helvetica, sans-serif;
+}
+#inputs #input_message {
+	width: 300px;
+	height: 19px;
+	max-height: 58px;
+	white-space: pre-wrap;
+	font-family: Arial, Helvetica, sans-serif;
+}
+#volume-slider {
+	display: inline-block;
+	margin-left: 0px;
+	margin-right: 10px;
+	width: 100px;
+}
+/*
+* User panel
+*/
+#users {
+	display: inline-block;
+	vertical-align: top;
+	min-height: 150px;
+	overflow-y: auto;
+	font-size: 80%;
+}
+#user_menu li.ui-menu-item a {
+	white-space: nowrap;
+	overflow: hidden;
+}
+#user_menu {
+	width: 160px;
+}
+
+.hidden, #hidden {
+	display: none;
+}
+.clear, #clear {
+	clear: both;
+}
+
+/*
+* custom promt window.
+*/
+div#nprompt {
+	display: none;
+	position: fixed;
+	top: 10%;
+	left: 0;
+	max-height: 200px;
+	width: 400px;
+	border-width: 1px;
+	border-color: #CCCCCC;
+	border-style: solid;
+	border-radius: 4px;
+	background-color: #F5F5F5;
+	z-index: +1;
+}
+div#nprompt div#nprompt_inner {
+	padding: 5px;
+	color: #000000;
+	text-align: left;
+	font-family: Trebuchet MS,Tahoma,Verdana,Arial,sans-serif;
+	font-weight: normal;
+	font-size: 100%;
+}
+div#nprompt div#nprompt_inner div#nprompt_message {
+	margin-bottom: 10px;
+	max-height: 100px;
+	overflow-y: auto;
+	text-align: center;
+}
+div#nprompt div#nprompt_inner div#nprompt_inputs {
+	margin-bottom: 5px;
+	text-align: center;
+}
+div#nprompt div#nprompt_inner div#nprompt_inputs input {
+	border-width: 1px;
+	border-color: #CCCCCC;
+	border-style: solid;
+	border-radius: 4px;
+}
+div#nprompt div#nprompt_inner div#nprompt_inputs input#nprompt_value {
+	margin-bottom: 5px;
+	padding: 5px;
+	width: 350px;
+}
+div#nprompt div#nprompt_inner div#nprompt_inputs input#submit_ok,
+div#nprompt div#nprompt_inner div#nprompt_inputs input#submit_cancel {
+	display: inline-block;
+	line-height: normal;
+	padding: 4px 10px;
+	margin: 0px 2px;
+	color: #1C94C4;
+	font-weight: bold;
+}
+div#nprompt div#nprompt_inner div#nprompt_inputs input#submit_ok:hover,
+div#nprompt div#nprompt_inner div#nprompt_inputs input#submit_cancel:hover {
+	box-shadow: 0 5px 8px 4px #E6E6E6 inset;
+}
