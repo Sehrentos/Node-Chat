@@ -8,12 +8,12 @@
 * cd <my_directory>
 * npm install socket.io
 */
+// Create http server
+/*
 var app = require('http').createServer(handler),
-    io = require('socket.io').listen(app),
-    fs = require('fs');
-
+    io = require('socket.io').listen(app), //socket.io
+    fs = require('fs'); //FileSystem
 app.listen(9000);
-
 function handler (req, res) {
 	fs.readFile(__dirname + '/index.html',
 	function (err, data) {
@@ -26,6 +26,10 @@ function handler (req, res) {
 		res.end(data);
 	});
 }
+*/
+// socket.io standalone
+var io = require('socket.io')();
+io.listen(9000);
 
 var users = [];
 
@@ -48,6 +52,26 @@ var removeUser = function(user) {
         }
     }
 }
+
+var editUserName = function(socket, user, data) {
+	var exist = false;
+	for(var i=0; i<users.length; i++) {
+		if(data.name === users[i].name) {
+			exist = true;
+			socket.emit('notice', { message: 'This name already exists! <strong>'+ user.name +'</strong>' });
+		}
+	}
+	for(var i=0; i<users.length; i++) {
+		if(exist === false && user.name === users[i].name) {
+			user.name = data.name;
+			users[i].name = data.name;
+			socket.emit('notice', { message: 'Your name is now <strong>'+ user.name +'</strong>' });
+		}
+	}
+	if(user.name === data.name) {
+		updateUsers();
+	}
+};
 
 var updateUsers = function() {
     //io.sockets.emit("users", { users: str });
@@ -73,30 +97,20 @@ io.sockets.on('connection', function (socket) {
 	// setName
 	socket.on('setName', function (data) {
 		console.log(data);
-		var exist = false;
-		for(var i=0; i<users.length; i++) {
-			if(data.name === users[i].name) {
-				exist = true;
-				socket.emit('notice', { message: 'This name already exists! <strong>'+ user.name +'</strong>' });
-			}
-		}
-		for(var i=0; i<users.length; i++) {
-			if(exist === false && user.name === users[i].name) {
-				user.name = data.name;
-				users[i].name = data.name;
-				socket.emit('notice', { message: 'Your name is now <strong>'+ user.name +'</strong>' });
-			}
-		}
-		if(user.name === data.name) {
-			updateUsers();
-		}
+		editUserName(socket, user, data);
 	});
 
 	// whisper
-	// todo...
+	socket.on('whisper', function (data) {
+		// todo...
+		console.log(data);
+	});
 
 	// setChannel
-	// todo...
+	socket.on('setChannel', function (data) {
+		// todo...
+		console.log(data);
+	});
 
 	// Client disconnect from server
 	socket.on('disconnect', function (data) {

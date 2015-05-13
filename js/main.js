@@ -6,66 +6,6 @@ var socket;
 var chat = {};
 
 /*
-* Set height to the page.
-* @css min-height 150px
-*/
-chat.setHeight = function(str) {
-	if (str === undefined) {
-		var docHeight = $(window).height();
-	} else {
-		var docHeight = str;
-	}
-	$("#messages").css("height",(docHeight-170)+'px');
-	$("#users").css("height",(docHeight-170)+'px');
-	return this;
-};
-
-/*
-* Focus function.
-* @setFocus( id );
-*/
-chat.setFocus = function(e) {
-	if (e === undefined) {
-		document.getElementById("input_message").focus();
-	} else {
-		document.getElementById(e).focus();
-	}
-	return this;
-};
-
-/*
-* Scroll down the chat div.
-*/
-chat.scrollDown = function(id) {
-	if (id === undefined) {
-		var element = document.getElementById("messages");
-	} else {
-		var element = document.getElementById(id);
-	}
-	element.scrollTop = element.scrollHeight;
-	return this;
-};
-
-/*
-* Append to chat messages.
-*/
-chat.mes = function(string,whisper) {
-	if(whisper !== undefined || whisper === true) {
-		var msg = "<span id=\"whisper\">" + string + "</span>";
-	} else {
-		var msg = "<span>" + string + "</span>";
-	}
-	return $("#messages").append(msg);
-};
-
-/*
-* Build users menu.
-*/
-chat.buildmenu = function(string) {
-	return $("#user_menu").menu("destroy").html(string).menu();
-};
-
-/*
 * WebSocket init
 * @http://socket.io/docs/client-api/
 */
@@ -118,9 +58,7 @@ chat.init = function() {
 			chat.buildmenu(string);
 		}
 	});
-
 	return this;
-
 };
 
 /*
@@ -130,9 +68,7 @@ chat.setSubmit = function( id ) {
 	if (id === undefined) {
 		id = '#sendform';
 	}
-
 	var inputMes = $( id ).find("#input_message");
-
 	if (inputMes.val().trim().length === 0) {
 		this.setFocus().notice("Message is empty.",5000);
 	}
@@ -140,7 +76,6 @@ chat.setSubmit = function( id ) {
 		this.notice("Message is too long! max. 1000",5000);
 	}
 	else {
-
 		try {
 			var message = {
 				"command": "sendMessage",
@@ -156,9 +91,7 @@ chat.setSubmit = function( id ) {
 			inputMes.val('');
 			this.error("Message was unable to send!",5000);
 		}
-
 	}
-
 	return this;
 };
 
@@ -187,7 +120,7 @@ chat.setName = function() {
 			}
 		}
 	});
-
+	return this;
 };
 
 /*
@@ -228,6 +161,7 @@ chat.setChannel = function(channel) {
 			chat.error("Channel request was unable to send!",5000);
 		}
 	}
+	return this;
 };
 
 /*
@@ -264,6 +198,7 @@ chat.setWhisper = function(target,msg) {
 			chat.sendWhisper(target,msg);
 		}
 	}
+	return this;
 };
 
 /*
@@ -285,6 +220,66 @@ chat.sendWhisper = function(target,msg) {
 			chat.error("Whisper request was unable to send!",5000);
 		}
 	}
+	return this;
+};
+
+/*
+* Set height to the page.
+* @css min-height 150px
+*/
+chat.setHeight = function(str) {
+	if (str === undefined) {
+		var docHeight = $(window).height();
+	} else {
+		var docHeight = str;
+	}
+	$("#messages").css("height",(docHeight-170)+'px');
+	$("#users").css("height",(docHeight-170)+'px');
+	return this;
+};
+
+/*
+* Append to chat messages.
+*/
+chat.mes = function(string,whisper) {
+	if(whisper !== undefined || whisper === true) {
+		var msg = "<span id=\"whisper\">" + string + "</span>";
+	} else {
+		var msg = "<span>" + string + "</span>";
+	}
+	return $("#messages").append(msg);
+};
+
+/*
+* Build users menu.
+*/
+chat.buildmenu = function(string) {
+	return $("#user_menu").menu("destroy").html(string).menu();
+};
+
+/*
+* Focus function.
+* @setFocus( id );
+*/
+chat.setFocus = function(e) {
+	if (e === undefined) {
+		document.getElementById("input_message").focus();
+	} else {
+		document.getElementById(e).focus();
+	}
+	return this;
+};
+
+/*
+* Scroll down the chat div.
+*/
+chat.scrollDown = function(id) {
+	if (id === undefined) {
+		var element = document.getElementById("messages");
+	} else {
+		var element = document.getElementById(id);
+	}
+	element.scrollTop = element.scrollHeight;
 	return this;
 };
 
