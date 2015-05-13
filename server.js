@@ -77,43 +77,54 @@ var updateUsers = function() {
 	io.sockets.emit("users", users);
 }
 
+var debug = function(str) {
+	console.log(str);
+	return this;
+};
+
 // Socket open
 io.sockets.on('connection', function (socket) {
-	console.log(socket.id+' connect');
+	debug(socket.id+' connect');
 
 	// Set user name
-	var user = addUser();
+	var user = addUser(), timestamp = (new Date().getTime());
 
 	// Welcome new user to the server
 	socket.emit('welcome', { name: user.name, message: 'Welcome to the server.' }); //You are in default channel.(todo)
 
 	// Send message to every connected client
 	socket.on('sendMessage', function (data) {
-		console.log(data);
-		io.sockets.emit('message', { date: (new Date()), name: user.name, message: data.message });
+		debug(data);
+		var d = new Date(), ts = d.getTime();
+		//Delay message from user 1000ms
+		if(ts > (timestamp + 1000)) {
+			debug("timestamp: "+ timestamp +" < "+ ts);
+			timestamp = ts;
+			io.sockets.emit('message', { date: d, name: user.name, message: data.message });
+		}
 	});
 
 	// setName
 	socket.on('setName', function (data) {
-		console.log(data);
+		debug(data);
 		editUserName(socket, user, data);
 	});
 
 	// whisper
 	socket.on('whisper', function (data) {
 		// todo...
-		console.log(data);
+		debug(data);
 	});
 
 	// setChannel
 	socket.on('setChannel', function (data) {
 		// todo...
-		console.log(data);
+		debug(data);
 	});
 
 	// Client disconnect from server
 	socket.on('disconnect', function (data) {
-		console.log(socket.id+' disconnect');
+		debug(socket.id+' disconnect');
 		removeUser(user);
 	});
 
