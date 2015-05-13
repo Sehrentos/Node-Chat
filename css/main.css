@@ -15,7 +15,7 @@ body {
 .container {
 	width: 80%;
 	min-width: 1000px;
-	margin: 10px auto;
+	margin: 0px auto;
 }
 .content {
 	padding: 10px;

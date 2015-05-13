@@ -110,6 +110,7 @@ chat.setName = function() {
 			if (str !== null) {
 				localStorage.name = str;
 				socket.emit('setName', { name: str });
+				chat.setFocus();
 			}
 		}
 	});
@@ -218,13 +219,6 @@ chat.mes = function(string,whisper) {
 		var msg = "<span>" + string + "</span>";
 	}
 	return $("#messages").append(msg);
-};
-
-/*
-* Build users menu.
-*/
-chat.buildMenu = function(string) {
-	return $("#user_menu").html(string); //menu("destroy").html(string).menu();
 };
 
 /*
@@ -337,7 +331,7 @@ $(function(){
 	// Define sound on/off button.
 	$("#disablesound").click(function() {
 		chat.soundOn = chat.soundOn ? false : true;
-		$(this).find("span").html("Sound is "+(chat.soundOn ? "on" : "off"));
+		$(this).html("Sound is "+(chat.soundOn ? "on" : "off"));
 	});
 
 	// Define quit button.
