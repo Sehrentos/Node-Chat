@@ -12,12 +12,12 @@ var chat = {};
 chat.init = function() {
 
 	// Open WebSocket.
-	//socket = new WebSocket("http://localhost:9000");
 	socket = io.connect('ws://localhost:9000');
 
 	socket.on('welcome', function (data) {
 		console.log(data);
 		chat.mes("Welcome <strong>" + data.name + "</strong> !");
+		chat.setName();
 	});
 
 	socket.on('notice', function (data) {
@@ -44,18 +44,28 @@ chat.init = function() {
 		console.log(data);
 		// Update userlist menu
 		if (data !== undefined) {
-			var string = "";
+			$("#user_menu").empty();
 			$.each(data, function( key, value ) {
-				string += "<li><a>"+ value.name +"</a>";
 				if (localStorage.name === value.name) {
-					string += "<ul><li><a href=\"javascript:void(0)\" onclick=\"chat.setName()\">Change name</a></li>";
-					string += "<li><a href=\"javascript:void(0)\" onclick=\"chat.setChannel()\">Change channel</a></li></ul>";
+					string = $("<li><a>"+ value.name +"</a></li>").dropdown({
+						menu: [{
+							"name": "Change name",
+							"link": "chat.setName()"
+						},{
+							"name": "Change channel",
+							"link": "chat.setChannel()"
+						}]
+					});
 				} else {
-					string += "<ul><li><a href=\"javascript:void(0)\" onclick=\"chat.setWhisper('"+ value.name +"')\">Whisper</a></li></ul>";
+					string = $("<li><a>"+ value.name +"</a></li>").dropdown({
+						menu: [{
+							"name": "Whisper",
+							"link": "chat.setWhisper('"+value.name+"')"
+						}]
+					});
 				}
-				string += "</li>";
+				$("#user_menu").append(string);
 			});
-			chat.buildmenu(string);
 		}
 	});
 	return this;
@@ -65,32 +75,24 @@ chat.init = function() {
 * WebSocket send
 */
 chat.setSubmit = function( id ) {
-	if (id === undefined) {
-		id = '#sendform';
-	}
-	var inputMes = $( id ).find("#input_message");
+	var inputMes = $(id).find("#input_message");
 	if (inputMes.val().trim().length === 0) {
-		this.setFocus().notice("Message is empty.",5000);
+		//this.setFocus().notice("Message is empty.",5000);
 	}
 	else if (inputMes.val().trim().length > 1000) {
-		this.notice("Message is too long! max. 1000",5000);
+		//this.notice("Message is too long! max. 1000",5000);
+		$.fn.nNotice({
+			message: "Message is too long! 1000 letters max.",
+			enableBackground: true,
+			onSubmit: function () {
+				//Do nothing...
+			}
+		});
 	}
 	else {
-		try {
-			var message = {
-				"command": "sendMessage",
-				"message": inputMes.val()
-			};
-			var jsonMessage = JSON.stringify( message );
-			inputMes.val('');
-			//socket.send( jsonMessage );
-			socket.emit('sendMessage', message);
-			chat.scrollDown().setFocus();
-		}
-		catch(ex) {
-			inputMes.val('');
-			this.error("Message was unable to send!",5000);
-		}
+		socket.emit('sendMessage', { message: inputMes.val() });
+		inputMes.val('');
+		chat.scrollDown().setFocus();
 	}
 	return this;
 };
@@ -99,24 +101,15 @@ chat.setSubmit = function( id ) {
 * Set user nick name
 */
 chat.setName = function() {
-	$.fn.nprompt({
-		text: "Hello, please write your <b>name</b> at the input below.",
-		defaultText: (localStorage.name ? localStorage.name : ""),
-		submit: function(str) {
+	$.fn.nPrompt({
+		title: "Set Name",
+		message: "Please enter your <b>name</b> at the field below.",
+		value: (localStorage.name ? localStorage.name : ""),
+		enableBackground: false,
+		onSubmit: function(str) {
 			if (str !== null) {
-				try {
-					localStorage.name = str;
-					var message = {
-						"command": "setName",
-						"name": str
-					};
-					var jsonMessage = JSON.stringify( message );
-					//socket.send( jsonMessage );
-					socket.emit('setName', message);
-				}
-				catch(err) {
-					chat.error("Name was unable to send!",5000);
-				}
+				localStorage.name = str;
+				socket.emit('setName', { name: str });
 			}
 		}
 	});
@@ -126,40 +119,22 @@ chat.setName = function() {
 /*
 * Change channels.
 */
-chat.setChannel = function(channel) {
-	if (channel === undefined) {
-		$.fn.nprompt({
-			text: "Hello, please write <b>channel</b> name at the input below.",
-			defaultText: "General",
-			submit: function(channel) {
-				if (channel !== null) {
-					try {
-						var message = {
-							"channel": channel.toLowerCase(),
-							"command": "setChannel"
-						};
-						var jsonMessage = JSON.stringify( message );
-						//socket.send( jsonMessage );
-						socket.emit('setChannel', message);
-					} catch(err) {
-						chat.error("Channel request was unable to send!",5000);
-					}
+chat.setChannel = function(c) {
+	if (c === undefined) {
+		$.fn.nPrompt({
+			title: "Set Channel",
+			message: "Please enter <b>channel</b> name at the field below.",
+			value: "General",
+			enableBackground: false,
+			onSubmit: function(str) {
+				if (str !== null) {
+					socket.emit('setChannel', { channel: str.toLowerCase() });
 				}
 			}
 		});
 	}
 	else {
-		try {
-			var message = {
-				"channel": channel.toLowerCase(),
-				"command": "setChannel"
-			};
-			var jsonMessage = JSON.stringify( message );
-			//socket.send( jsonMessage );
-			socket.emit('setChannel', message);
-		} catch(err) {
-			chat.error("Channel request was unable to send!",5000);
-		}
+		socket.emit('setChannel', { channel: c.toLowerCase() });
 	}
 	return this;
 };
@@ -169,15 +144,17 @@ chat.setChannel = function(channel) {
 */
 chat.setWhisper = function(target,msg) {
 	if (target === undefined) {
-		$.fn.nprompt({
-			text: "Hello, please enter a target <b>name</b>.",
-			submit: function(target) {
-				// Dont send to your self
-				if (target !== localStorage.name) {
-					$.fn.nprompt({
-						text: "Hello, please write your <b>message</b> at the input below.",
-						submit: function(msg) {
-							chat.sendWhisper(target,msg);
+		$.fn.nPrompt({
+			title: "Send whisper",
+			message: "Please enter a target <b>name</b>.",
+			onSubmit: function(str) {
+				// Don't send to your self
+				if (str !== localStorage.name) {
+					$.fn.nPrompt({
+						title: "Send whisper",
+						message: "Please enter your <b>message</b> at the field below.",
+						onSubmit: function(message) {
+							chat.sendWhisper(str,message);
 						}
 					});
 				}
@@ -187,10 +164,11 @@ chat.setWhisper = function(target,msg) {
 	// Dont send to your self
 	else if (target.length && target !== localStorage.name) {
 		if (msg === undefined) {
-			$.fn.nprompt({
-				text: "Hello, please write your <b>message</b> at the input below.",
-				submit: function(msg) {
-					chat.sendWhisper(target,msg);
+			$.fn.nPrompt({
+				title: "Send whisper",
+				message: "Please enter your <b>message</b> at the field below.",
+				onSubmit: function(message) {
+					chat.sendWhisper(target,message);
 				}
 			});
 		}
@@ -206,19 +184,11 @@ chat.setWhisper = function(target,msg) {
 */
 chat.sendWhisper = function(target,msg) {
 	if (target.length && msg.length) {
-		try {
-			var message = {
-				"name": target,
-				"parent": localStorage.name,
-				"message": msg,
-				"command": "whisper"
-			};
-			var jsonMessage = JSON.stringify( message );
-			//socket.send( jsonMessage );
-			socket.emit('whisper', message);
-		} catch(err) {
-			chat.error("Whisper request was unable to send!",5000);
-		}
+		socket.emit('whisper', {
+			name: target,
+			parent: localStorage.name,
+			message: msg
+		});
 	}
 	return this;
 };
@@ -253,8 +223,8 @@ chat.mes = function(string,whisper) {
 /*
 * Build users menu.
 */
-chat.buildmenu = function(string) {
-	return $("#user_menu").menu("destroy").html(string).menu();
+chat.buildMenu = function(string) {
+	return $("#user_menu").html(string); //menu("destroy").html(string).menu();
 };
 
 /*
@@ -306,40 +276,6 @@ chat.playVolume = function(volume) {
 };
 
 /*
-* Notice function
-*/
-chat.notice = function(str,time) {
-	if (str !== undefined) {
-		$("#notice").html(str).parent().parent().parent().show();
-	} else {
-		$("#notice").html("Notice!").parent().parent().parent().show();
-	}
-	if (time !== undefined) {
-		setTimeout(function(){
-			$("#notice").empty().parent().parent().parent().hide();
-		},time);
-	}
-	return this;
-};
-
-/*
-* Error function
-*/
-chat.error = function(str,time) {
-	if (str !== undefined) {
-		$("#error").html(str).parent().parent().parent().show();
-	} else {
-		$("#error").html("Error has occurred!").parent().parent().parent().show();
-	}
-	if (time !== undefined) {
-		setTimeout(function(){
-			$("#error").empty().parent().parent().parent().hide();
-		},time);
-	}
-	return this;
-};
-
-/*
 * Quit/Close WebSocket
 */
 chat.quit = function() {
@@ -366,7 +302,7 @@ chat.reconnect = function() {
 * Load chat and settings.
 * @typeof chat === 'object'
 */
-$(function() {
+$(function(){
 
 	// Height of the page.
 	chat.setHeight().scrollDown();
@@ -384,76 +320,69 @@ $(function() {
 		chat.error("WebSocket is not supported by your browser!");
 	}
 
-	// Define submit.
-	$( "#sendform" ).submit(function(e) {
+	// Define submit event.
+	$("#sendform").submit(function(e) {
 		e.preventDefault();
-		chat.setSubmit( "#sendform" );
+		chat.setSubmit("#sendform");
 	});
 
 	// Define textarea keydown.
-	$( "#sendform textarea" ).keydown(function(e) {
+	$("#sendform textarea").keydown(function(e) {
 		if (e.keyCode == 13 && !e.shiftKey) {
 			e.preventDefault();
-			chat.setSubmit( "#sendform" );
+			chat.setSubmit("#sendform");
 		}
 	});
 
 	// Define sound on/off button.
-	$( "#disablesound" ).click(function() {
+	$("#disablesound").click(function() {
 		chat.soundOn = chat.soundOn ? false : true;
 		$(this).find("span").html("Sound is "+(chat.soundOn ? "on" : "off"));
-	}).button();
+	});
 
 	// Define quit button.
-	$( "#chat_quit" ).click(function() {
+	$("#chat_quit").click(function() {
 		chat.quit();
 		chat.mes("Disconnected.");
-	}).button();
+	});
 
 	// Define reconnect button.
-	$( "#chat_connect" ).click(function() {
+	$("#chat_connect").click(function() {
 		chat.mes("Reconnecting.");
 		chat.reconnect();
-	}).button();
+	});
 
 	// Define tooltips.
 	//$( document ).tooltip();
 
 	// Define buttons.
-	$( ".button" ).button();
+	//$(".button").button();
 
 	// Define menu.
 	//$( "#users" ).draggable();
-	$( "#user_menu" ).menu();
+	//$("#user_menu").menu();
 
 	// Define html links.
-	$( "#messages" ).find("span").linkify();
+	$("#messages").find("span").linkify();
 
 	// Nick/Name button
-	$( "#chat_nick" ).click(function(e) {
+	$("#chat_nick").click(function(e) {
 		e.preventDefault();
 		chat.setName();
-	}).button();
+	});
 
 	// Channel button
-	$( "#chat_channel" ).click(function(e) {
+	$("#chat_channel").click(function(e) {
 		e.preventDefault();
 		chat.setChannel();
-	}).button();
-
-	// Volume slider.
-	$( "#volume-slider" ).slider({
-		value: 0.5,
-		min: 0.0,
-		max: 1.0,
-		step: 0.1,
-		slide: function( event, ui ) {
-			chat.playVolume( ui.value );
-			this.title = "Volume: "+ ui.value * 100 +"%";
-			chat.playAudio();
-		}
 	});
-	// Set default volume level.
-	chat.playVolume( $("#volume-slider").slider("value") );
+
+	// Volume slider. 0.1 - 1.0
+	$("#volume-slider").change(function(){
+		chat.playVolume( this.value / 100);
+		this.title = "Volume: "+ this.value +"%";
+		chat.playAudio();
+	});
+	chat.playVolume( $("#volume-slider").val() / 100 );
 
 });
