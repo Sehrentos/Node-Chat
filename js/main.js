@@ -28,7 +28,11 @@ chat.init = function() {
 	socket.on('message', function(data) {
 		console.log(data);
 		var d = new Date(data.date);
-		var msg = "["+ d.getHours() + ":" + d.getMinutes() + ":" + d.getSeconds() +"] ";
+		    hours = d.getHours(),
+			minutes = d.getMinutes(),
+			seconds = d.getSeconds();
+
+		var msg = "["+ ("0" + hours).slice(-2) + ":" + ("0" + minutes).slice(-2) + ":" + ("0" + seconds).slice(-2) +"] ";
 			msg += "<a href=\"javascript:void(0)\" id=\"nick\" onclick=\"chat.setWhisper('"+ data.name +"')\">&lt;"+ data.name +"&gt;</a> ";
 			msg += data.message;
 		chat.mes(msg).linkify();
