@@ -60,20 +60,21 @@ body {
 	background-color: #F1F1F1;
 	border-radius: 10px;
 	margin-bottom: 5px;
+	text-align: left;
 }
 #messages span {
 	display: block;
 	padding: 1px 2px;
 	color: #000000;
-	font-size: 80%;
+	font-size: 90%;
 	text-align: left;
 	white-space: pre;
 }
 #messages span:hover {
 	background-color: #D1CFCF;
 }
-#messages span#whisper {
-	color: #0099FF;
+#messages span.whisper {
+	color: #F453A8;
 }
 #messages span a#nick {
 	text-decoration: none;

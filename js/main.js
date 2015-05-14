@@ -24,6 +24,29 @@ chat.init = function() {
 		chat.mes(data.message);
 	});
 
+	socket.on('wisper', function (data) {
+		console.log(data);
+		var d = new Date(data.date);
+		    hours = d.getHours(),
+			minutes = d.getMinutes(),
+			seconds = d.getSeconds();
+
+		var msg = "["+ ("0" + hours).slice(-2) + ":" + ("0" + minutes).slice(-2) + ":" + ("0" + seconds).slice(-2) +"] ";
+			if (data.from === data.to || data.from === localStorage.name) {
+				msg += "Whisper to <a href=\"javascript:void(0)\" id=\"nick\" onclick=\"chat.setWhisper('"+ data.to +"')\">&lt;"+ data.to +"&gt;</a> ";
+			} else {
+				msg += "<a href=\"javascript:void(0)\" id=\"nick\" onclick=\"chat.setWhisper('"+ data.from +"')\">&lt;"+ data.from +"&gt;</a> Whispers: ";
+			}
+			msg += data.message;
+		chat.mes(msg,true).linkify();
+		// Play audio
+		if (data.to !== localStorage.name) {
+			chat.playAudio();
+		}
+		// Scroll down the chat and set focus to input.
+		chat.scrollDown().setFocus();
+	});
+
 	socket.on('message', function(data) {
 		console.log(data);
 		var d = new Date(data.date);
@@ -188,9 +211,9 @@ chat.setWhisper = function(target,msg) {
 */
 chat.sendWhisper = function(target,msg) {
 	if (target.length && msg.length) {
-		socket.emit('whisper', {
-			name: target,
-			parent: localStorage.name,
+		socket.emit('setWhisper', {
+			to: target,
+			from: localStorage.name,
 			message: msg
 		});
 	}
@@ -217,7 +240,7 @@ chat.setHeight = function(str) {
 */
 chat.mes = function(string,whisper) {
 	if(whisper !== undefined || whisper === true) {
-		var msg = "<span id=\"whisper\">" + string + "</span>";
+		var msg = "<span class=\"whisper\">" + string + "</span>";
 	} else {
 		var msg = "<span>" + string + "</span>";
 	}
