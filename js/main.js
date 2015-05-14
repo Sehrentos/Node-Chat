@@ -16,8 +16,7 @@ chat.init = function() {
 
 	socket.on('welcome', function (data) {
 		console.log(data);
-		chat.mes("Welcome <strong>" + data.name + "</strong> !");
-		chat.setName();
+		chat.mes(data.message);
 	});
 
 	socket.on('notice', function (data) {

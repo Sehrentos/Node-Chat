@@ -1,15 +1,12 @@
 /*
-* NodeJS - chat
-* @source: http://stackoverflow.com/questions/18990494/how-to-install-node-js-npm-socket-io-and-use-them
-* @source: http://krasimirtsonev.com/blog/article/Real-time-chat-with-NodeJS-Socketio-and-ExpressJS
+* NodeJS & socket.io chat server
 * @http://socket.io/docs/server-api/
 *
-* Install socket.io module: 
+* Install socket.io module:
 * cd <my_directory>
 * npm install socket.io
-*/
-// Create http server
-/*
+*
+// Create http server with socket.io and filesystem
 var app = require('http').createServer(handler),
     io = require('socket.io').listen(app), //socket.io
     fs = require('fs'); //FileSystem
@@ -34,23 +31,25 @@ var users = [];
 
 var addUser = function() {
 	var time = new Date().getTime();
-    var user = {
-        name: "Anon"+ time //name: "Anon". users.length
-    }
-    users.push(user);
-    updateUsers();
-    return user;
-}
+	var user = {
+		name: "Anon"+ time,
+		channel: 'general',
+		timestamp: time
+	}
+	users.push(user);
+	updateUsers(user);
+	return user;
+};
 
 var removeUser = function(user) {
-    for(var i=0; i<users.length; i++) {
-        if(user.name === users[i].name) {
-            users.splice(i, 1);
-            updateUsers();
-            return user;
-        }
-    }
-}
+	for(var i=0; i<users.length; i++) {
+		if(user.name === users[i].name) {
+			users.splice(i, 1);
+			updateUsers(user);
+			return user;
+		}
+	}
+};
 
 var editUserName = function(socket, user, data) {
 	var exist = false;
@@ -68,19 +67,39 @@ var editUserName = function(socket, user, data) {
 		}
 	}
 	if(user.name === data.name) {
-		updateUsers();
+		updateUsers(user);
 	}
 };
 
-var updateUsers = function() {
-    //io.sockets.emit("users", { users: str });
-	io.sockets.emit("users", users);
-}
+var editUserChannel = function(socket, user, data) {
+	for(var i=0; i<users.length; i++) {
+		if(user.name === users[i].name) {
+			socket.leave(user.channel);
+			user.channel = data.channel;
+			users[i].channel = data.channel;
+			socket.join(data.channel);
+			socket.emit('notice', { message: 'You moved into <strong>'+ user.channel +'</strong> channel' });
+		}
+	}
+	updateUsers(user);
+};
+
+var updateUsers = function(user) {
+	var arr = [];
+	for(var i=0; i<users.length; i++) {
+		if(user.channel === users[i].channel) {
+			arr.push(users[i]);
+		}
+	}
+	io.sockets.emit("users", arr);
+};
 
 // String encode function: myVariable.encodeHTML()
-if (!String.prototype.encodeHTML) {
-	String.prototype.encodeHTML = function () {
-		return this.replace(/&/g, '&amp;')
+if(!String.prototype.encodeHTML) {
+	String.prototype.encodeHTML = function() {
+		return this.replace('script','blocked')
+			.replace('/script','/blocked')
+			.replace(/&/g, '&amp;')
 			.replace(/</g, '&lt;')
 			.replace(/>/g, '&gt;')
 			.replace(/"/g, '&quot;')
@@ -101,21 +120,24 @@ io.sockets.on('connection', function (socket) {
 	var user = addUser(), timestamp = (new Date().getTime());
 
 	// Welcome new user to the server
-	socket.emit('welcome', { name: user.name, message: 'Welcome to the server.' }); //You are in default channel.(todo)
+	socket.emit('welcome', { message: 'Welcome to the server. You are in '+ user.channel +' channel.' }); //You are in default channel.(todo)
+
+	// Join default channel
+	socket.join(user.channel);
 
 	// Send message to every connected client
 	socket.on('sendMessage', function (data) {
 		debug(data);
 		var d = new Date(), ts = d.getTime();
 
-		//Delay message from user 1000ms
+		//Message re-posting delay 1000ms
+		//Message max length 1000 characters
 		if(ts > (timestamp + 1000) && data.message.length <= 1000) {
 			debug("timestamp: "+ timestamp +" < "+ ts);
 			timestamp = ts;
-
-			string = data.message.replace('script','blocked').replace('/script','/blocked').encodeHTML();
-
-			io.sockets.emit('message', { date: d, name: user.name, message: string });
+			//io.sockets.emit('message', { date: d, name: user.name, message: data.message.encodeHTML() });
+			io.to(user.channel).emit('message', { date: d, name: user.name, message: data.message.encodeHTML() });
+			//io.broadcast.to(user.channel).emit('message', { date: d, name: user.name, message: data.message.encodeHTML() });
 		}
 	});
 
@@ -135,6 +157,8 @@ io.sockets.on('connection', function (socket) {
 	socket.on('setChannel', function (data) {
 		// todo...
 		debug(data);
+		//Edit user details
+		editUserChannel(socket, user, data);
 	});
 
 	// Client disconnect from server
