@@ -77,6 +77,17 @@ var updateUsers = function() {
 	io.sockets.emit("users", users);
 }
 
+// String encode function: myVariable.encodeHTML()
+if (!String.prototype.encodeHTML) {
+	String.prototype.encodeHTML = function () {
+		return this.replace(/&/g, '&amp;')
+			.replace(/</g, '&lt;')
+			.replace(/>/g, '&gt;')
+			.replace(/"/g, '&quot;')
+			.replace(/'/g, '&apos;');
+	};
+}
+
 var debug = function(str) {
 	console.log(str);
 	return this;
@@ -96,11 +107,15 @@ io.sockets.on('connection', function (socket) {
 	socket.on('sendMessage', function (data) {
 		debug(data);
 		var d = new Date(), ts = d.getTime();
+
 		//Delay message from user 1000ms
-		if(ts > (timestamp + 1000)) {
+		if(ts > (timestamp + 1000) && data.message.length <= 1000) {
 			debug("timestamp: "+ timestamp +" < "+ ts);
 			timestamp = ts;
-			io.sockets.emit('message', { date: d, name: user.name, message: data.message });
+
+			string = data.message.replace('script','blocked').replace('/script','/blocked').encodeHTML();
+
+			io.sockets.emit('message', { date: d, name: user.name, message: string });
 		}
 	});
 
