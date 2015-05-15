@@ -29,6 +29,12 @@ io.listen(9000);
 
 var users = [];
 
+// debug console.log
+var debug = function(str) {
+	console.log(str);
+	return this;
+};
+
 var addUser = function(sid) {
 	var time = new Date().getTime();
 	var user = {
@@ -75,14 +81,14 @@ var editUserName = function(socket, user, data) {
 var editUserChannel = function(socket, user, data) {
 	for (var i=0; i<users.length; i++) {
 		if (user.name === users[i].name) {
+			var from_channel = user.channel, to_channel = data.channel;
 			socket.leave(user.channel);
-			user.channel = data.channel;
 			users[i].channel = data.channel;
 			socket.join(data.channel);
 			socket.emit('notice', { message: 'You moved into <strong>'+ user.channel +'</strong> channel' });
 		}
 	}
-	updateUsers(user);
+	updateUsers(user, from_channel, to_channel);
 };
 
 var wisperUser = function(socket, user, data) {
@@ -93,14 +99,37 @@ var wisperUser = function(socket, user, data) {
 	}
 };
 
-var updateUsers = function(user) {
-	var arr = [];
-	for (var i=0; i<users.length; i++) {
-		if (user.channel === users[i].channel) {
-			arr.push(users[i]);
+var updateUsers = function(user, from_channel, to_channel) {
+	var arr_enter = [];
+	var arr_leave = [];
+	if (from_channel !== undefined) {
+		for (var i=0; i<users.length; i++) {
+			if (to_channel === users[i].channel) {
+				arr_enter.push(users[i]);
+			} else if (from_channel === users[i].channel) {
+				arr_leave.push(users[i]);
+			}
+		}
+		for (var i=0; i<users.length; i++) {
+			if (to_channel === users[i].channel) {
+				io.to(users[i].id).emit("users", arr_enter);
+			}
+			if (from_channel === users[i].channel) {
+				io.to(users[i].id).emit("users", arr_leave);
+			}
+		}
+	} else {
+		for (var i=0; i<users.length; i++) {
+			if (user.channel === users[i].channel) {
+				arr_enter.push(users[i]);
+			}
+		}
+		for (var i=0; i<users.length; i++) {
+			if (user.channel === users[i].channel) {
+				io.to(users[i].id).emit("users", arr_enter);
+			}
 		}
 	}
-	io.sockets.emit("users", arr);
 };
 
 // String encode function: myVariable.encodeHTML()
@@ -115,11 +144,6 @@ if (!String.prototype.encodeHTML) {
 			.replace(/'/g, '&apos;');
 	};
 }
-
-var debug = function(str) {
-	console.log(str);
-	return this;
-};
 
 // Socket open
 io.sockets.on('connection', function (socket) {
