@@ -87,7 +87,7 @@ var editUserChannel = function(socket, user, data) {
 
 var wisperUser = function(socket, user, data) {
 	for (var i=0; i<users.length; i++) {
-		if (users[i].to === data.to || users[i].to === user.to) {
+		if (users[i].name === data.to || users[i].name === data.from) {
 			io.to(users[i].id).emit('wisper', { date: (new Date()), to: data.to, from: data.from, message: data.message });
 		}
 	}

@@ -6,7 +6,7 @@ Backend [node.js] (https://nodejs.org/), [socket.io] (http://socket.io/)
 Frontend [HTML5] (http://www.w3.org/TR/html5/), [jQuery] (https://jquery.com/)
 
 ### Install
- - open console and cd to your work dir
+ - Open console and cd to your work dir
  - Install socket.io node module by typing: [npm install socket.io] (http://socket.io/)
  - Edit socket address and port from client side [/js/main.js] (https://github.com/Sehrentos/NodeJS-SocketIO-Chat/blob/master/js/main.js)
  - Edit socket address and port from server side [server.js] (https://github.com/Sehrentos/NodeJS-SocketIO-Chat/blob/master/server.js)
