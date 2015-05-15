@@ -1,7 +1,9 @@
-NodeJS-SocketIO-Chat
+Node-Chat
 ======================
 
-My test project for chat application with Node JS, socket.io, html5 and jQuery.
+This is my experimental node chat app project.
+Backend [node.js] (https://nodejs.org/), [socket.io] (http://socket.io/)
+Frontend [HTML5] (http://www.w3.org/TR/html5/), [jQuery] (https://jquery.com/)
 
 ### Install
  - open console and cd to your work dir
