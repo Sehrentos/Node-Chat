@@ -3,6 +3,7 @@
 * Define socket and chat object.
 */
 var socket;
+var user = {};
 var chat = {};
 
 /*
@@ -14,14 +15,47 @@ chat.init = function() {
 	// Open WebSocket.
 	socket = io.connect('ws://localhost:9000');
 
+	socket.on('connect_error', function (data) {
+		//console.log(data);
+		if (data.type === "TransportError") {
+			chat.mes("Unable to connect server.").scrollDown();
+			socket.close();
+		}
+	});
+
+	socket.on('disconnect', function (data) {
+		console.log(data);
+		chat.mes("Disconnected from server.").scrollDown();
+		// Ask user to reconnect
+		$.fn.nConfirm({
+			title: "Disconnected!",
+			message: "Do you wan't to <b>reconnect</b> to the server?",
+			enableBackground: false,
+			onSubmit: function(str) {
+				socket.connect();
+			}
+		});
+	});
+
+	socket.on('connect_timeout', function (data) {
+		console.log(data);
+		chat.mes("Connection timeout.").scrollDown();
+	});
+
+	// Update user data
+	socket.on('update', function (data) {
+		console.log(data);
+		user = data;
+	});
+
 	socket.on('welcome', function (data) {
 		console.log(data);
-		chat.mes(data.message);
+		chat.mes(data.message).scrollDown();
 	});
 
 	socket.on('notice', function (data) {
 		console.log(data);
-		chat.mes(data.message);
+		chat.mes(data.message).scrollDown();
 	});
 
 	socket.on('wisper', function (data) {
@@ -32,22 +66,22 @@ chat.init = function() {
 			seconds = d.getSeconds();
 
 		var msg = "["+ ("0" + hours).slice(-2) + ":" + ("0" + minutes).slice(-2) + ":" + ("0" + seconds).slice(-2) +"] ";
-			if (data.from === data.to || data.from === localStorage.name) {
-				msg += "Whisper to <a href=\"javascript:void(0)\" id=\"nick\" onclick=\"chat.setWhisper('"+ data.to +"')\">&lt;"+ data.to +"&gt;</a> ";
-			} else {
-				msg += "<a href=\"javascript:void(0)\" id=\"nick\" onclick=\"chat.setWhisper('"+ data.from +"')\">&lt;"+ data.from +"&gt;</a> Whispers: ";
-			}
-			msg += data.message;
-		chat.mes(msg,true).linkify();
+		if (data.from === data.to || data.from === user.name) {
+			msg += "Whisper to <a href=\"javascript:void(0)\" id=\"nick\" onclick=\"chat.setWhisper('"+ data.to +"')\">&lt;"+ data.to +"&gt;</a> ";
+		} else {
+			msg += "<a href=\"javascript:void(0)\" id=\"nick\" onclick=\"chat.setWhisper('"+ data.from +"')\">&lt;"+ data.from +"&gt;</a> Whispers: ";
+		}
+		msg += data.message;
+		chat.mes(msg,true);
 		// Play audio
-		if (data.to !== localStorage.name) {
+		if (data.to !== user.name) {
 			chat.playAudio();
 		}
 		// Scroll down the chat and set focus to input.
 		chat.scrollDown().setFocus();
 	});
 
-	socket.on('message', function(data) {
+	socket.on('chat', function(data) {
 		console.log(data);
 		var d = new Date(data.date);
 		    hours = d.getHours(),
@@ -57,13 +91,13 @@ chat.init = function() {
 		var msg = "["+ ("0" + hours).slice(-2) + ":" + ("0" + minutes).slice(-2) + ":" + ("0" + seconds).slice(-2) +"] ";
 			msg += "<a href=\"javascript:void(0)\" id=\"nick\" onclick=\"chat.setWhisper('"+ data.name +"')\">&lt;"+ data.name +"&gt;</a> ";
 			msg += data.message;
-		chat.mes(msg).linkify();
+		chat.mes(msg);
 		// Play audio
-		if (data.name !== localStorage.name) {
+		if (data.name !== user.name) {
 			chat.playAudio();
 		}
-		// Scroll down the chat and set focus to input.
-		chat.scrollDown().setFocus();
+		// Scroll down the chat.
+		chat.scrollDown();
 	});
 
 	socket.on('users', function(data) {
@@ -72,28 +106,38 @@ chat.init = function() {
 		if (data !== undefined) {
 			$("#user_menu").empty();
 			$.each(data, function( key, value ) {
-				if (localStorage.name === value.name) {
-					string = $("<li><a>"+ value.name +"</a></li>").dropdown({
-						menu: [{
-							"name": "Change name",
-							"link": "chat.setName()"
-						},{
-							"name": "Change channel",
-							"link": "chat.setChannel()"
-						}]
+				if (user.name === value.name || localStorage.name === value.name) {
+					var active = 0;
+					string = $('<li class="user"><a>'+ value.name +'</a></li>').click(function(e) {
+						active++;
+						if (active === 1) {
+							menu = '<li class="menu" onclick="chat.setWhisper()">Whisper</li>';
+							menu += '<li class="menu" onclick="chat.setName()">Change name</li>';
+							menu += '<li class="menu" onclick="chat.setChannel()">Change channel</li>';
+							$(this).append('<ul>'+ menu +'</ul>');
+						}
+					}).mouseleave(function() {
+						$(this).find('ul').remove();
+						active = 0;
 					});
 				} else {
-					string = $("<li><a>"+ value.name +"</a></li>").dropdown({
-						menu: [{
-							"name": "Whisper",
-							"link": "chat.setWhisper('"+value.name+"')"
-						}]
+					var active = 0;
+					string = $('<li class="user"><a>'+ value.name +'</a></li>').click(function(e) {
+						active++;
+						if (active === 1) {
+							menu = '<li class="menu" onclick="chat.setWhisper(\''+ value.name +'\')">Whisper</li>';
+							$(this).append('<ul>'+ menu +'</ul>');
+						}
+					}).mouseleave(function() {
+						$(this).find('ul').remove();
+						active = 0;
 					});
 				}
 				$("#user_menu").append(string);
 			});
 		}
 	});
+
 	return this;
 };
 
@@ -101,25 +145,19 @@ chat.init = function() {
 * WebSocket send
 */
 chat.setSubmit = function( id ) {
-	var inputMes = $(id).find("#input_message");
-	if (inputMes.val().trim().length === 0) {
-		//this.setFocus().notice("Message is empty.",5000);
+	if (id.val().length) {
+		if (id.val().trim().length > 1000) {
+			$.fn.nNotice({
+				message: "Message is too long! 1000 letters max.",
+				enableBackground: true
+			});
+		}
+		else {
+			socket.emit('message', { message: id.val() });
+			id.val('');
+		}
 	}
-	else if (inputMes.val().trim().length > 1000) {
-		//this.notice("Message is too long! max. 1000",5000);
-		$.fn.nNotice({
-			message: "Message is too long! 1000 letters max.",
-			enableBackground: true,
-			onSubmit: function () {
-				//Do nothing...
-			}
-		});
-	}
-	else {
-		socket.emit('sendMessage', { message: inputMes.val() });
-		inputMes.val('');
-		chat.scrollDown().setFocus();
-	}
+	chat.scrollDown().setFocus();
 	return this;
 };
 
@@ -130,10 +168,11 @@ chat.setName = function() {
 	$.fn.nPrompt({
 		title: "Set Name",
 		message: "Please enter your <b>name</b> at the field below.",
-		value: (localStorage.name ? localStorage.name : ""),
+		value: (localStorage.name ? localStorage.name : user.name),
 		enableBackground: false,
 		onSubmit: function(str) {
 			if (str !== null) {
+				user.name = str;
 				localStorage.name = str;
 				socket.emit('setName', { name: str });
 				chat.setFocus();
@@ -170,37 +209,47 @@ chat.setChannel = function(c) {
 * Open Whisper to user.
 */
 chat.setWhisper = function(target,msg) {
-	if (target === undefined) {
-		$.fn.nPrompt({
-			title: "Send whisper",
-			message: "Please enter a target <b>name</b>.",
-			onSubmit: function(str) {
-				// Don't send to your self
-				if (str !== localStorage.name) {
+	if (target.length && msg.length) {
+		if (msg.length > 1000) {
+			$.fn.nNotice({
+				message: "Message is too long! 1000 letters max.",
+				enableBackground: true
+			});
+		} else {
+			if (target === undefined || target === user.name) {
+				$.fn.nPrompt({
+					title: "Send whisper",
+					message: "Please enter a target <b>name</b>.",
+					value: user.whisper ? user.whisper: '',
+					onSubmit: function(str) {
+						// Don't send to your self
+						if (str !== user.name) {
+							$.fn.nPrompt({
+								title: "Send whisper",
+								message: "Please enter your <b>message</b> at the field below.",
+								onSubmit: function(message) {
+									chat.sendWhisper(str,message);
+								}
+							});
+						}
+					}
+				});
+			}
+			// Dont send to your self
+			else if (target.length && target !== user.name) {
+				if (msg === undefined) {
 					$.fn.nPrompt({
 						title: "Send whisper",
 						message: "Please enter your <b>message</b> at the field below.",
 						onSubmit: function(message) {
-							chat.sendWhisper(str,message);
+							chat.sendWhisper(target,message);
 						}
 					});
 				}
-			}
-		});
-	}
-	// Dont send to your self
-	else if (target.length && target !== localStorage.name) {
-		if (msg === undefined) {
-			$.fn.nPrompt({
-				title: "Send whisper",
-				message: "Please enter your <b>message</b> at the field below.",
-				onSubmit: function(message) {
-					chat.sendWhisper(target,message);
+				else if (target.length && msg.length) {
+					chat.sendWhisper(target,msg);
 				}
-			});
-		}
-		else if (target.length && msg.length) {
-			chat.sendWhisper(target,msg);
+			}
 		}
 	}
 	return this;
@@ -213,7 +262,7 @@ chat.sendWhisper = function(target,msg) {
 	if (target.length && msg.length) {
 		socket.emit('setWhisper', {
 			to: target,
-			from: localStorage.name,
+			from: user.name,
 			message: msg
 		});
 	}
@@ -244,7 +293,8 @@ chat.mes = function(string,whisper) {
 	} else {
 		var msg = "<span>" + string + "</span>";
 	}
-	return $("#messages").append(msg);
+	$("#messages").append(msg).linkify();
+	return this;
 };
 
 /*
@@ -343,14 +393,30 @@ $(function(){
 	// Define submit event.
 	$("#sendform").submit(function(e) {
 		e.preventDefault();
-		chat.setSubmit("#sendform");
+		var whisper = $(this).find("#input_whisper"),
+		    message = $(this).find("#input_message");
+
+		if (whisper.val().length) {
+			chat.setWhisper( whisper.val(), message.val() );
+			message.val('');
+		} else {
+			chat.setSubmit( message );
+		}
 	});
 
 	// Define textarea keydown.
 	$("#sendform textarea").keydown(function(e) {
 		if (e.keyCode == 13 && !e.shiftKey) {
 			e.preventDefault();
-			chat.setSubmit("#sendform");
+			var whisper = $(this).parent().find("#input_whisper"),
+				message = $(this).parent().find("#input_message");
+
+			if (whisper.val().length) {
+				chat.setWhisper( whisper.val(), message.val() );
+				message.val('');
+			} else {
+				chat.setSubmit( message );
+			}
 		}
 	});
 
@@ -371,16 +437,6 @@ $(function(){
 		chat.mes("Reconnecting.");
 		chat.reconnect();
 	});
-
-	// Define tooltips.
-	//$( document ).tooltip();
-
-	// Define buttons.
-	//$(".button").button();
-
-	// Define menu.
-	//$( "#users" ).draggable();
-	//$("#user_menu").menu();
 
 	// Define html links.
 	$("#messages").find("span").linkify();

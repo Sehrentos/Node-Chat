@@ -14,44 +14,46 @@
 <script src="js/main.js" charset="utf-8"></script>
 </head>
 <body>
-
 <div class="container">
-
 	<div class="content">
-
 		<div class="inner-content">
-
 			<div id="chat">
-				<div id="messages"></div>
-
-				<div id="users">
-					<ul id="user_menu">
-						<li><a href="#">No users</a></li>
-					</ul>
-				</div>
-
-				<div id="inputs">
-					<form id="sendform" action="index.php" method="post" accept-charset="utf-8">
-					<input type="hidden" class="button" name="action" value="send" />
-					<textarea class="textarea" id="input_message" name="message" placeholder="Write message here..."></textarea>
-					<input type="submit" class="button" value="Send" />
-					</form>
-				</div>
+			<table>
+			<tr>
+				<td id="message-td">
+					<div id="messages"></div>
+				</td>
+				<td id="user-td">
+					<div id="users">
+						<ul id="user_menu">
+							<li class="user"><a href="#">No users</a></li>
+						</ul>
+					</div>
+				</td>
+			</tr>
+			<tr>
+				<td colspan="2">
+					<div id="inputs">
+						<form id="sendform" action="" method="post" accept-charset="utf-8">
+						<input type="hidden" class="button" name="action" value="send" />
+						<input type="text" class="textarea" id="input_whisper" name="whisper" placeholder="Whisper" />
+						<textarea class="textarea" id="input_message" name="message" placeholder="Write message here..."></textarea>
+						<input type="submit" class="button" value="Send" />
+						</form>
+					</div>
+				</td>
+			</tr>
+			</table>
 			</div>	
-
 			<div id="links">
 				<input id="volume-slider" type="range" min="1" max="99" value="25" />
 				<button type="button" class="button" id="disablesound">Sound is off</button>
 				<button type="button" class="button" id="chat_nick">Change name</button>
 				<button type="button" class="button" id="chat_channel">Change channel</button>
 			</div>
-
 		</div>
-
 	</div>
-
 </div>
-
 <div class="hidden">
 	<!-- Audio source: eng.universal-soundbank.com/hits.htm -->
 	<audio id="audio" controls hidden>
@@ -61,6 +63,5 @@
 		Your browser does not support HTML5 audio.
 	</audio>
 </div>
-
 </body>
 </html>

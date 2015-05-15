@@ -8,8 +8,8 @@
 *
 // Create http server with socket.io and filesystem
 var app = require('http').createServer(handler),
-    io = require('socket.io').listen(app), //socket.io
-    fs = require('fs'); //FileSystem
+	io = require('socket.io').listen(app), //socket.io
+	fs = require('fs'); //FileSystem
 app.listen(9000);
 function handler (req, res) {
 	fs.readFile(__dirname + '/index.html',
@@ -31,7 +31,7 @@ var users = [];
 
 // debug console.log
 var debug = function(str) {
-	console.log(str);
+	//console.log(str); //Uncomment this to see logs
 	return this;
 };
 
@@ -41,6 +41,8 @@ var addUser = function(sid) {
 		id: sid,
 		name: "Anon"+ time,
 		channel: 'general',
+		whisper: '',
+		joined: time,
 		timestamp: time
 	}
 	users.push(user);
@@ -48,7 +50,7 @@ var addUser = function(sid) {
 	return user;
 };
 
-var removeUser = function(user) {
+var removeUser = function(socket,user) {
 	for (var i=0; i<users.length; i++) {
 		if (user.name === users[i].name) {
 			users.splice(i, 1);
@@ -56,6 +58,11 @@ var removeUser = function(user) {
 			return user;
 		}
 	}
+};
+
+var updateUserData = function(socket, user) {
+	user.timestamp = new Date().getTime();
+	socket.emit('update', user);
 };
 
 var editUserName = function(socket, user, data) {
@@ -79,13 +86,18 @@ var editUserName = function(socket, user, data) {
 };
 
 var editUserChannel = function(socket, user, data) {
+	var from_channel = user.channel,
+	    to_channel = data.channel;
+
 	for (var i=0; i<users.length; i++) {
-		if (user.name === users[i].name) {
-			var from_channel = user.channel, to_channel = data.channel;
+		if (from_channel === to_channel) {
+			return socket.emit('notice', { message: 'You are in <strong>'+ user.channel +'</strong> channel' });
+		}
+		else if (user.name === users[i].name) {
 			socket.leave(user.channel);
 			users[i].channel = data.channel;
 			socket.join(data.channel);
-			socket.emit('notice', { message: 'You moved into <strong>'+ user.channel +'</strong> channel' });
+			socket.emit('notice', { message: 'You moved to <strong>'+ user.channel +'</strong> channel' });
 		}
 	}
 	updateUsers(user, from_channel, to_channel);
@@ -93,21 +105,23 @@ var editUserChannel = function(socket, user, data) {
 
 var wisperUser = function(socket, user, data) {
 	for (var i=0; i<users.length; i++) {
-		if (users[i].name === data.to || users[i].name === data.from) {
+		if (users[i].name.length && (users[i].name === data.to || users[i].name === data.from)) {
+			user.whisper = data.to;
 			io.to(users[i].id).emit('wisper', { date: (new Date()), to: data.to, from: data.from, message: data.message });
 		}
 	}
 };
 
+// emit channel users array[name,name,...]
 var updateUsers = function(user, from_channel, to_channel) {
 	var arr_enter = [];
 	var arr_leave = [];
 	if (from_channel !== undefined) {
 		for (var i=0; i<users.length; i++) {
 			if (to_channel === users[i].channel) {
-				arr_enter.push(users[i]);
+				arr_enter.push({ name: users[i].name });
 			} else if (from_channel === users[i].channel) {
-				arr_leave.push(users[i]);
+				arr_leave.push({ name: users[i].name });
 			}
 		}
 		for (var i=0; i<users.length; i++) {
@@ -121,7 +135,7 @@ var updateUsers = function(user, from_channel, to_channel) {
 	} else {
 		for (var i=0; i<users.length; i++) {
 			if (user.channel === users[i].channel) {
-				arr_enter.push(users[i]);
+				arr_enter.push({ name: users[i].name });
 			}
 		}
 		for (var i=0; i<users.length; i++) {
@@ -144,35 +158,55 @@ if (!String.prototype.encodeHTML) {
 			.replace(/'/g, '&apos;');
 	};
 }
+/*
+ * Array contains function:
+ * socket.contains(client.id, function(found) {
+ * 	if (found) {
+ * 		socket.emit
+ * 	}
+ * });
+*/
+Array.prototype.contains = function(k, callback) {
+	var self = this;
+	return (function check(i) {
+		if (i >= self.length) {
+			return callback(false);
+		}
+		if (self[i] === k) {
+			return callback(true);
+		}
+		return process.nextTick(check.bind(null, i+1));
+	}(0));
+};
 
 // Socket open
 io.sockets.on('connection', function (socket) {
-	debug(socket.id+' connected');
 
-	// Set user name
+	// Set new user details
 	var user = addUser(socket.id), timestamp = (new Date().getTime());
-	socket.user = user;
-	debug(socket.user.name);
+	//socket.name = user;
+	debug(socket.id +' connected: '+ user.name);
 
 	// Welcome new user to the server
-	socket.emit('welcome', { message: 'Welcome to the server. You are in '+ user.channel +' channel.' }); //You are in default channel.(todo)
+	socket.emit('welcome', { message: 'Welcome to the server. You are in '+ user.channel +' channel.' });
 
 	// Join default channel
 	socket.join(user.channel);
 
+	// Update user settings
+	updateUserData(socket,user);
+
 	// Send message to every connected client
-	socket.on('sendMessage', function (data) {
+	socket.on('message', function (data) {
 		debug(data);
 		var d = new Date(), ts = d.getTime();
 
 		//Message re-posting delay 1000ms
 		//Message max length 1000 characters
-		if(ts > (timestamp + 1000) && data.message.length <= 1000) {
+		if (ts > (timestamp + 1000) && data.message.length <= 1000) {
 			//debug("timestamp: "+ timestamp +" < "+ ts);
 			timestamp = ts;
-			//io.sockets.emit('message', { date: d, name: user.name, message: data.message.encodeHTML() });
-			io.to(user.channel).emit('message', { date: d, name: user.name, message: data.message.encodeHTML() });
-			//io.broadcast.to(user.channel).emit('message', { date: d, name: user.name, message: data.message.encodeHTML() });
+			io.to(user.channel).emit('chat', { date: d, name: user.name, message: data.message.encodeHTML() });
 		}
 	});
 
@@ -180,12 +214,14 @@ io.sockets.on('connection', function (socket) {
 	socket.on('setName', function (data) {
 		debug(data);
 		editUserName(socket, user, data);
+		updateUserData(socket,user);
 	});
 
 	// whisper
 	socket.on('setWhisper', function (data) {
 		debug(data);
 		wisperUser(socket, user, data);
+		updateUserData(socket,user);
 	});
 
 	// setChannel
@@ -193,12 +229,13 @@ io.sockets.on('connection', function (socket) {
 		debug(data);
 		//Edit user details
 		editUserChannel(socket, user, data);
+		updateUserData(socket,user);
 	});
 
 	// Client disconnect from server
 	socket.on('disconnect', function (data) {
 		debug(socket.id+' disconnect');
-		removeUser(user);
+		removeUser(socket,user);
 	});
 
 });
