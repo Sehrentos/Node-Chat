@@ -230,8 +230,8 @@ chat.setHeight = function(str) {
 	} else {
 		var docHeight = str;
 	}
-	$("#messages").css("height",(docHeight-170)+'px');
-	$("#users").css("height",(docHeight-170)+'px');
+	$("#messages").css("height",(docHeight-150)+'px');
+	$("#users").css("height",(docHeight-150)+'px');
 	return this;
 };
 

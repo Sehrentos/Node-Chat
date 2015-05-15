@@ -32,19 +32,18 @@
 
 				<div id="inputs">
 					<form id="sendform" action="index.php" method="post" accept-charset="utf-8">
-					<input type="hidden" name="action" value="send" />
-					<textarea id="input_message" name="message" placeholder="Write message here..."></textarea>
-					<input type="submit" value="Send" class="button" />
+					<input type="hidden" class="button" name="action" value="send" />
+					<textarea class="textarea" id="input_message" name="message" placeholder="Write message here..."></textarea>
+					<input type="submit" class="button" value="Send" />
 					</form>
 				</div>
 			</div>	
 
 			<div id="links">
 				<input id="volume-slider" type="range" min="1" max="99" value="25" />
-				<button type="button" id="disablesound">Sound is off</button>
-				<!--<button type="button" id="chat_quit">Disconnect</button><button type="button" id="chat_connect">Reconnect</button> -->
-				<button type="button" id="chat_nick">Change name</button>
-				<button type="button" id="chat_channel">Change channel</button>
+				<button type="button" class="button" id="disablesound">Sound is off</button>
+				<button type="button" class="button" id="chat_nick">Change name</button>
+				<button type="button" class="button" id="chat_channel">Change channel</button>
 			</div>
 
 		</div>

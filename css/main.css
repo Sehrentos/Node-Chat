@@ -10,12 +10,11 @@ body {
 	font-family: Arial, Helvetica, sans-serif;
 	font-size: 100%;
 	text-align: center;
-	background-color: #FFFFFF;
+	background-color: #9A9A9A;
 }
 .container {
-	width: 80%;
+	width: 100%;
 	min-width: 1000px;
-	margin: 0px auto;
 }
 .content {
 	padding: 10px;
@@ -56,7 +55,7 @@ body {
 	min-height: 150px;
 	overflow-y: auto;
 	padding: 4px;
-	border: 1px dashed #9A9A9A;
+	border: 1px dashed #CCCCCC;
 	background-color: #F1F1F1;
 	border-radius: 10px;
 	margin-bottom: 5px;
@@ -87,13 +86,13 @@ body {
 	height: 40px;
 	width: 600px;
 }
-.content input, .content button, .content textarea {
+.button, .textarea {
     border-width: 1px;
     border-color: #CCCCCC;
     border-style: solid;
     border-radius: 4px;
 }
-.content input, .content button {
+.button {
     display: inline-block;
     padding: 4px 10px;
     margin: 0px 2px;
@@ -103,12 +102,11 @@ body {
     font-variant: small-caps;
     background-color: #ffffff;
 }
-.content input:hover , .content button:hover {
+.button:hover {
 	color: #c77405;
     box-shadow: 0 5px 8px 5px #f3f4f6 inset;
 }
-
-#inputs textarea {
+.textarea {
 	display: inline-block;
 	color: #000000;
 	vertical-align: bottom;
@@ -119,13 +117,16 @@ body {
 }
 #inputs #input_message {
 	width: 300px;
-	height: 19px;
+	max-width: 500px;
+	height: 16px;
 	max-height: 58px;
 }
 #volume-slider {
 	display: inline-block;
-	margin-left: 0px;
-	margin-right: 10px;
+	position: relative;
+	top: 10px;
+	left: 0px;
+	margin-right: 5px;
 	width: 100px;
 }
 /*
