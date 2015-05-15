@@ -1,9 +1,13 @@
 {
-    "name": "App",
+    "name": "ChatApp",
     "version": "0.0.1",
-    "description": "App",
+    "description": "NodeJS, socket.io as backend and html5, jQuery as frontend",
+	"repository": {
+		"type": "git",
+		"url": "git://github.com/Sehrentos/NodeJS-SocketIO-Chat"
+	},
     "dependencies": {
         "socket.io": "latest"
     },
-    "author": "developer"
+    "author": "Sehrentos"
 }
