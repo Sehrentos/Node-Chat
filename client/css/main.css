@@ -17,7 +17,7 @@ body {
 	min-width: 1000px;
 }
 .content {
-	padding: 10px;
+	padding: 5px;
 	background-color: #9A9A9A;
 	border-top-right-radius: 25px;
 	border-bottom-left-radius: 25px;
@@ -46,12 +46,13 @@ body {
 #chat table {
 	width: 100%;
 }
-#chat table #message-td {}
+#chat table #message-td {
+	border: 1px dashed #CCCCCC;
+	background-color: #F1F1F1;
+	border-radius: 10px;
+}
 #chat table #user-td {
 	width: 200px;
-}
-#links {
-	margin-left: 10px;
 }
 
 #messages {
@@ -60,15 +61,10 @@ body {
 	min-height: 150px;
 	overflow-y: auto;
 	padding: 4px;
-	border: 1px dashed #CCCCCC;
-	background-color: #F1F1F1;
-	border-radius: 10px;
-	margin-bottom: 5px;
 }
 #messages span {
 	display: block;
 	padding: 1px 2px;
-	color: #000000;
 	font-size: 90%;
 	text-align: left;
 	white-space: pre;
@@ -76,10 +72,13 @@ body {
 #messages span:hover {
 	background-color: #D1CFCF;
 }
-#messages span.whisper {
+.message {
+	color: #000000;
+}
+.whisper {
 	color: #F453A8;
 }
-#messages span a#nick {
+.nickname {
 	text-decoration: none;
 	color: #000000;
 }
@@ -92,7 +91,6 @@ body {
 	width: 100%;
 	min-height: 150px;
 	overflow-y: auto;
-	font-size: 80%;
 }
 #user_menu li {
     border-width: 1px;
@@ -122,6 +120,7 @@ body {
 #inputs {
 	display: block;
 	height: 40px;
+	margin-top: 5px;
 }
 .button, .textarea {
     border-width: 1px;
@@ -161,6 +160,9 @@ body {
 	max-width: 520px;
 	height: 16px;
 	max-height: 58px;
+}
+#links {
+	margin-left: 10px;
 }
 #volume-slider {
 	display: inline-block;

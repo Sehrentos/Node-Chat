@@ -67,9 +67,9 @@ chat.init = function() {
 
 		var msg = "["+ ("0" + hours).slice(-2) + ":" + ("0" + minutes).slice(-2) + ":" + ("0" + seconds).slice(-2) +"] ";
 		if (data.from === data.to || data.from === user.name) {
-			msg += "Whisper to <a href=\"javascript:void(0)\" id=\"nick\" onclick=\"chat.setWhisper('"+ data.to +"')\">&lt;"+ data.to +"&gt;</a> ";
+			msg += "Whisper to <a href=\"javascript:void(0)\" class=\"nickname\" onclick=\"chat.setWhisper('"+ data.to +"')\">&lt;"+ data.to +"&gt;</a> ";
 		} else {
-			msg += "<a href=\"javascript:void(0)\" id=\"nick\" onclick=\"chat.setWhisper('"+ data.from +"')\">&lt;"+ data.from +"&gt;</a> Whispers: ";
+			msg += "<a href=\"javascript:void(0)\" class=\"nickname\" onclick=\"chat.setWhisper('"+ data.from +"')\">&lt;"+ data.from +"&gt;</a> Whispers: ";
 		}
 		msg += data.message;
 		chat.mes(msg,true);
@@ -89,7 +89,7 @@ chat.init = function() {
 			seconds = d.getSeconds();
 
 		var msg = "["+ ("0" + hours).slice(-2) + ":" + ("0" + minutes).slice(-2) + ":" + ("0" + seconds).slice(-2) +"] ";
-			msg += "<a href=\"javascript:void(0)\" id=\"nick\" onclick=\"chat.setWhisper('"+ data.name +"')\">&lt;"+ data.name +"&gt;</a> ";
+			msg += "<a href=\"javascript:void(0)\" class=\"nickname\" onclick=\"chat.setWhisper('"+ data.name +"')\">&lt;"+ data.name +"&gt;</a> ";
 			msg += data.message;
 		chat.mes(msg);
 		// Play audio
@@ -108,12 +108,12 @@ chat.init = function() {
 			$.each(data, function( key, value ) {
 				if (user.name === value.name || localStorage.name === value.name) {
 					var active = 0;
-					string = $('<li class="user"><a>'+ value.name +'</a></li>').click(function(e) {
+					string = $('<li class="user">'+ value.name +' &rsaquo;</li>').click(function(e) {
 						active++;
 						if (active === 1) {
-							menu = '<li class="menu" onclick="chat.setWhisper()">Whisper</li>';
-							menu += '<li class="menu" onclick="chat.setName()">Change name</li>';
-							menu += '<li class="menu" onclick="chat.setChannel()">Change channel</li>';
+							menu = '<li class="menu" onclick="chat.setWhisper()">&lsaquo; Whisper</li>';
+							menu += '<li class="menu" onclick="chat.setName()">&lsaquo; Change name</li>';
+							menu += '<li class="menu" onclick="chat.setChannel()">&lsaquo; Change channel</li>';
 							$(this).append('<ul>'+ menu +'</ul>');
 						}
 					}).mouseleave(function() {
@@ -122,10 +122,10 @@ chat.init = function() {
 					});
 				} else {
 					var active = 0;
-					string = $('<li class="user"><a>'+ value.name +'</a></li>').click(function(e) {
+					string = $('<li class="user">'+ value.name +' &rsaquo;</li>').click(function(e) {
 						active++;
 						if (active === 1) {
-							menu = '<li class="menu" onclick="chat.setWhisper(\''+ value.name +'\')">Whisper</li>';
+							menu = '<li class="menu" onclick="chat.setWhisper(\''+ value.name +'\')">&lsaquo; Whisper</li>';
 							$(this).append('<ul>'+ menu +'</ul>');
 						}
 					}).mouseleave(function() {
@@ -208,47 +208,45 @@ chat.setChannel = function(c) {
 /*
 * Open Whisper to user.
 */
-chat.setWhisper = function(target,msg) {
-	if (target.length && msg.length) {
-		if (msg.length > 1000) {
-			$.fn.nNotice({
-				message: "Message is too long! 1000 letters max.",
-				enableBackground: true
+chat.setWhisper = function(target, msg) {
+	if (msg !== undefined && msg.length > 1000) {
+		$.fn.nNotice({
+			message: "Message is too long! 1000 letters max.",
+			enableBackground: true
+		});
+	} else {
+		if (target === undefined || target === user.name) {
+			$.fn.nPrompt({
+				title: "Send whisper",
+				message: "Please enter a target <b>name</b>.",
+				value: user.whisper ? user.whisper: '',
+				onSubmit: function(str) {
+					// Don't send to your self
+					if (str !== user.name) {
+						$.fn.nPrompt({
+							title: "Send whisper",
+							message: "Please enter your <b>message</b> at the field below.",
+							onSubmit: function(message) {
+								chat.sendWhisper(str,message);
+							}
+						});
+					}
+				}
 			});
-		} else {
-			if (target === undefined || target === user.name) {
+		}
+		// Dont send to your self
+		else if (target.length && target !== user.name) {
+			if (msg === undefined) {
 				$.fn.nPrompt({
 					title: "Send whisper",
-					message: "Please enter a target <b>name</b>.",
-					value: user.whisper ? user.whisper: '',
-					onSubmit: function(str) {
-						// Don't send to your self
-						if (str !== user.name) {
-							$.fn.nPrompt({
-								title: "Send whisper",
-								message: "Please enter your <b>message</b> at the field below.",
-								onSubmit: function(message) {
-									chat.sendWhisper(str,message);
-								}
-							});
-						}
+					message: "Please enter your <b>message</b> at the field below.",
+					onSubmit: function(message) {
+						chat.sendWhisper(target,message);
 					}
 				});
 			}
-			// Dont send to your self
-			else if (target.length && target !== user.name) {
-				if (msg === undefined) {
-					$.fn.nPrompt({
-						title: "Send whisper",
-						message: "Please enter your <b>message</b> at the field below.",
-						onSubmit: function(message) {
-							chat.sendWhisper(target,message);
-						}
-					});
-				}
-				else if (target.length && msg.length) {
-					chat.sendWhisper(target,msg);
-				}
+			else if (target.length && msg.length) {
+				chat.sendWhisper(target,msg);
 			}
 		}
 	}
@@ -265,6 +263,7 @@ chat.sendWhisper = function(target,msg) {
 			from: user.name,
 			message: msg
 		});
+		$("#sendform").find("#input_whisper").val(target);
 	}
 	return this;
 };
@@ -291,7 +290,7 @@ chat.mes = function(string,whisper) {
 	if(whisper !== undefined || whisper === true) {
 		var msg = "<span class=\"whisper\">" + string + "</span>";
 	} else {
-		var msg = "<span>" + string + "</span>";
+		var msg = "<span class=\"message\">" + string + "</span>";
 	}
 	$("#messages").append(msg).linkify();
 	return this;
@@ -350,7 +349,7 @@ chat.playVolume = function(volume) {
 */
 chat.quit = function() {
 	if (socket != null) {
-		console.log("Socket close.");
+		console.log("Socket close");
 		socket.close();
 		socket=null;
 	}
@@ -363,8 +362,9 @@ chat.quit = function() {
 chat.reconnect = function() {
 	chat.quit();
 	setTimeout(function(){
+		console.log("Socket init");
 		chat.init();
-	},3000);
+	},2000);
 	return this;
 }
 
@@ -376,9 +376,27 @@ $(function(){
 
 	// Height of the page.
 	chat.setHeight().scrollDown();
-	$( window ).resize(function() {
-		chat.setHeight().scrollDown();
+
+	// Resize window event
+	var rtime = new Date().getTime();
+	var timeout = false;
+	var delta = 200;
+	$(window).resize(function() {
+		rtime = new Date().getTime();
+		if (timeout === false) {
+			timeout = true;
+			setTimeout(resizeend, delta);
+		}
 	});
+	function resizeend() {
+		if (new Date().getTime() - rtime < delta) {
+			setTimeout(resizeend, delta);
+		} else {
+			timeout = false;
+			chat.setHeight().scrollDown();
+			console.log('Window resize');
+		}
+	}
 
 	// Focus input/textarea.
 	chat.setFocus();
@@ -405,7 +423,7 @@ $(function(){
 	});
 
 	// Define textarea keydown.
-	$("#sendform textarea").keydown(function(e) {
+	$("#sendform").find("textarea").keydown(function(e) {
 		if (e.keyCode == 13 && !e.shiftKey) {
 			e.preventDefault();
 			var whisper = $(this).parent().find("#input_whisper"),
