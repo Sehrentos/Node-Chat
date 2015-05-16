@@ -374,30 +374,6 @@ chat.reconnect = function() {
 */
 $(function(){
 
-	// Height of the page.
-	chat.setHeight().scrollDown();
-
-	// Resize window event
-	var rtime = new Date().getTime();
-	var timeout = false;
-	var delta = 200;
-	$(window).resize(function() {
-		rtime = new Date().getTime();
-		if (timeout === false) {
-			timeout = true;
-			setTimeout(resizeend, delta);
-		}
-	});
-	function resizeend() {
-		if (new Date().getTime() - rtime < delta) {
-			setTimeout(resizeend, delta);
-		} else {
-			timeout = false;
-			chat.setHeight().scrollDown();
-			console.log('Window resize');
-		}
-	}
-
 	// Focus input/textarea.
 	chat.setFocus();
 

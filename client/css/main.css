@@ -6,61 +6,54 @@
 	padding: 0;
 	margin: 0;
 }
+html{
+	height: 100%;
+}
 body {
+	height: 100%;
 	font-family: Arial, Helvetica, sans-serif;
 	font-size: 100%;
 	text-align: left;
-	background-color: #9A9A9A;
+	background-color: #F5F5F5;
+	overflow: hidden;
 }
 .container {
 	width: 100%;
-	min-width: 1000px;
+	height: 100%;
+	min-width: 650px;
 }
 .content {
-	padding: 5px;
-	background-color: #9A9A9A;
-	border-top-right-radius: 25px;
-	border-bottom-left-radius: 25px;
-}
-.inner-content {
-	padding: 10px;
-	background-color: #F5F5F5;
-	border-top-right-radius: 15px;
-	border-bottom-left-radius: 15px;
-	box-shadow: 0px 0px 17px #000000;
-}
-@-moz-document url-prefix() {
-.inner-content {
-	padding: 10px;
-	background-color: #F5F5F5;
-	border-top-right-radius: 15px;
-	border-bottom-left-radius: 15px;
-	box-shadow: 0px 0px 8px #000000;
-}
+	height: 100%;
 }
 
 #chat {
-	margin: 10px;
-	margin-bottom: 10px;
+	height: 100%;
 }
 #chat table {
 	width: 100%;
+	height: 100%;
+}
+#chat table td {
+	vertical-align: top;
 }
 #chat table #message-td {
-	border: 1px dashed #CCCCCC;
-	background-color: #F1F1F1;
-	border-radius: 10px;
+	width: 80%;
+	height: 100%;
 }
 #chat table #user-td {
-	width: 200px;
+	width: 20%;
 }
 
 #messages {
 	display: block;
 	width: 100%;
+	height: 100%;
 	min-height: 150px;
 	overflow-y: auto;
 	padding: 4px;
+	border: 1px dashed #CCCCCC;
+	background-color: #FFFFFF;
+	border-radius: 10px;
 }
 #messages span {
 	display: block;
@@ -68,9 +61,6 @@ body {
 	font-size: 90%;
 	text-align: left;
 	white-space: pre;
-}
-#messages span:hover {
-	background-color: #D1CFCF;
 }
 .message {
 	color: #000000;
@@ -87,9 +77,8 @@ body {
 */
 #users {
 	display: block;
-	vertical-align: top;
 	width: 100%;
-	min-height: 150px;
+	height: 100%;
 	overflow-y: auto;
 }
 #user_menu li {
@@ -109,7 +98,7 @@ body {
 	overflow: hidden;
 	cursor: pointer;
 }
-#user_menu li li:hover {
+#user_menu li:hover {
 	color: #c77405;
     box-shadow: 0 5px 8px 5px #f3f4f6 inset;
 }
@@ -120,7 +109,7 @@ body {
 #inputs {
 	display: block;
 	height: 40px;
-	margin-top: 5px;
+	padding-top: 5px;
 }
 .button, .textarea {
     border-width: 1px;
@@ -162,7 +151,7 @@ body {
 	max-height: 58px;
 }
 #links {
-	margin-left: 10px;
+	height: 100%;
 }
 #volume-slider {
 	display: inline-block;
