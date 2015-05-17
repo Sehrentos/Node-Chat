@@ -6,9 +6,11 @@
 	padding: 0;
 	margin: 0;
 }
+
 html{
 	height: 100%;
 }
+
 body {
 	height: 100%;
 	font-family: Arial, Helvetica, sans-serif;
@@ -17,11 +19,13 @@ body {
 	background-color: #F5F5F5;
 	overflow: hidden;
 }
+
 .container {
 	width: 100%;
 	height: 100%;
 	min-width: 650px;
 }
+
 .content {
 	height: 100%;
 }
@@ -29,17 +33,21 @@ body {
 #chat {
 	height: 100%;
 }
+
 #chat table {
 	width: 100%;
 	height: 100%;
 }
+
 #chat table td {
 	vertical-align: top;
 }
+
 #chat table #message-td {
 	width: 80%;
 	height: 100%;
 }
+
 #chat table #user-td {
 	width: 20%;
 }
@@ -55,6 +63,7 @@ body {
 	background-color: #FFFFFF;
 	border-radius: 10px;
 }
+
 #messages span {
 	display: block;
 	padding: 1px 2px;
@@ -62,25 +71,28 @@ body {
 	text-align: left;
 	white-space: pre;
 }
+
 .message {
 	color: #000000;
 }
+
 .whisper {
 	color: #F453A8;
 }
+
 .nickname {
 	text-decoration: none;
 	color: #000000;
 }
-/*
-* User panel
-*/
+
+/* User panel */
 #users {
 	display: block;
 	width: 100%;
 	height: 100%;
 	overflow-y: auto;
 }
+
 #user_menu li {
     border-width: 1px;
     border-color: #CCCCCC;
@@ -98,10 +110,12 @@ body {
 	overflow: hidden;
 	cursor: pointer;
 }
+
 #user_menu li:hover {
 	color: #c77405;
     box-shadow: 0 5px 8px 5px #f3f4f6 inset;
 }
+
 #user_menu {
 	width: 100%;
 }
@@ -111,12 +125,14 @@ body {
 	height: 40px;
 	padding-top: 5px;
 }
+
 .button, .textarea {
     border-width: 1px;
     border-color: #CCCCCC;
     border-style: solid;
     border-radius: 4px;
 }
+
 .button {
     display: inline-block;
     padding: 4px 10px;
@@ -127,10 +143,12 @@ body {
     font-variant: small-caps;
     background-color: #ffffff;
 }
+
 .button:hover {
 	color: #c77405;
     box-shadow: 0 5px 8px 5px #f3f4f6 inset;
 }
+
 .textarea {
 	display: inline-block;
 	color: #000000;
@@ -140,19 +158,23 @@ body {
 	background: #FFFFFF;
 	padding: 5px 13px;
 }
+
 #inputs #input_whisper {
 	width: 100px;
 	height: 16px;
 }
+
 #inputs #input_message {
 	width: 60%;
 	max-width: 520px;
 	height: 16px;
 	max-height: 58px;
 }
+
 #links {
 	height: 100%;
 }
+
 #volume-slider {
 	display: inline-block;
 	position: relative;
@@ -165,18 +187,19 @@ body {
 .hidden, #hidden {
 	display: none;
 }
+
 .clear, #clear {
 	clear: both;
 }
+
 .error, #error {
 	color: red;
 	padding-left: 5px;
 	padding-right: 5px;
 }
-/*
-* custom promt window.
-*/
-div#nprompt_background {
+
+/* jQuery plugin nPromt */
+div.nprompt_background {
     display: none;
     position: fixed;
     top: 0;
@@ -184,7 +207,8 @@ div#nprompt_background {
     width: 100%;
     height: 100%;
 }
-div#nprompt_main {
+
+div.nprompt_main {
     position: fixed;
     top: 15%;
     left: 0;
@@ -197,7 +221,8 @@ div#nprompt_main {
     box-shadow: 0 0 10px 5px #dedede;
     z-index: +1;
 }
-div#nprompt_main div#nprompt_inner {
+
+div.nprompt_main div.nprompt_inner {
     padding: 5px;
     color: #999999;
     text-align: left;
@@ -205,13 +230,15 @@ div#nprompt_main div#nprompt_inner {
     font-weight: normal;
     font-size: 100%;
 }
-div#nprompt_main div#nprompt_inner div#nprompt_message {
+
+div.nprompt_main div.nprompt_inner div.nprompt_message {
     min-height: 40px;
     max-height: 150px;
     overflow-y: auto;
     text-align: center;
 }
-div#nprompt_main div#nprompt_inner div#nprompt_message #title {
+
+div.nprompt_main div.nprompt_inner div.nprompt_message .title {
     font-size: 125%;
     font-weight: bold;
     font-variant: small-caps;
@@ -223,28 +250,33 @@ div#nprompt_main div#nprompt_inner div#nprompt_message #title {
     border-bottom-style: dashed;
     border-bottom-color: #dddddd;
 }
-div#nprompt_main div#nprompt_inner div#nprompt_message #message {
+
+div.nprompt_main div.nprompt_inner div.nprompt_message .message {
     margin-top: 5px;
     margin-bottom: 10px;
     padding-top: 5px;
     padding-bottom: 5px;
 }
-div#nprompt_main div#nprompt_inner div#nprompt_inputs {
+
+div.nprompt_main div.nprompt_inner div.nprompt_inputs {
     margin-bottom: 5px;
     text-align: center;
 }
-div#nprompt_main div#nprompt_inner div#nprompt_inputs input {
+
+div.nprompt_main div.nprompt_inner div.nprompt_inputs input {
     border-width: 1px;
     border-color: #CCCCCC;
     border-style: solid;
     border-radius: 4px;
 }
-div#nprompt_main div#nprompt_inner div#nprompt_inputs input#nprompt_value {
+
+div.nprompt_main div.nprompt_inner div.nprompt_inputs input.nprompt_value {
     margin-bottom: 5px;
     padding: 5px;
     width: 350px;
 }
-div#nprompt_main div#nprompt_inner div#nprompt_inputs input#submit_ok, div#nprompt_main div#nprompt_inner div#nprompt_inputs input#submit_cancel {
+
+div.nprompt_main div.nprompt_inner div.nprompt_inputs input.submit_ok, div.nprompt_main div.nprompt_inner div.nprompt_inputs input.submit_cancel {
     display: inline-block;
     padding: 4px 10px;
     margin: 0px 2px;
@@ -255,6 +287,50 @@ div#nprompt_main div#nprompt_inner div#nprompt_inputs input#submit_ok, div#nprom
     font-variant: small-caps;
     background-color: #ffffff;
 }
-div#nprompt_main div#nprompt_inner div#nprompt_inputs input#submit_ok:hover, div#nprompt_main div#nprompt_inner div#nprompt_inputs input#submit_cancel:hover {
+
+div.nprompt_main div.nprompt_inner div.nprompt_inputs input.submit_ok:hover, div.nprompt_main div.nprompt_inner div.nprompt_inputs input.submit_cancel:hover {
     box-shadow: 0 5px 8px 5px #f3f4f6 inset;
+}
+
+/* jQuery plugin dropdown */
+.custom-dropdown {
+	display: block;
+	position: absolute;
+	top: 0px;
+	left: 0px;
+	min-width: 100px;
+	border-width: 1px;
+	border-color: #CCCCCC;
+	border-style: solid;
+	border-radius: 4px;
+	background-color: auto;
+	z-index: +1;
+}
+
+.custom-dropdown ul {
+	list-style-type: none;
+	padding: 0px;
+	margin: 0px;
+}
+
+.custom-dropdown ul li {
+	cursor: pointer;
+	color: #000000;
+	text-align: left;
+	font-family: inherit;
+	font-weight: inherit;
+	font-size: inherit;
+	border-bottom-width: 1px;
+	border-bottom-color: #CCCCCC;
+	border-bottom-style: solid;
+	padding: 2px 5px;
+}
+
+.custom-dropdown ul li:hover {
+	color: #FFFFFF;
+	background-color: #6C6C6C;
+}
+
+.custom-dropdown ul li:last-child {
+	border-bottom: none;
 }
