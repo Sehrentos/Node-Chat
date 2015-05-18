@@ -1,0 +1,190 @@
+/* styles.css - default stylesheet */
+@charset "utf-8";
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  height: 100%;
+}
+
+body {
+  height: 100%;
+  font: 100% Helvetica, Arial;
+}
+
+#wrap {
+  height: 100%;
+}
+
+table {
+  width: 100%;
+  height: 100%;
+  border-collapse: collapse;
+}
+
+table tr {
+  height: 100%;
+  text-align: left;
+  vertical-align: top;
+}
+
+table tr:first-child {
+  height: .1%;
+}
+
+table td {
+  width: 100%;
+}
+
+form {
+  padding: 3px;
+}
+
+form input#whisper {
+  width: 15%;
+  vertical-align: top;
+  padding: .7%;
+  margin-right: .5%;
+}
+
+form textarea#message {
+  display: inline-block;
+  width: 72%;
+  vertical-align: top;
+  padding: .7%;
+  margin-right: .5%;
+  resize: none;
+  /*outline: none;*/
+}
+
+form input#send {
+  width: 10%;
+  padding: .7%;
+  color: #1C94C4;
+  font-weight: bold;
+  line-height: normal;
+  font-variant: small-caps;
+  background-color: #ffffff;
+}
+
+form input#send:hover {
+  color: #c77405;
+  box-shadow: 0 5px 8px 5px #f3f4f6 inset;
+}
+
+#header {
+  padding: 12px;
+  height: 42px;
+  word-break: break-all;
+  overflow: hidden;
+  background: #fff;
+  border-bottom: 1px solid #ccc;
+}
+
+#header #welcome {
+  padding: 0 35px;
+}
+
+#content {
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+}
+
+#content ul {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+}
+
+#content ul li {
+  padding: 5px 10px;
+  white-space: pre-wrap;
+}
+/*#content ul li:nth-child(odd) { background: #eee; }*/
+
+#users ul {
+  display: block;
+  list-style-type: none;
+  margin: 0;
+  padding: 2px 0;
+}
+
+#users ul > li {
+  width: 180px;
+  border-width: 1px;
+  border-color: #CCCCCC;
+  border-style: solid;
+  border-radius: 4px;
+  padding: 4px 10px;
+  margin: 0px 2px;
+  color: #1c94c4;
+  font-size: 100%;
+  line-height: normal;
+  font-variant: small-caps;
+  background-color: #ffffff;
+  white-space: nowrap;
+  overflow: hidden;
+  o-text-overflow: ellipsis;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+
+#users ul > li li {
+  width: 100%;
+  border-width: 1px;
+  border-color: #CCCCCC;
+  border-style: solid;
+  border-radius: 4px;
+  padding: 4px 10px;
+  margin: 0px 2px;
+  color: #1c94c4;
+  font-size: 100%;
+  line-height: normal;
+  font-variant: small-caps;
+  background-color: #ffffff;
+  white-space: nowrap;
+  overflow: hidden;
+  o-text-overflow: ellipsis;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+
+#users ul i:hover {
+  color: #c77405;
+  box-shadow: 0 5px 8px 5px #f3f4f6 inset;
+}
+
+#footer {
+  width: 100%;
+  background: #ccc;
+  box-shadow: 0 5px 8px 5px #f3f4f6 inset;
+  border-top: 1px solid #ccc;
+}
+
+.border {
+  border-width: 1px;
+  border-color: #CCCCCC;
+  border-style: solid;
+  border-radius: 4px;
+}
+
+.message {
+  color: #000000;
+}
+
+.whisper {
+  color: #F453A8;
+}
+
+.nickname {
+  text-decoration: none;
+  color: #1C94C4;
+}
+
+.hidden {
+  display: none;
+}
