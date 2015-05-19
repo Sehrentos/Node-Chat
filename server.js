@@ -107,6 +107,11 @@ var updateUser = function(socket, user) {
 
 var updateName = function(socket, user, data) {
 	var exist = false;
+	if (!data.name.length) {
+		return socket.emit('notice', {
+			message: 'Empty name provided'
+		});
+	}
 	for (var i=0; i<users.length; i++) {
 		if (data.name === users[i].name) {
 			exist = true;
@@ -119,6 +124,7 @@ var updateName = function(socket, user, data) {
 		if (exist === false && user.name === users[i].name) {
 			user.name = data.name;
 			users[i].name = data.name;
+			updateUser(socket, user);
 			socket.emit('notice', {
 				message: 'Your name is now <strong>'+ user.name +'</strong>'
 			});
@@ -143,15 +149,19 @@ var updateChannel = function(socket, user, data) {
 			user.channel = data.channel;
 			socket.join(data.channel);
 			socket.emit('notice', { message: 'You moved to <strong>'+ user.channel +'</strong> channel' });
+			updateUser(socket, user);
 		}
 	}
 	updateUsers(user, from_channel, to_channel);
 };
 
-var whisperTo = function(user, data) {
+var whisperTo = function(socket, user, data) {
 	for (var i=0; i<users.length; i++) {
 		if (users[i].name.length && (users[i].name === data.to || users[i].name === data.from)) {
-			user.whisper = data.to;
+			if (user.whisper !== data.to) {
+				user.whisper = data.to;
+				updateUser(socket, user);
+			}
 			io.to(users[i].id).emit('wisper', {
 				date: (new Date()),
 				to: data.to,
@@ -162,18 +172,17 @@ var whisperTo = function(user, data) {
 	}
 };
 
-// emit channel users array[name,name,...]
+// channel users array[name,name,...]
 var updateUsers = function(user, from_channel, to_channel) {
-	var arr_enter = [];
-	var arr_leave = [];
-	debug( users[0] );
+	var arr_enter = { users:[] };
+	var arr_leave = { users:[] };
 
 	if (from_channel !== undefined) {
 		for (var i=0; i<users.length; i++) {
 			if (to_channel === users[i].channel) {
-				arr_enter.push({ name: users[i].name });
+				arr_enter.users.push( { name: users[i].name, channel: users[i].channel } );
 			} else if (from_channel === users[i].channel) {
-				arr_leave.push({ name: users[i].name });
+				arr_leave.users.push( { name: users[i].name, channel: users[i].channel } );
 			}
 		}
 		for (var i=0; i<users.length; i++) {
@@ -187,7 +196,7 @@ var updateUsers = function(user, from_channel, to_channel) {
 	} else {
 		for (var i=0; i<users.length; i++) {
 			if (user.channel === users[i].channel) {
-				arr_enter.push({ name: users[i].name });
+				arr_enter.users.push( { name: users[i].name, channel: users[i].channel } );
 			}
 		}
 		for (var i=0; i<users.length; i++) {
@@ -207,7 +216,9 @@ io.sockets.on('connection', function (socket) {
 	//user.timestamp = new Date().getTime();
 
 	//socket.name = user;
-	debug(socket.id +' connected: '+ user.name);
+    //var client = socket.handshake.address;
+	var client = socket.request.connection;
+	debug('Connection '+ socket.id +' '+ user.name +' '+ client.remoteAddress);
 
 	// Welcome new user to the server
 	socket.emit('welcome', {
@@ -222,7 +233,7 @@ io.sockets.on('connection', function (socket) {
 
 	// Send message to every connected client
 	socket.on('message', function (data) {
-		debug(data);
+		debug('message '+ data);
 		var _date = new Date(),
 		    _timestamp = _date.getTime();
 
@@ -240,29 +251,26 @@ io.sockets.on('connection', function (socket) {
 
 	// name change
 	socket.on('setName', function (data) {
-		debug(data);
+		debug('setName '+ data);
 		updateName(socket, user, data);
-		updateUser(socket, user);
 	});
 
 	// whisper to
 	socket.on('setWhisper', function (data) {
-		debug(data);
-		whisperTo(user, data);
-		updateUser(socket, user);
+		debug('setWhisper '+data);
+		whisperTo(socket, user, data);
 	});
 
 	// channel switch
 	socket.on('setChannel', function (data) {
-		debug(data);
+		debug('setChannel '+ data);
 		//Edit user details
 		updateChannel(socket, user, data);
-		updateUser(socket, user);
 	});
 
 	// Client disconnect from server
 	socket.on('disconnect', function (data) {
-		debug(socket.id+' disconnect');
+		debug('disconnect '+ socket.id);
 		removeUser(user);
 	});
 
