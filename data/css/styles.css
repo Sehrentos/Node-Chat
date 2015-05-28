@@ -45,6 +45,7 @@ form {
 
 form input#whisper {
 	width: 15%;
+	height: 36px;
 	vertical-align: top;
 	padding: .7%;
 	margin-right: .5%;
@@ -53,6 +54,7 @@ form input#whisper {
 form textarea#message {
 	display: inline-block;
 	width: 72%;
+	height: 36px;
 	vertical-align: top;
 	padding: .7%;
 	margin-right: .5%;
@@ -62,6 +64,7 @@ form textarea#message {
 
 form input#send {
 	width: 10%;
+	height: 36px;
 	padding: .7%;
 	color: #1C94C4;
 	font-weight: bold;
