@@ -123,7 +123,7 @@ chat.init = function(url) {
 
 
 	// Whisper
-	self.socket.on('wisper', function (data) {
+	self.socket.on('whisper', function (data) {
 		chat.debug('Whisper:');
 		chat.debug(data);
 		var d = new Date(data.date),
@@ -430,45 +430,42 @@ chat.setChannel = function(c) {
 chat.setWhisper = function(nickname, messageStr) {
 	var self = this;
 
-	if (messageStr !== undefined && messageStr.length > 1000) {
-		$.fn.nNotice({
-			message: "Message is too long! 1000 letters max.",
-			enableBackground: true
+	if (nickname === undefined || nickname === chat.user.name) {
+		$.fn.nPrompt({
+			title: "Send whisper",
+			message: "Please enter a whisper <b>name</b>.",
+			value: chat.user.whisper ? chat.user.whisper: '',
+			onSubmit: function(str) {
+				// Don't send to your self
+				if (str !== chat.user.name) {
+					$.fn.nPrompt({
+						title: "Send whisper",
+						message: "Please enter your <b>message</b> at the field below.",
+						onSubmit: function(message) {
+							self.sendWhisper(str, message);
+						}
+					});
+				}
+			}
 		});
-	} else {
-		if (nickname === undefined || nickname === chat.user.name) {
+	}
+	// Dont send to your self
+	else if (nickname.length && nickname !== chat.user.name) {
+		if (nickname.length && messageStr === undefined) {
+			$("#sendform").find("#whisper").val(nickname);
+			self.setFocus();
+		}
+		else if (messageStr === '') {
 			$.fn.nPrompt({
 				title: "Send whisper",
-				message: "Please enter a whisper <b>name</b>.",
-				value: chat.user.whisper ? chat.user.whisper: '',
-				onSubmit: function(str) {
-					// Don't send to your self
-					if (str !== chat.user.name) {
-						$.fn.nPrompt({
-							title: "Send whisper",
-							message: "Please enter your <b>message</b> at the field below.",
-							onSubmit: function(message) {
-								self.sendWhisper(str,message);
-							}
-						});
-					}
+				message: "Please enter your <b>message</b> at the field below.",
+				onSubmit: function(message) {
+					self.sendWhisper(nickname, message);
 				}
 			});
 		}
-		// Dont send to your self
-		else if (nickname.length && nickname !== chat.user.name) {
-			if (messageStr === undefined) {
-				$.fn.nPrompt({
-					title: "Send whisper",
-					message: "Please enter your <b>message</b> at the field below.",
-					onSubmit: function(message) {
-						self.sendWhisper(nickname,message);
-					}
-				});
-			}
-			else if (nickname.length && messageStr.length) {
-				self.sendWhisper(nickname,messageStr);
-			}
+		else if (nickname.length && messageStr.length) {
+			self.sendWhisper(nickname, messageStr);
 		}
 	}
 
@@ -483,12 +480,21 @@ chat.sendWhisper = function(nickname, messageStr) {
 	var self = this;
 
 	if (nickname.length && messageStr.length) {
-		self.socket.emit('setWhisper', {
-			to: nickname,
-			from: chat.user.name,
-			message: messageStr
-		});
-		$("#sendform").find("#whisper").val(nickname);
+		if (messageStr.length > 1000) {
+			$.fn.nNotice({
+				message: "Message is too long! 1000 letters max.",
+				enableBackground: true
+			});
+		}
+		else {
+			self.socket.emit('whisper', {
+				to: nickname,
+				from: chat.user.name,
+				message: messageStr
+			});
+			$("#sendform").find("#whisper").val(nickname);
+			self.setFocus();
+		}
 	}
 
 	return this;
