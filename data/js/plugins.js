@@ -43,12 +43,12 @@
 	* @jQuery.fn.nAlert( options )
 	* @jQuery.fn.nNotice( options )
 	options = {
-		title: string,                -optional
-		message: string,              -optional
-		value: string,                -optional/exept nPromt required
-		enableBackground: true/false, -optional
-		onSubmit: callback,           -optional
-		onCancel: callback            -optional
+		title: string,					-optional
+		message: string,				-optional
+		value: string,					-optional/exept nPromt required
+		enableBackground: true/false,	-optional
+		onSubmit: callback,				-optional
+		onCancel: callback				-optional
 	}
 	*/
 	$.fn.nPromptIt = function (options) {

@@ -18,7 +18,7 @@ var chat = {
 * @require String
 */
 chat.debug = function(str) {
-    return !chat.debug_mode || console.log(str);
+	return !chat.debug_mode || console.log(str);
 };
 
 /*
@@ -34,12 +34,12 @@ chat.init = function(url) {
 	// Open socket
 	self.socket = io.connect(link);
 
-    // Error
+	// Error
 	self.socket.on('error', function (data) {
 		chat.debug(data);
 	});
 
-    // Error
+	// Error
 	self.socket.on('connect_error', function (data) {
 		chat.debug(data);
 		if (data.type === "TransportError") {
@@ -54,7 +54,7 @@ chat.init = function(url) {
 		self.mes("Connection timeout.");
 	});
 
-    // Disconnect
+	// Disconnect
 	self.socket.on('disconnect', function (data) {
 		chat.debug(data);
 		self.mes("Disconnected from server.");
@@ -69,7 +69,7 @@ chat.init = function(url) {
 		});
 	});
 
-    // Welcome
+	// Welcome
 	self.socket.on('welcome', function (data) {
 		chat.debug('Welcome:');
 		chat.debug(data);
@@ -77,7 +77,7 @@ chat.init = function(url) {
 		$("#header").find("#welcome").html(data.message);
 	});
 
-    // Notice
+	// Notice
 	self.socket.on('notice', function (data) {
 		chat.debug('Notice:');
 		chat.debug(data);
@@ -92,37 +92,37 @@ chat.init = function(url) {
 	});
 
 
-    // New updater: add user
-    self.socket.on('channel-user-add', function (data) {
+	// New updater: add user
+	self.socket.on('channel-user-add', function (data) {
 		chat.debug('Channel-user-add:');
-        chat.debug(data);
-        self.menuAddUser(data.id, data.name, data.channel);
-    });
+		chat.debug(data);
+		self.menuAddUser(data.id, data.name, data.channel);
+	});
 
-    // New updater: add user
-    self.socket.on('channel-user-list', function (data) { //FIXME
-        chat.debug('Channel-user-list:');
-        chat.debug(data);
-        //self.menuAddUser(data.id, data.name, data.channel);
-        self.updateUsers(data);
-    });
+	// New updater: add user
+	self.socket.on('channel-user-list', function (data) { //FIXME
+		chat.debug('Channel-user-list:');
+		chat.debug(data);
+		//self.menuAddUser(data.id, data.name, data.channel);
+		self.updateUsers(data);
+	});
 
-    //New updater: remove user
-    self.socket.on('channel-user-remove', function (data) {
+	//New updater: remove user
+	self.socket.on('channel-user-remove', function (data) {
 		chat.debug('Channel-user-remove:');
-        chat.debug(data);
-        self.menuRemoveUser(data.id); //userid
-    });
+		chat.debug(data);
+		self.menuRemoveUser(data.id); //userid
+	});
 
-    // New updater: user update
-    self.socket.on('channel-user-update', function (data) {
+	// New updater: user update
+	self.socket.on('channel-user-update', function (data) {
 		chat.debug('Channel-user-update:');
-        chat.debug(data);
-        self.menuUpdateUser(data.id, data.name, data.channel);
-    });
+		chat.debug(data);
+		self.menuUpdateUser(data.id, data.name, data.channel);
+	});
 
 
-    // Whisper
+	// Whisper
 	self.socket.on('wisper', function (data) {
 		chat.debug('Whisper:');
 		chat.debug(data);
@@ -147,7 +147,7 @@ chat.init = function(url) {
 		self.setFocus();
 	});
 
-    // message / chat
+	// message / chat
 	self.socket.on('message', function(data) {
 		chat.debug('Chat:');
 		chat.debug(data);
@@ -199,89 +199,89 @@ chat.setSubmit = function(elementId) {
 * @require user: id, name, channel
 */
 chat.menuAddUser = function(id, name, channel) {
-    var self = this,
-        active = 0;
+	var self = this,
+		active = 0;
 
 	// New menu object
 	var $menu = $('<ul/>');
 
-    // New user object
-    var $user = $('<li/>', {
-        class: 'user',
-        id: id,
-        title: name
-    })
-    .html('&rsaquo; '+ name);
+	// New user object
+	var $user = $('<li/>', {
+		class: 'user',
+		id: id,
+		title: name
+	})
+	.html('&rsaquo; '+ name);
 
-    $user.click(function() {
-        active++;
-        if (active === 1) {
-            if (self.user.name === name) { //localStorage.name === name
-                var $menuSub = $('<ul/>');
+	$user.click(function() {
+		active++;
+		if (active === 1) {
+			if (self.user.name === name) { //localStorage.name === name
+				var $menuSub = $('<ul/>');
 
-                // Whisper
-                $('<li/>', {
-                    class: 'menu'
-                })
-                .html('&lsaquo; New whisper')
-                .click(function() {
-                    chat.setWhisper();
-                })
-                .appendTo($menuSub);
+				// Whisper
+				$('<li/>', {
+					class: 'menu'
+				})
+				.html('&lsaquo; New whisper')
+				.click(function() {
+					chat.setWhisper();
+				})
+				.appendTo($menuSub);
 
-                // Change name
-                $('<li/>', {
-                    class: 'menu'
-                })
-                .html('&lsaquo; Change name')
-                .click(function() {
-                    self.setName();
-                })
-                .appendTo($menuSub);
+				// Change name
+				$('<li/>', {
+					class: 'menu'
+				})
+				.html('&lsaquo; Change name')
+				.click(function() {
+					self.setName();
+				})
+				.appendTo($menuSub);
 
-                // Change channel
-                $('<li/>', {
-                    class: 'menu'
-                })
-                .html('&lsaquo; Change channel')
-                .click(function() {
-                    self.setChannel();
-                })
-                .appendTo($menuSub);
+				// Change channel
+				$('<li/>', {
+					class: 'menu'
+				})
+				.html('&lsaquo; Change channel')
+				.click(function() {
+					self.setChannel();
+				})
+				.appendTo($menuSub);
 
-                // Append to user
-                $($menuSub).appendTo($user);
-            }
-            else {
-                var $menuSub = $('<ul/>');
-                // Whisper menu
-                $('<li/>', {
-                    class: 'menu'
-                })
-                .html('&lsaquo; Whisper')
-                .click(function() {
-                    self.setWhisper( name );
-                })
-                .appendTo($menuSub);
-                // Append to user
-                $($menuSub).appendTo($user);
-            }
-        }
-    }).mouseleave(function() {
-        $(this).find('ul').remove();
-        active = 0;
-    });
+				// Append to user
+				$($menuSub).appendTo($user);
+			}
+			else {
+				var $menuSub = $('<ul/>');
+				// Whisper menu
+				$('<li/>', {
+					class: 'menu'
+				})
+				.html('&lsaquo; Whisper')
+				.click(function() {
+					self.setWhisper( name );
+				})
+				.appendTo($menuSub);
+				// Append to user
+				$($menuSub).appendTo($user);
+			}
+		}
+	}).mouseleave(function() {
+		$(this).find('ul').remove();
+		active = 0;
+	});
 
-    // Append user to menu
-    $user.appendTo($menu);
+	// Append user to menu
+	$user.appendTo($menu);
 
-    // Display new menu
-    $menu.appendTo("#users");
+	// Display new menu
+	$menu.appendTo("#users");
 
-    chat.debug('menuAddUser: '+ name);
+	chat.debug('menuAddUser: '+ name);
 
-    // Append to parent div
-    return this;
+	// Append to parent div
+	return this;
 };
 
 /*
@@ -294,12 +294,12 @@ chat.menuRemoveUser = function(userId) {
 	// User menu array
 	var $menuArray = $("#users").find("ul").find("#" + userId);
 
-    // If array has any value, remove it
-    if ($menuArray.length) {
-        // Found in array: Remove user element:
-        $menuArray.parent().remove();
-        chat.debug('User menu remove');
-    }
+	// If array has any value, remove it
+	if ($menuArray.length) {
+		// Found in array: Remove user element:
+		$menuArray.parent().remove();
+		chat.debug('User menu remove');
+	}
 
 	return this;
 };
@@ -310,14 +310,14 @@ chat.menuRemoveUser = function(userId) {
 */
 // chat.updateUserMenu('CuYkSRtA7LtB4kzZAAAF','tester','bla bla bla');
 chat.menuUpdateUser = function(id, name, channel) {
-    chat.debug('Menu update user');
+	chat.debug('Menu update user');
 	var self = this;
 
-    // Remove old
-    self.menuRemoveUser(id);
+	// Remove old
+	self.menuRemoveUser(id);
 
-    // Build new user menu
-    self.menuAddUser(id, name, channel);
+	// Build new user menu
+	self.menuAddUser(id, name, channel);
 
 	return this;
 };
@@ -335,11 +335,11 @@ chat.updateUsers = function(data) {
 	// Add all users in array
 	$.each(data.users, function() {
 		var id = this.id,
-            name = this.name,
-		    channel = this.channel,
-		    active = 0;
+			name = this.name,
+			channel = this.channel,
+			active = 0;
 
-        // Build new user menu
+		// Build new user menu
 		self.menuAddUser(id, name, channel);
 
 	});
@@ -490,6 +490,7 @@ chat.sendWhisper = function(nickname, messageStr) {
 		});
 		$("#sendform").find("#whisper").val(nickname);
 	}
+
 	return this;
 };
 
@@ -500,6 +501,7 @@ chat.sendWhisper = function(nickname, messageStr) {
 chat.isCommand = function(str) {
 	// starts: /any-letter any-letter any-letter
 	var regex = /^(\/.*)\s(.*)\s(.*)$/g;
+
 	return regex.exec(str);
 };
 
