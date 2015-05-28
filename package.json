@@ -1,6 +1,26 @@
 {
-  "name": "node-socket-chat",
-  "version": "0.0.1",
-  "description": "my first socket.io app",
+  "name": "nw-chat-app",
+  "main": "data/index.html",
+  "description": "A chat application",
+  "version": "0.1.1",
+  "keywords": [ "chat", "node-webkit" ],
+  "readme": "README.md",
+  "window": {
+    "title": "Chat app",
+    "icon": "data/images/favicon.png",
+    "toolbar": true,
+    "frame": true,
+    "width": 650,
+    "height": 300,
+    "position": "mouse",
+    "min_width": 400,
+    "min_height": 200
+  },
+  "nodejs": false,
+  "node-main": "data/nw-app.js",
+  "webkit": {
+    "plugin": false
+  },
+  "repository": {},
   "dependencies": {}
 }
