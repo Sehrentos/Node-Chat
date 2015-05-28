@@ -1,0 +1,180 @@
+<!doctype html>
+<html>
+	<head>
+	<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+	<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=0" />
+	<meta name="mobile-web-app-capable" content="yes" />
+	<meta name="description" content="A chat project." />
+	<meta name="keywords" content="Project" />
+	<meta name="author" content="Niko H. (Sehrentos)" />
+	<meta name="robots" content="noindex, nofollow" />
+	<meta name="google" value="notranslate">
+	<link rel="shortcut icon" href="images/icon32.ico" sizes="32x32" type="image/x-icon" />
+	<link rel="icon" href="images/favicon64.ico" sizes="64x64" type="image/x-icon" />
+    <!-- Title -->
+	<title>Chat app</title>
+	<!-- Stylesheet -->
+	<link href="css/styles.css" rel="stylesheet" />
+	<link href="css/plugins.css" rel="stylesheet" />
+	<!-- Javascript libraries -->
+	<script src="js/lib/jquery.js"></script>
+	<script src="js/lib/socket.io.js"></script>
+	<!-- Javascripts -->
+	<script src="js/plugins.js" charset="utf-8"></script>
+	<script src="js/scripts.js" charset="utf-8"></script>
+<script>
+// Call exported functions from node-main: app.js
+//var exports = process.mainModule.exports;
+// Now you can call them exports.functionName()
+if (typeof(process) === 'object') {
+    if (process.mainModule.loaded) {
+        var exports = process.mainModule.exports;
+
+        var gui = require('nw.gui') || global.window.nwDispatcher.requireNwGui();
+
+        //Count how many times page will beloaded on this session
+        exports.pageload();
+
+        // Start your own server: experimental stuff...
+        /*
+		function server_start() {
+            return exports.server_online || exports.server_start(function() {
+                //var gui = require('nw.gui') || global.window.nwDispatcher.requireNwGui();
+                //This will load file locally into new window.
+                //window.open('express.html');
+                //window.open('http://localhost:3000');
+                gui.Window.open('http://localhost:3000');
+            });
+        }
+		*/
+
+    }
+}
+// jQuery initialized
+if ("jQuery" in window) {
+
+	// Document is ready to use
+	$(function() {
+
+		// Prevent submit while chat has not been initialized
+		$("form").submit(function(e) {
+			e.preventDefault();
+			return false;
+		});
+
+        // Over-write default chat settings before init
+        $.extend( chat || {}, {
+            method: 'http', //https/http/ws
+            address: 'localhost',
+            port: 9000,
+			channel: '',
+			debug_mode: true
+        });
+
+		// Initialize socket.io and set events
+		chat.init();
+
+		// Initialize chat socket.io and set events
+        if ("io" in window) {
+			// Focus input/textarea.
+			chat.setFocus();
+
+			// Set main menu
+			chat.drawMenu();
+
+			// Set default volume level: 0.1 - 1.0
+			chat.playVolume( 0.5 );
+
+			/*
+			// Volume slider: 0.1 - 1.0
+			$("#volume-slider").change(function(){
+				chat.playVolume( this.value / 100);
+				this.title = "Volume: "+ this.value +"%";
+				chat.playAudio();
+			});
+			*/
+
+			// Define submit event
+			$("form").submit(function(e) {
+				e.preventDefault();
+				var whisper = $(this).parent().find("#whisper"),
+					message = $(this).parent().find("#message");
+				if (whisper.val().length) {
+					chat.setWhisper( whisper.val(), message.val() );
+					message.val('');
+				} else {
+					chat.setSubmit( message );
+				}
+			});
+
+			// Define textarea keydown event
+			$("#message").keydown(function(e) {
+				if (e.keyCode == 13 && !e.shiftKey) {
+					e.preventDefault();
+					var whisper = $(this).parent().find("#whisper"),
+					message = $(this).parent().find("#message");
+					if (whisper.val().length) {
+						chat.setWhisper( whisper.val(), message.val() );
+						message.val('');
+					} else {
+						chat.setSubmit( message );
+					}
+				}
+			});
+		}
+
+	});
+
+}
+</script>
+	</head>
+	<body>
+		<div id="wrap">
+			<table>
+				<tr>
+					<td colspan="2">
+						<div id="header">
+							<div id="welcome">Not connected.</div>
+						</div>
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<div id="content">
+							<ul id="messages"></ul>
+						</div>
+					</td>
+					<td>
+						<div id="users">
+							<ul>
+								<li class="user">&rsaquo; No users</li>
+							</ul>
+						</div>
+					</td>
+				</tr>
+				<tr>
+					<td colspan="2">
+						<div id="footer">
+							<form action="" id="sendform">
+								<input type="text" id="whisper" class="border" placeholder="Whisper" />
+								<!-- <input type="text" id="message" class="border" placeholder="Write message..." autocomplete="off" /> -->
+								<textarea id="message" class="border" placeholder="Write message..." autocomplete="off" rows="1"></textarea>
+								<input type="submit" id="send" class="border" value="Send" />
+							</form>
+						</div>
+					</td>
+				</tr>
+			</table>
+			<div id="debug"></div>
+			<div class="hidden">
+				<!-- Audio source: eng.universal-soundbank.com/hits.htm -->
+				<audio id="audio" controls hidden>
+					<source src="sound/anvil.mp3" type="audio/mpeg">
+					<source src="sound/anvil.ogg" type="audio/ogg">
+					<embed src="sound/anvil.mp3">
+					Your browser does not support HTML5 audio.
+				</audio>
+			</div>
+		</div>
+	</body>
+</html>
