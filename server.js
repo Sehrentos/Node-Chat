@@ -226,17 +226,17 @@ function whisperTo(socket, user, data) {
 	    _to = data.to.encodeHTML(),
 	    _msg = data.message.encodeHTML();
 
-	// Message delay 1000ms length 1000 characters
-	if (_timestamp > (user.timestamp + 1000) && _msg.length <= 1000) {
-		for (var i=0; i<users.length; i++) {
-			if (users[i].name.length && (users[i].name === _to || users[i].name === _from) ) {
-				if (user.whisper !== _to) {
-					user.whisper = _to;
-					updateUser(socket, user);
-				}
+	for (var i=0; i<users.length; i++) {
+		if (users[i].name.length && (users[i].name === _to || users[i].name === _from) ) {
+			if (user.whisper !== _to) {
+				user.whisper = _to;
+				updateUser(socket, user);
+			}
+			// Message delay 1000ms length 1000 characters
+			if (_timestamp > (user.timestamp + 1000) && data.message.length <= 1000) {
 				user.timestamp = _timestamp;
-				console.log(users[i].id);
-				io.to(users[i].id).emit('whisper', {
+
+				io.to(users[i].id).emit('wisper', {
 					date: _date,
 					to: _to,
 					from: _from,
@@ -312,8 +312,8 @@ io.sockets.on('connection', function (socket) {
 	});
 
 	// whisper to
-	socket.on('whisper', function (data) {
-		console.log(data);
+	socket.on('setWhisper', function (data) {
+		//console.log(data);
 		whisperTo(socket, user, data);
 	});
 
