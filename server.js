@@ -26,7 +26,7 @@ function handler(req, res) {
 */
 // Start socket.io standalone server:
 var io = require('socket.io')(9000);
-//io.listen(9000);
+    //io.listen(9000);
 
 // Save global users array
 var users = [];
@@ -50,9 +50,7 @@ if (!String.prototype.encodeHTML) {
 /*
 * Define contains function
 socket.contains(client.id, function(found) {
-    if (found) {
-        socket.emit
-    }
+    if (found)
 });
 */
 if (!Array.prototype.contains) {
@@ -91,12 +89,6 @@ function removeUser(user) {
 	for (var i=0; i<users.length; i++) {
 		if (user.name === users[i].name) {
 			users.splice(i, 1);
-
-            channelRemoveUser(user.channel, {
-				id: user.id,
-				name: user.name,
-				message: 'Disconnected'
-			});
 
 			return user;
 		}
@@ -181,7 +173,7 @@ function updateChannel(socket, user, data) {
 			socket.emit('notice', { message: 'You moved to <strong>'+ from_channel +'</strong> channel' });
 			updateUser(socket, user);
 
-			updateUsers(user, from_channel, to_channel);
+			channelSwitch(user, from_channel, to_channel);
 		}
 	}
 }
@@ -190,6 +182,28 @@ function updateChannel(socket, user, data) {
 // @channelAddUser(user.channel, { id: user.id, name: user.name, message: '' })
 function channelAddUser(channel, data) {
     io.sockets.in(channel).emit('channel-user-add', data);
+}
+
+// Send remove user data to every connected client in channel
+// @channelRemoveUser(user.channel, { id: user.id, name: user.name, message: '' })
+function channelRemoveUser(channel, data) {
+    io.sockets.in(channel).emit('channel-user-remove', data);
+}
+
+// Send updated user data to every connected client in channel
+// @channelUpdateUser(user.channel, { id: user.id, name: user.name, message: '' })
+function channelUpdateUser(channel, data) {
+    io.sockets.in(channel).emit('channel-user-update', data);
+}
+
+// Channel user switch channel updateUsers
+function channelSwitch(user, from_channel, to_channel) {
+	if (from_channel !== undefined) {
+        channelRemoveUser(from_channel, { id: user.id, name: user.name, message: 'Leaved channel' });
+		channelAddUser(to_channel, { id: user.id, name: user.name, message: 'Joined channel' });
+	} else {
+        channelUpdateUser(user.channel, { id: user.id, name: user.name, message: 'Update' });
+	}
 }
 
 // Get user list of the channel
@@ -204,18 +218,6 @@ function channelListUsers(socket, channel) {
     }
 
     socket.emit('channel-user-list', arr);
-}
-
-// Send remove user data to every connected client in channel
-// @channelRemoveUser(user.channel, { id: user.id, name: user.name, message: '' })
-function channelRemoveUser(channel, data) {
-    io.sockets.in(channel).emit('channel-user-remove', data);
-}
-
-// Send updated user data to every connected client in channel
-// @channelUpdateUser(user.channel, { id: user.id, name: user.name, message: '' })
-function channelUpdateUser(channel, data) {
-    io.sockets.in(channel).emit('channel-user-update', data);
 }
 
 // @whisperTo( socket, user, data)
@@ -235,7 +237,7 @@ function whisperTo(socket, user, data) {
 					updateUser(socket, user);
 				}
 				user.timestamp = _timestamp;
-				console.log(users[i].id);
+				//console.log(users[i].id);
 				io.to(users[i].id).emit('whisper', {
 					date: _date,
 					to: _to,
@@ -247,32 +249,23 @@ function whisperTo(socket, user, data) {
 	}
 }
 
-// Channel users array[name,name,...]
-function updateUsers(user, from_channel, to_channel) {
-	if (from_channel !== undefined) {
-        channelRemoveUser(from_channel.encodeHTML(), { id: user.id, name: user.name, message: 'Leaved channel' });
-		channelAddUser(to_channel.encodeHTML(), { id: user.id, name: user.name, message: 'Joined channel' });
-	} else {
-        channelUpdateUser(user.channel, { id: user.id, name: user.name, message: 'Update' });
-	}
-}
-
 // Event listener socket open
-io.sockets.on('connection', function (socket) {
+io.sockets.on('connection', function(socket) {
 
 	// Set new user data
 	var user = addUser(socket.id);
 
+	// Console log new connection.
     //var client = socket.handshake.address;
-	var client = socket.request.connection;
-	console.log('Connection '+ socket.id +' '+ user.name +' '+ client.remoteAddress);
+	//var client = socket.request.connection;
+	console.log('Connection '+ socket.id +' '+ user.name +' '+ socket.request.connection.remoteAddress);
 
 	// Welcome new user to the server
 	socket.emit('welcome', {
 		message: 'Welcome to the server. You are in '+ user.channel +' channel.'
 	});
 
-	// Join default channel
+	// Join other channel
 	socket.join(user.channel);
 
 	// Send updated user settings
@@ -329,7 +322,17 @@ io.sockets.on('connection', function (socket) {
 	// Client disconnect from server
 	socket.on('disconnect', function (data) {
 		//console.log('disconnect '+ socket.id);
+
+		// Remove user from global users array
 		removeUser(user);
+
+		// Update to other clients
+		channelRemoveUser(user.channel, {
+			id: user.id,
+			name: user.name,
+			message: 'User disconnect'
+		});
+
         delete user;
 	});
 

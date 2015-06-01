@@ -10,8 +10,8 @@
     "icon": "data/images/favicon.png",
     "toolbar": true,
     "frame": true,
-    "width": 650,
-    "height": 300,
+    "width": 700,
+    "height": 350,
     "position": "mouse",
     "min_width": 400,
     "min_height": 200
