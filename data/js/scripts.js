@@ -45,7 +45,7 @@ chat.init = function(url) {
 		if (data.type === "TransportError") {
 			self.mes("Unable to connect server.");
 			// Clear user menu
-			$('#users').remove();
+			$('#users').find("ul").remove();
 			self.socket.close();
 		}
 	});
@@ -55,7 +55,7 @@ chat.init = function(url) {
 		chat.debug(data);
 		self.mes("Connection timeout.");
 		// Clear user menu
-		$('#users').remove();
+		$('#users').find("ul").remove();
 	});
 
 	// Disconnect
@@ -63,7 +63,7 @@ chat.init = function(url) {
 		chat.debug(data);
 		self.mes("Disconnected from server.");
 		// Clear user menu
-		$('#users').remove();
+		$('#users').find("ul").remove();
 		// Ask to reconnect
 		$.fn.nConfirm({
 			title: "Disconnected!",
@@ -127,7 +127,6 @@ chat.init = function(url) {
 		self.menuUpdateUser(data.id, data.name, data.channel);
 	});
 
-
 	// Whisper
 	self.socket.on('whisper', function (data) {
 		chat.debug('Whisper:');
@@ -165,11 +164,34 @@ chat.init = function(url) {
 		var msg = "["+ self.twoDigits(hours) + ":" + self.twoDigits(minutes) + ":" + self.twoDigits(seconds) +"] ";
 			msg += "<a href=\"javascript:void(0)\" class=\"nickname\" onclick=\"chat.setWhisper('"+ data.name +"')\">&lt;"+ data.name +"&gt;</a> ";
 			msg += data.message;
+
 		self.mes(msg);
 		// Play audio
 		if (data.name !== self.user.name) {
 			self.playAudio();
 		}
+	});
+
+	// Get all messages from channel
+	self.socket.on('get-messages', function (data) {
+		chat.debug('Get-messages:');
+		chat.debug(data);
+		self.mes('Start of messages.');
+
+		$.each(data.messages, function() {
+			var d = new Date( this.date ),
+				hours = d.getHours(),
+				minutes = d.getMinutes(),
+				seconds = d.getSeconds();
+
+			var msg = "["+ self.twoDigits(hours) + ":" + self.twoDigits(minutes) + ":" + self.twoDigits(seconds) +"] ";
+			msg += "<a href=\"javascript:void(0)\" class=\"nickname\" onclick=\"chat.setWhisper('"+ this.name +"')\">&lt;"+ this.name +"&gt;</a> ";
+			msg += this.message;
+
+			self.mes(msg);
+		});
+
+		self.mes('End of messages.');
 	});
 
 	return this;
@@ -181,18 +203,81 @@ chat.init = function(url) {
 */
 chat.setSubmit = function(elementId) {
 	var self = this;
+	var messageStr = elementId.val().trim();
 
-	if (elementId.val().length) {
-		if (elementId.val().trim().length > 1000) {
+	if (messageStr.length) {
+		if (messageStr.trim().length > 1000) {
 			$.fn.nNotice({
 				message: "Message is too long! 1000 letters max.",
 				enableBackground: true
 			});
 		}
 		else {
-			self.socket.emit('message', { message: elementId.val() });
-			elementId.val(null);
+			// Check user commands
+			var isCommand = false;
+
+			// Check commands 1
+			var regex = /^(\/.*)$/g;
+			var command = regex.exec(messageStr);
+			if (command) {
+				isCommand = true;
+				switch (command[1]) {
+					// Show help
+					case "/h":
+					case "/help":
+					case "/commands":
+						self.mes("Commands:\n /h/help/commands - Display help.\n /log/messages - Display logged channel messages.\n /c/channel &lt;name&gt; - Change channel.\n /n/name/nick/nickname &lt;name&gt; - Change name.");
+					break;
+
+					// Log/Get messages
+					case "/log":
+					case "/messages":
+						//var channel = command[2] === undefined ? null : command[2].trim();
+						self.socket.emit('get-messages', { message: true });
+					break;
+
+					// Command depth: 2
+					default:
+						var regex = /^(\/.*)\s(.*)$/g;
+						var command = regex.exec(messageStr);
+						if (command) {
+							switch (command[1]) {
+								// Channel change
+								case "/c":
+								case "/channel":
+									var channel = command[2] === undefined ? null : command[2].trim();
+									if (channel) {
+										self.setChannel( channel );
+									}
+								break;
+
+								// Name change
+								case "/n":
+								case "/name":
+								case "/nick":
+								case "/nickname":
+									var name = command[2] === undefined ? null : command[2].trim();
+									if (name) {
+										self.setName( name );
+									}
+								break;
+							}
+						} else {
+							self.mes('Unknown command or missing options.');
+						}
+					break;
+				}
+			}
+			// Message was not a command. Send normal data
+			if (!isCommand) {
+				self.socket.emit('message', { message: messageStr });
+			}
 		}
+		elementId.val(null);
+		/* else {
+			self.socket.emit('message', { message: messageStr });
+			elementId.val(null);
+		} */
 	}
 
 	self.setFocus();
@@ -379,37 +464,55 @@ chat.connect = function(callback) {
 
 /*
 * UI open set nickname window
-* @require: none
+* @require: nameStr -optional
 */
-chat.setName = function() {
-	var self = this;
-
-	$.fn.nPrompt({
-		title: "Set Name",
-		message: "Please enter your <b>name</b> at the field below.",
-		value: (localStorage.name ? localStorage.name : chat.user.name),
-		enableBackground: false,
-		onSubmit: function(str) {
-			if (str !== null) {
-				chat.user.name = str;
-				localStorage.name = str;
-				self.socket.emit('setName', { name: str });
-				self.setFocus();
+chat.setName = function(nameStr) {
+	if (nameStr === undefined) {
+		$.fn.nPrompt({
+			title: "Set Name",
+			message: "Please enter your <b>name</b> at the field below.",
+			value: (localStorage.name ? localStorage.name : chat.user.name),
+			enableBackground: false,
+			onSubmit: function(str) {
+				if (str !== null) {
+					chat.user.name = str;
+					localStorage.name = str;
+					chat.socket.emit('setName', { name: str });
+					chat.setFocus();
+				}
 			}
+		});
+	}
+	else {
+		if (nameStr.length < 2) {
+			$.fn.nNotice({
+				message: "Name is too short! 2 min.",
+				enableBackground: true
+			});
+		} else if (nameStr.length > 25) {
+			$.fn.nNotice({
+				message: "Name is too long! 25 max.",
+				enableBackground: true
+			});
+		} else {
+			chat.user.name = nameStr;
+			localStorage.name = nameStr;
+			chat.socket.emit('setName', { name: nameStr });
+			chat.setFocus();
 		}
-	});
+	}
 
 	return this;
 };
 
 /*
 * UI open change channel window
-* @require: none
+* @require: channelName -optional
 */
-chat.setChannel = function(c) {
+chat.setChannel = function(channelName) {
 	var self = this;
 
-	if (c === undefined) {
+	if (channelName === undefined) {
 		$.fn.nPrompt({
 			title: "Set Channel",
 			message: "Please enter <b>channel</b> name at the field below.",
@@ -423,7 +526,20 @@ chat.setChannel = function(c) {
 		});
 	}
 	else {
-		self.socket.emit('setChannel', { channel: c.toLowerCase() });
+		if (channelName.length < 2) {
+			$.fn.nNotice({
+				message: "Channel name is too short! 2 min.",
+				enableBackground: true
+			});
+		} else if (channelName.length > 50) {
+			$.fn.nNotice({
+				message: "Channel name is too long! 50 max.",
+				enableBackground: true
+			});
+		} else {
+			// Send.
+			self.socket.emit('setChannel', { channel: channelName.toLowerCase() });
+		}
 	}
 
 	return this;
@@ -510,9 +626,10 @@ chat.sendWhisper = function(nickname, messageStr) {
 * Check if post is command
 * @https://regex101.com/
 */
-chat.isCommand = function(str) {
+chat.isCommand = function(str, reg) {
 	// starts: /any-letter any-letter any-letter
-	var regex = /^(\/.*)\s(.*)\s(.*)$/g;
+	//var regex = /^(\/.*)\s(.*)\s(.*)$/g;
+	var regex = reg || /^(\/.*)$/;
 
 	return regex.exec(str);
 };

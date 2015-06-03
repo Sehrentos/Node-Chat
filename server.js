@@ -26,10 +26,15 @@ function handler(req, res) {
 */
 // Start socket.io standalone server:
 var io = require('socket.io')(9000);
-    //io.listen(9000);
+	//io.listen(9000);
 
-// Save global users array
-var users = [];
+// Save global data
+// @users array object { id, name, channel, whisper, joined, timestamp }
+// @messages array object { channel, message }
+var chatData = {
+	users: [],
+	messages: []
+};
 
 /*
 * Define encodeHTML function
@@ -48,7 +53,7 @@ if (!String.prototype.encodeHTML) {
 /*
 * Define contains function
 socket.contains(client.id, function(found) {
-    if (found)
+	if (found)
 });
 */
 if (!Array.prototype.contains) {
@@ -77,16 +82,16 @@ function addUser(socketId) {
 		joined: time,
 		timestamp: time
 	}
-	users.push(user);
+	chatData.users.push(user);
 
 	return user;
 }
 
 // Remove user
 function removeUser(user) {
-	for (var i=0; i<users.length; i++) {
-		if (user.name === users[i].name) {
-			users.splice(i, 1);
+	for (var i=0; i<chatData.users.length; i++) {
+		if (user.name === chatData.users[i].name) {
+			chatData.users.splice(i, 1);
 
 			return user;
 		}
@@ -103,44 +108,62 @@ function updateUser(socket, user) {
 // @channelAddUser(user.channel, { id: user.id, name: user.name, message: '' })
 function channelAddUser(socket, channel, data) {
 	socket.join(channel);
-    io.sockets.in(channel).emit('channel-user-add', data);
+	io.sockets.in(channel).emit('channel-user-add', data);
 }
 
 // Send remove user data to every connected client in channel
 // @channelRemoveUser(user.channel, { id: user.id, name: user.name, message: '' })
 function channelRemoveUser(socket, channel, data) {
 	socket.leave(channel);
-    io.sockets.in(channel).emit('channel-user-remove', data);
+	io.sockets.in(channel).emit('channel-user-remove', data);
 }
 
 // Send updated user data to every connected client in channel
 // @channelUpdateUser(user.channel, { id: user.id, name: user.name, message: '' })
 function channelUpdateUser(socket, channel, data) {
-    io.sockets.in(channel).emit('channel-user-update', data);
+	io.sockets.in(channel).emit('channel-user-update', data);
 }
 
 // Channel user switch channel updateUsers
 function channelSwitch(socket, user, from_channel, to_channel) {
 	if (from_channel !== undefined) {
-        channelRemoveUser(socket, from_channel, { id: user.id, name: user.name, message: 'Leaved channel' });
+		channelRemoveUser(socket, from_channel, { id: user.id, name: user.name, message: 'Leaved channel' });
 		channelAddUser(socket, to_channel, { id: user.id, name: user.name, message: 'Joined channel' });
 	} else {
-        channelUpdateUser(socket, user.channel, { id: user.id, name: user.name, message: 'Update' });
+		channelUpdateUser(socket, user.channel, { id: user.id, name: user.name, message: 'Update' });
 	}
 }
 
 // Get user list of the channel
 // @channelListUsers(user.channel)
 function channelListUsers(socket, channel) {
-    var arr = { users:[] };
+	var arr = { users:[] };
 
-    for (var i=0; i<users.length; i++) {
-        if (channel === users[i].channel) {
-            arr.users.push( { id: users[i].id, name: users[i].name, channel: users[i].channel } );
-        }
-    }
+	for (var i=0; i<chatData.users.length; i++) {
+		if (channel === chatData.users[i].channel) {
+			arr.users.push( { id: chatData.users[i].id, name: chatData.users[i].name, channel: chatData.users[i].channel } );
+		}
+	}
 
-    socket.emit('channel-user-list', arr);
+	socket.emit('channel-user-list', arr);
+}
+
+// Get messages from channel
+function getMessages(socket, user) {
+	var arr = { messages:[] };
+
+	for (var i=0; i<chatData.messages.length; i++) {
+		if (chatData.messages[i].channel === user.channel) {
+			arr.messages.push({
+				channel: chatData.messages[i].channel,
+				date: chatData.messages[i].date,
+				name: chatData.messages[i].name,
+				message: chatData.messages[i].message
+			});
+		}
+	}
+
+	socket.emit('get-messages', arr);
 }
 
 // Event listener's on socket open
@@ -150,7 +173,7 @@ io.sockets.on('connection', function(socket) {
 	var user = addUser(socket.id);
 
 	// Console log new connection.
-    //var client = socket.handshake.address;
+	//var client = socket.handshake.address;
 	//var client = socket.request.connection;
 	console.log('Connection '+ socket.id +' '+ user.name +' '+ socket.request.connection.remoteAddress);
 	//console.log( socket.adapter.rooms ); //{ R5czp2k6xwFBEKK8AAAA: { R5czp2k6xwFBEKK8AAAA: true } }
@@ -168,17 +191,17 @@ io.sockets.on('connection', function(socket) {
 	// @event: update-user
 	updateUser(socket, user);
 
-    // Add new user to the channel
+	// Add new user to the channel
 	// @event: channel-user-add
-    channelAddUser(socket, user.channel, {
+	channelAddUser(socket, user.channel, {
 		id: user.id,
 		name: user.name,
 		message: 'Joined channel'
 	});
 
-    // Send list of users in this channel to the current user
+	// Send list of users in this channel to the current user
 	// @event: channel-user-list
-    channelListUsers(socket, user.channel);
+	channelListUsers(socket, user.channel);
 
 	// Message event
 	// @event: message
@@ -190,7 +213,15 @@ io.sockets.on('connection', function(socket) {
 		// Message delay 1000ms length 1000 characters
 		if (_timestamp > (user.timestamp + 1000) && data.message.length <= 1000) {
 			user.timestamp = _timestamp;
+			// Send to client
 			io.to(user.channel).emit('message', {
+				date: _date,
+				name: user.name,
+				message: data.message.encodeHTML()
+			});
+			// Save message data
+			chatData.messages.push({
+				channel: user.channel,
 				date: _date,
 				name: user.name,
 				message: data.message.encodeHTML()
@@ -210,15 +241,15 @@ io.sockets.on('connection', function(socket) {
 
 		// Message delay 1000ms length 1000 characters
 		if (_timestamp > (user.timestamp + 1000) && _msg.length <= 1000) {
-			for (var i=0; i<users.length; i++) {
-				if (users[i].name.length && (users[i].name === _to || users[i].name === _from) ) {
+			for (var i=0; i<chatData.users.length; i++) {
+				if (chatData.users[i].name.length && (chatData.users[i].name === _to || chatData.users[i].name === _from) ) {
 					if (user.whisper !== _to) {
 						user.whisper = _to;
 						updateUser(socket, user);
 					}
 					user.timestamp = _timestamp;
-					//console.log(users[i].id);
-					io.to(users[i].id).emit('whisper', {
+					//console.log(chatData.users[i].id);
+					io.to(chatData.users[i].id).emit('whisper', {
 						date: _date,
 						to: _to,
 						from: _from,
@@ -249,8 +280,8 @@ io.sockets.on('connection', function(socket) {
 		}
 		else {
 			// Check if name exists
-			for (var i=0; i<users.length; i++) {
-				if (data_name === users[i].name) {
+			for (var i=0; i<chatData.users.length; i++) {
+				if (data_name === chatData.users[i].name) {
 					exist = true;
 					socket.emit('notice', {
 						message: 'This name already exists <strong>'+ data_name +'</strong>'
@@ -261,10 +292,10 @@ io.sockets.on('connection', function(socket) {
 			}
 			// Update user and send data to other clients
 			if (exist === false) {
-				for (var i=0; i<users.length; i++) {
-					if (user.name === users[i].name) {
+				for (var i=0; i<chatData.users.length; i++) {
+					if (user.name === chatData.users[i].name) {
 						user.name = data_name;
-						users[i].name = data_name;
+						chatData.users[i].name = data_name;
 
 						updateUser(socket, user);
 
@@ -303,10 +334,10 @@ io.sockets.on('connection', function(socket) {
 			socket.emit('notice', { message: 'You are in <strong>'+ from_channel +'</strong> channel' });
 		}
 		else {
-			for (var i=0; i<users.length; i++) {
-				if (user.name === users[i].name) {
+			for (var i=0; i<chatData.users.length; i++) {
+				if (user.name === chatData.users[i].name) {
 					user.channel = to_channel;
-					users[i].channel = to_channel;
+					chatData.users[i].channel = to_channel;
 					updateUser(socket, user);
 
 					channelSwitch(socket, user, from_channel, to_channel);
@@ -321,7 +352,14 @@ io.sockets.on('connection', function(socket) {
 				}
 			}
 		}
+	});
 
+	// get messages posted in channel
+	// @event: get-messages
+	socket.on('get-messages', function (data) {
+		if (data) {
+			getMessages(socket, user);
+		}
 	});
 
 	// Client disconnect from server
@@ -339,7 +377,7 @@ io.sockets.on('connection', function(socket) {
 			message: 'User disconnect'
 		});
 
-        delete user;
+		delete user;
 	});
 
 }); //End io sockets
