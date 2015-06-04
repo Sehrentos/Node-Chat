@@ -33,21 +33,27 @@ if (typeof(process) === 'object') {
 
 		var gui = require('nw.gui') || global.window.nwDispatcher.requireNwGui();
 
-		//Count how many times page will beloaded on this session
+		//Count how many times page will be loaded on this session
 		exports.pageload();
 
-		// Start your own server: experimental stuff...
-		/*
+		// Start your own chat-server
+		//@localhost:9000
 		function server_start() {
-			return exports.server_online || exports.server_start(function() {
-				//var gui = require('nw.gui') || global.window.nwDispatcher.requireNwGui();
-				//This will load file locally into new window.
-				//window.open('express.html');
-				//window.open('http://localhost:3000');
-				gui.Window.open('http://localhost:3000');
+			$.fn.nConfirm({
+				title: "Start Chat Server",
+				message: "Do you wan't to <b>start</b> the chat server?",
+				enableBackground: false,
+				onSubmit: function() {
+					if (!exports.server_online) {
+						exports.server_start(function() {
+							setTimeout(function() {
+								location.reload();
+							}, 1000);
+						});
+					}
+				}
 			});
 		}
-		*/
 
 	}
 }
@@ -56,6 +62,15 @@ if ("jQuery" in window) {
 
 	// Document is ready to use
 	$(function() {
+
+		// Start server?
+		if (typeof(process) === 'object') {
+			if (process.mainModule.loaded) {
+				if (!process.mainModule.exports.server_online) {
+					server_start();
+				}
+			}
+		}
 
 		// Prevent submit while chat has not been initialized
 		$("form").submit(function(e) {

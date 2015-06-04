@@ -15,7 +15,7 @@
 		//window.location - this would return current filename and line
 	};
 
-	// Start listen keypush events
+	// Start listen keypush events?
 	exports.onKeyPush = function(callback) {
 		window.addEventListener('keydown', function(e) {
 			if (callback && typeof(callback) === "function") {
@@ -24,41 +24,20 @@
 		});
 	};
 
-    // Start your own http server and send express.html as it's front page
-    // @localhost:3000
+    // Start your own chat server
+    // @localhost:9000
     exports.server_online = false;
-
     exports.server_start = function(callback) {
-
-        exports.server_online = true; //exports.server
-        // Setup http server
         //var gui = require('nw.gui') || global.window.nwDispatcher.requireNwGui();
-        var app = require('express')();
-        var http = require('http').Server(app);
-        var io = require('socket.io')(http);
+        require('../server.js');
 
-        // Send html file
-        app.get('/', function(req, res) {
-            res.sendFile(__dirname + '/express.html');
-            //res.send('<h1>Hello world</h1>');
-        });
-
-        // socket listen events
-        io.on('connection', function(socket) {
-            console.log('a user connected');
-        });
-
-        http.listen(3000, function() {
-            console.log('listening on *:3000');
-        });
-
-        console.log('Server is now online');
+        console.log('Server started.');
+		exports.server_online = true;
 
         // callback function
         if (callback && typeof(callback) === "function") {
             return callback();
         }
-
     };
 
 })();
