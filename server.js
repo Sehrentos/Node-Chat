@@ -28,12 +28,53 @@ function handler(req, res) {
 var io = require('socket.io')(9000);
 	//io.listen(9000);
 
-// Save global data
-// @users array object { id, name, channel, whisper, joined, timestamp }
-// @messages array object { channel, message }
-var chatData = {
-	users: [],
-	messages: []
+/*
+* Messages data object
+* @Messages.max - Max messages to start removing the first
+* @Messages.get()
+* @Messages.set( object ) - ignore max setting
+* @Messages.add( object )
+* @Messages.remove( object, all(true) ) 
+*/
+var Messages = function() {
+	this.max = 10; //zero count aswell
+	this.data = [];
+
+	this.remove = function(vals, all) {
+		var arr = this.data, i, removedItems = [];
+		if (!Array.isArray(vals)) vals = [vals];
+		for (var j = 0; j < vals.length; j++) {
+			if (all) {
+				for(i = arr.length; i--;){
+					if (arr[i] === vals[j]) removedItems.push(arr.splice(i, 1));
+				}
+			}
+			else {
+				i = arr.indexOf(vals[j]);
+				if(i>-1) removedItems.push(arr.splice(i, 1));
+			}
+		}
+		return removedItems;
+	};
+
+	this.add = function(obj) {
+		var arr = this.data;
+		if (arr.length >= this.max) {
+			var removed = arr.splice(0, 1);
+		}
+		return arr.push(obj);
+	};
+
+	this.get = function() {
+		return this.data;
+	};
+
+	this.set = function(arr) {
+		if (typeof(arr) === "object") {
+			this.data = arr;
+		}
+		return this.data;
+	};
 };
 
 /*
@@ -148,23 +189,30 @@ function channelListUsers(socket, channel) {
 	socket.emit('channel-user-list', arr);
 }
 
-// Get messages from channel
-function getMessages(socket, user) {
-	var arr = { messages:[] };
+// Cooldown
+function cooldown(user, time) {
+	var cd = time ? time : 1000;
+	var date = new Date();
+	var timestamp = date.getTime();
 
-	for (var i=0; i<chatData.messages.length; i++) {
-		if (chatData.messages[i].channel === user.channel) {
-			arr.messages.push({
-				channel: chatData.messages[i].channel,
-				date: chatData.messages[i].date,
-				name: chatData.messages[i].name,
-				message: chatData.messages[i].message
-			});
-		}
+	if (timestamp > (user.timestamp + cd)) {
+		user.timestamp = timestamp;
+		return timestamp;
 	}
 
-	socket.emit('get-messages', arr);
+	return false;
 }
+
+// Save global data
+// @users array object { id, name, channel, whisper, joined, timestamp }
+var chatData = {
+	users: []
+};
+// Messages object
+// Store all messages so you can log them
+// TODO: extend memory for each channels
+var messagesData =  new Messages();
+messagesData.max = 50; //Increase max messages
 
 // Event listener's on socket open
 io.sockets.on('connection', function(socket) {
@@ -206,55 +254,56 @@ io.sockets.on('connection', function(socket) {
 	// Message event
 	// @event: message
 	socket.on('message', function (data) {
-		//console.log(data);
-		var _date = new Date();
-		var _timestamp = _date.getTime();
+		if (cooldown(user, 800)) {
+			//console.log(data);
+			var _date = new Date();
 
-		// Message delay 1000ms length 1000 characters
-		if (_timestamp > (user.timestamp + 1000) && data.message.length <= 1000) {
-			user.timestamp = _timestamp;
-			// Send to client
-			io.to(user.channel).emit('message', {
-				date: _date,
-				name: user.name,
-				message: data.message.encodeHTML()
-			});
-			// Save message data
-			chatData.messages.push({
-				channel: user.channel,
-				date: _date,
-				name: user.name,
-				message: data.message.encodeHTML()
-			});
+			// Message delay 1000ms length 1000 characters
+			if (data.message.length <= 1000) {
+				// Send to client
+				io.to(user.channel).emit('message', {
+					date: _date,
+					name: user.name,
+					message: data.message.encodeHTML()
+				});
+				// Save message data
+				//chatData.messages.push({
+				messagesData.add({
+					channel: user.channel,
+					date: _date,
+					name: user.name,
+					message: data.message.encodeHTML()
+				});
+			}
 		}
 	});
 
 	// whisper to
 	// @event: whisper
 	socket.on('whisper', function (data) {
-		//console.log(data);
-		var _date = new Date(),
-			_timestamp = _date.getTime(),
-			_from = data.from.encodeHTML(),
-			_to = data.to.encodeHTML(),
-			_msg = data.message.encodeHTML();
+		if (cooldown(user, 800)) {
+			//console.log(data);
+			var _date = new Date(),
+				_from = data.from.encodeHTML(),
+				_to = data.to.encodeHTML(),
+				_msg = data.message.encodeHTML();
 
-		// Message delay 1000ms length 1000 characters
-		if (_timestamp > (user.timestamp + 1000) && _msg.length <= 1000) {
-			for (var i=0; i<chatData.users.length; i++) {
-				if (chatData.users[i].name.length && (chatData.users[i].name === _to || chatData.users[i].name === _from) ) {
-					if (user.whisper !== _to) {
-						user.whisper = _to;
-						updateUser(socket, user);
+			// Message length 1000 characters
+			if (_msg.length <= 1000) {
+				for (var i=0; i<chatData.users.length; i++) {
+					if (chatData.users[i].name.length && (chatData.users[i].name === _to || chatData.users[i].name === _from) ) {
+						if (user.whisper !== _to) {
+							user.whisper = _to;
+							updateUser(socket, user);
+						}
+						//console.log(chatData.users[i].id);
+						io.to(chatData.users[i].id).emit('whisper', {
+							date: _date,
+							to: _to,
+							from: _from,
+							message: _msg
+						});
 					}
-					user.timestamp = _timestamp;
-					//console.log(chatData.users[i].id);
-					io.to(chatData.users[i].id).emit('whisper', {
-						date: _date,
-						to: _to,
-						from: _from,
-						message: _msg
-					});
 				}
 			}
 		}
@@ -263,53 +312,55 @@ io.sockets.on('connection', function(socket) {
 	// Name change
 	// @event: setName
 	socket.on('setName', function (data) {
-		//console.log(data);
-		//updateName(socket, user, data);
-		var exist = false,
-			data_name = data.name.encodeHTML() || 0;
+		if (cooldown(user, 1000)) {
+			//console.log(data);
+			//updateName(socket, user, data);
+			var exist = false,
+				data_name = data.name.encodeHTML() || 0;
 
-		if (data_name.length <= 1) {
-			socket.emit('notice', {
-				message: 'Name is too short (2-50)'
-			});
-		}
-		else if (data_name.length > 50) {
-			socket.emit('notice', {
-				message: 'Name is too long (2-50)'
-			});
-		}
-		else {
-			// Check if name exists
-			for (var i=0; i<chatData.users.length; i++) {
-				if (data_name === chatData.users[i].name) {
-					exist = true;
-					socket.emit('notice', {
-						message: 'This name already exists <strong>'+ data_name +'</strong>'
-					});
-
-					break; //Stop loop
-				}
+			if (data_name.length <= 1) {
+				socket.emit('notice', {
+					message: 'Name is too short (2-50)'
+				});
 			}
-			// Update user and send data to other clients
-			if (exist === false) {
+			else if (data_name.length > 50) {
+				socket.emit('notice', {
+					message: 'Name is too long (2-50)'
+				});
+			}
+			else {
+				// Check if name exists
 				for (var i=0; i<chatData.users.length; i++) {
-					if (user.name === chatData.users[i].name) {
-						user.name = data_name;
-						chatData.users[i].name = data_name;
-
-						updateUser(socket, user);
-
-						channelUpdateUser(socket, user.channel, {
-							id: user.id,
-							name: user.name,
-							message: 'Update'
-						});
-
+					if (data_name === chatData.users[i].name) {
+						exist = true;
 						socket.emit('notice', {
-							message: 'Your name is now <strong>'+ user.name +'</strong>'
+							message: 'This name already exists <strong>'+ data_name +'</strong>'
 						});
 
 						break; //Stop loop
+					}
+				}
+				// Update user and send data to other clients
+				if (exist === false) {
+					for (var i=0; i<chatData.users.length; i++) {
+						if (user.name === chatData.users[i].name) {
+							user.name = data_name;
+							chatData.users[i].name = data_name;
+
+							updateUser(socket, user);
+
+							channelUpdateUser(socket, user.channel, {
+								id: user.id,
+								name: user.name,
+								message: 'Update'
+							});
+
+							socket.emit('notice', {
+								message: 'Your name is now <strong>'+ user.name +'</strong>'
+							});
+
+							break; //Stop loop
+						}
 					}
 				}
 			}
@@ -319,36 +370,38 @@ io.sockets.on('connection', function(socket) {
 	// Channel switch
 	// @event: setChannel
 	socket.on('setChannel', function (data) {
-		//console.log(data);
-		var from_channel = user.channel.encodeHTML() || 0,
-			to_channel = data.channel.encodeHTML() || 0;
+		if (cooldown(user, 1000)) {
+			//console.log(data);
+			var from_channel = user.channel.encodeHTML() || 0,
+				to_channel = data.channel.encodeHTML() || 0;
 
-		//updateChannel(socket, user, data);
-		if (to_channel.length <= 1) {
-			socket.emit('notice', { message: 'Channel name is too short (2-50)' });
-		}
-		else if (to_channel.length > 50) {
-			socket.emit('notice', { message: 'Channel name is too long (2-50)' });
-		}
-		else if (from_channel === to_channel) {
-			socket.emit('notice', { message: 'You are in <strong>'+ from_channel +'</strong> channel' });
-		}
-		else {
-			for (var i=0; i<chatData.users.length; i++) {
-				if (user.name === chatData.users[i].name) {
-					user.channel = to_channel;
-					chatData.users[i].channel = to_channel;
-					updateUser(socket, user);
+			//updateChannel(socket, user, data);
+			if (to_channel.length <= 1) {
+				socket.emit('notice', { message: 'Channel name is too short (2-50)' });
+			}
+			else if (to_channel.length > 50) {
+				socket.emit('notice', { message: 'Channel name is too long (2-50)' });
+			}
+			else if (from_channel === to_channel) {
+				socket.emit('notice', { message: 'You are in <strong>'+ from_channel +'</strong> channel' });
+			}
+			else {
+				for (var i=0; i<chatData.users.length; i++) {
+					if (user.name === chatData.users[i].name) {
+						user.channel = to_channel;
+						chatData.users[i].channel = to_channel;
+						updateUser(socket, user);
 
-					channelSwitch(socket, user, from_channel, to_channel);
+						channelSwitch(socket, user, from_channel, to_channel);
 
-					socket.emit('notice', { message: 'You moved to <strong>'+ user.channel +'</strong> channel' });
-					socket.emit('header-topic', { message: 'You are in '+ user.channel +' channel.' });
+						socket.emit('notice', { message: 'You moved to <strong>'+ user.channel +'</strong> channel' });
+						socket.emit('header-topic', { message: 'You are in '+ user.channel +' channel.' });
 
-					// Get list of users in channel
-					channelListUsers(socket, user.channel);
+						// Get list of users in channel
+						channelListUsers(socket, user.channel);
 
-					break; //Stop loop
+						break; //Stop loop
+					}
 				}
 			}
 		}
@@ -358,7 +411,24 @@ io.sockets.on('connection', function(socket) {
 	// @event: get-messages
 	socket.on('get-messages', function (data) {
 		if (data) {
-			getMessages(socket, user);
+			if (cooldown(user, 5000)) {
+				//getMessages(socket, user);
+				var arr = { messages:[] };
+				var messages = messagesData.get();
+
+				for (var i=0; i<messages.length; i++) {
+					if (messages[i].channel === user.channel) {
+						arr.messages.push({
+							channel: messages[i].channel,
+							date: messages[i].date,
+							name: messages[i].name,
+							message: messages[i].message
+						});
+					}
+				}
+
+				socket.emit('get-messages', arr);
+			}
 		}
 	});
 
