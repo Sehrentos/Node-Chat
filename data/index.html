@@ -29,6 +29,7 @@
 // Now you can call them exports.functionName()
 if (typeof(process) === 'object') {
 	if (process.mainModule.loaded) {
+
 		var exports = process.mainModule.exports;
 
 		var gui = require('nw.gui') || global.window.nwDispatcher.requireNwGui();
@@ -36,7 +37,7 @@ if (typeof(process) === 'object') {
 		//Count how many times page will be loaded on this session
 		exports.pageload();
 
-		// Start your own chat-server
+		// Start your own chat-server function
 		//@localhost:9000
 		function server_start() {
 			$.fn.nConfirm({
@@ -63,11 +64,13 @@ if ("jQuery" in window) {
 	// Document is ready to use
 	$(function() {
 
-		// Start server?
+		// Start your own chat-server
 		if (typeof(process) === 'object') {
 			if (process.mainModule.loaded) {
 				if (!process.mainModule.exports.server_online) {
-					server_start();
+					setTimeout(function() {
+						server_start();
+					}, 1000);
 				}
 			}
 		}

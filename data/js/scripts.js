@@ -39,13 +39,13 @@ chat.init = function(url) {
 		chat.debug(data);
 	});
 
-	// Error
+	// Connect error
 	self.socket.on('connect_error', function (data) {
 		chat.debug(data);
 		if (data.type === "TransportError") {
 			self.mes("Unable to connect server.");
 			// Clear user menu
-			$('#users').find("ul").remove();
+			self.menuClear();
 			self.socket.close();
 		}
 	});
@@ -55,7 +55,7 @@ chat.init = function(url) {
 		chat.debug(data);
 		self.mes("Connection timeout.");
 		// Clear user menu
-		$('#users').find("ul").remove();
+		self.menuClear();
 	});
 
 	// Disconnect
@@ -63,7 +63,7 @@ chat.init = function(url) {
 		chat.debug(data);
 		self.mes("Disconnected from server.");
 		// Clear user menu
-		$('#users').find("ul").remove();
+		self.menuClear();
 		// Ask to reconnect
 		$.fn.nConfirm({
 			title: "Disconnected!",
@@ -391,6 +391,16 @@ chat.menuRemoveUser = function(userId) {
 		$menuArray.parent().remove();
 		chat.debug('User menu remove');
 	}
+
+	return this;
+};
+
+/*
+* Clear menu
+* Remove all users from menu
+*/
+chat.menuClear = function() {
+	$('#users').find("ul").remove();
 
 	return this;
 };
