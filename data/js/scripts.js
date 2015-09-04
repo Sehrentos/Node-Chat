@@ -314,30 +314,30 @@ chat.menuAddUser = function(id, name, channel) {
 				$('<li/>', {
 					class: 'menu'
 				})
-				.html('&lsaquo; New whisper')
 				.click(function() {
 					chat.setWhisper();
 				})
+				.html('&lsaquo; New whisper')
 				.appendTo($menuSub);
 
 				// Change name
 				$('<li/>', {
 					class: 'menu'
 				})
-				.html('&lsaquo; Change name')
 				.click(function() {
 					self.setName();
 				})
+				.html('&lsaquo; Change name')
 				.appendTo($menuSub);
 
 				// Change channel
 				$('<li/>', {
 					class: 'menu'
 				})
-				.html('&lsaquo; Change channel')
 				.click(function() {
 					self.setChannel();
 				})
+				.html('&lsaquo; Change channel')
 				.appendTo($menuSub);
 
 				// Append to user
@@ -349,11 +349,12 @@ chat.menuAddUser = function(id, name, channel) {
 				$('<li/>', {
 					class: 'menu'
 				})
-				.html('&lsaquo; Whisper')
 				.click(function() {
 					self.setWhisper( name );
 				})
+				.html('&lsaquo; Whisper')
 				.appendTo($menuSub);
+
 				// Append to user
 				$($menuSub).appendTo($user);
 			}

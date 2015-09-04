@@ -2,8 +2,8 @@
 <html>
 	<head>
 	<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
-	<meta http-equiv="Cache-control" content="public,max-age=86400">
-	<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=0" />
+	<meta http-equiv="Cache-control" content="private, max-age=0">
+	<meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, height=device-height" />
 	<meta name="mobile-web-app-capable" content="yes" />
 	<meta name="description" content="A chat project." />
 	<meta name="keywords" content="Project" />
@@ -12,7 +12,6 @@
 	<meta name="google" value="notranslate">
 	<link rel="shortcut icon" href="images/icon32.ico" sizes="32x32" type="image/x-icon" />
 	<link rel="icon" href="images/favicon64.ico" sizes="64x64" type="image/x-icon" />
-	<!-- Title -->
 	<title>Chat app</title>
 	<!-- Stylesheet -->
 	<link href="css/styles.css" rel="stylesheet" />
@@ -24,9 +23,7 @@
 	<script src="js/plugins.js" charset="utf-8"></script>
 	<script src="js/scripts.js" charset="utf-8"></script>
 <script>
-// Call exported functions from node-main: app.js
-//var exports = process.mainModule.exports;
-// Now you can call them exports.functionName()
+// Call exported functions from node nw-app.js
 if (typeof(process) === 'object') {
 	if (process.mainModule.loaded) {
 
@@ -140,8 +137,31 @@ if ("jQuery" in window) {
 					}
 				}
 			});
-		}
+			
+			// Animate users menu
+			var uAnim = false;
+			$('#users').mouseenter(function() {
+				if (!uAnim) {
+					uAnim = true;
+					$(this).find('li').animate({"width":"+170"}).ready(function() {
+						setTimeout(function() {
+							uAnim = false;
+						}, 300);
+					});
+				}
+			}).mouseleave(function() {
+				if (!uAnim) {
+					uAnim = true;
+					$(this).find('li').animate({"width":"-170"}).ready(function() {
+						setTimeout(function() {
+							uAnim = false;
+						}, 300);
+					});
+				}
+			});
 
+		}
+		
 	});
 
 }

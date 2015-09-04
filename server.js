@@ -212,7 +212,7 @@ var chatData = {
 // Store all messages so you can log them
 // TODO: extend memory for each channels
 var messagesData =  new Messages();
-messagesData.max = 50; //Increase max messages
+messagesData.max = 25; //Increase max messages
 
 // Event listener's on socket open
 io.sockets.on('connection', function(socket) {
@@ -411,7 +411,7 @@ io.sockets.on('connection', function(socket) {
 	// @event: get-messages
 	socket.on('get-messages', function (data) {
 		if (data) {
-			if (cooldown(user, 5000)) {
+			if (cooldown(user, 3000)) {
 				//getMessages(socket, user);
 				var arr = { messages:[] };
 				var messages = messagesData.get();

@@ -53,7 +53,7 @@ form input#whisper {
 
 form textarea#message {
 	display: inline-block;
-	width: 72%;
+	width: 82%;
 	height: 36px;
 	vertical-align: top;
 	padding: .7%;
@@ -63,6 +63,7 @@ form textarea#message {
 }
 
 form input#send {
+	display: none;
 	width: 10%;
 	height: 36px;
 	padding: .7%;
@@ -117,7 +118,7 @@ form input#send:hover {
 }
 
 #users ul > li {
-	width: 180px;
+	width: 10px; /* animated. 180px original */
 	border-width: 1px;
 	border-color: #CCCCCC;
 	border-style: solid;
