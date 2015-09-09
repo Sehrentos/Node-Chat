@@ -118,7 +118,7 @@ form input#send:hover {
 }
 
 #users ul > li {
-	width: 10px; /* animated. 180px original */
+	width: 180px;
 	border-width: 1px;
 	border-color: #CCCCCC;
 	border-style: solid;

@@ -34,6 +34,11 @@ chat.init = function(url) {
 	// Open socket
 	self.socket = io.connect(link);
 
+	// Successful connection
+	self.socket.on('connect', function (data) {
+		self.setName();
+	});
+
 	// Error
 	self.socket.on('error', function (data) {
 		chat.debug(data);
