@@ -5,7 +5,7 @@
 	<meta http-equiv="Cache-control" content="private, max-age=0">
 	<meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, height=device-height" />
 	<meta name="mobile-web-app-capable" content="yes" />
-	<meta name="description" content="A chat project." />
+	<meta name="description" content="A node chat project." />
 	<meta name="keywords" content="Project" />
 	<meta name="author" content="Niko H. (Sehrentos)" />
 	<meta name="robots" content="noindex, nofollow" />
@@ -58,8 +58,14 @@ if (typeof(process) === 'object') {
 // jQuery initialized
 if ("jQuery" in window) {
 
-	// Document is ready to use
+	// Document is loaded and ready to use
 	$(function() {
+
+		// Prevent submit while chat has not been initialized
+		$("form").submit(function(e) {
+			e.preventDefault();
+			return false;
+		});
 
 		// Start your own chat-server
 		if (typeof(process) === 'object') {
@@ -72,98 +78,117 @@ if ("jQuery" in window) {
 			}
 		}
 
-		// Prevent submit while chat has not been initialized
-		$("form").submit(function(e) {
-			e.preventDefault();
-			return false;
-		});
+		// Ask user for server address
+		var ask_server = function() {
+			$.fn.nPrompt({
+				title: "Set Server Address",
+				message: "Please enter server <b>address</b> at the field below.",
+				value: (localStorage.server ? localStorage.server : 'localhost'),
+				enableBackground: true,
+				onSubmit: function(server) {
+					if (server === null) return;
+					localStorage.server = server;
 
-		// Over-write default chat settings before init
-		$.extend( chat || {}, {
-			method: 'http', //https/http/ws
-			address: 'localhost',
-			port: 9000,
-			channel: '',
-			debug_mode: true
-		});
-
-		// Initialize socket.io and set events
-		chat.init();
-
-		// Initialize chat socket.io and set events
-		if ("io" in window) {
-			// Focus input/textarea.
-			chat.setFocus();
-
-			// Set main menu
-			chat.drawMenu();
-
-			// Set default volume level: 0.1 - 1.0
-			chat.playVolume( 0.5 );
-
-			/*
-			// Volume slider: 0.1 - 1.0
-			$("#volume-slider").change(function(){
-				chat.playVolume( this.value / 100);
-				this.title = "Volume: "+ this.value +"%";
-				chat.playAudio();
-			});
-			*/
-
-			// Define submit event
-			$("form").submit(function(e) {
-				e.preventDefault();
-				var whisper = $(this).parent().find("#whisper"),
-					message = $(this).parent().find("#message");
-				if (whisper.val().length) {
-					chat.setWhisper( whisper.val(), message.val() );
-					message.val('');
-				} else {
-					chat.setSubmit( message );
+					// Continue to ask server port
+					ask_port(server);
 				}
+			}); //end-address
+		};
+
+		var ask_port = function(server) {
+			// Ask user for server port or use existing one
+			$.fn.nPrompt({
+				title: "Set Server Port",
+				message: "Please enter server <b>port</b> at the field below.",
+				value: (localStorage.port ? localStorage.port : 9000),
+				enableBackground: true,
+				onSubmit: function(port) {
+					if (port === null) return;
+					localStorage.port = port;
+
+					// Call init...
+					init_chat(server, port);
+				}
+			}); //end-port
+		};
+
+		var init_chat = function(server, port) {
+			// Over-write default chat settings before init
+			$.extend( chat || {}, {
+				method: 'ws', //https/http/ws
+				address: server,
+				port: port,
+				channel: '',
+				debug_mode: true
 			});
 
-			// Define textarea keydown event
-			$("#message").keydown(function(e) {
-				if (e.keyCode == 13 && !e.shiftKey) {
+			// Initialize socket.io and set events
+			chat.init();
+
+			// Initialize chat socket.io and set events
+			if ("io" in window) {
+				// Focus input/textarea.
+				chat.setFocus();
+
+				// Set main menu
+				chat.drawMenu();
+
+				// Set default volume level: 0.1 - 1.0
+				chat.playVolume( 0.5 );
+
+				// Define submit event
+				$("form").submit(function(e) {
 					e.preventDefault();
 					var whisper = $(this).parent().find("#whisper"),
-					message = $(this).parent().find("#message");
+						message = $(this).parent().find("#message");
 					if (whisper.val().length) {
 						chat.setWhisper( whisper.val(), message.val() );
 						message.val('');
 					} else {
 						chat.setSubmit( message );
 					}
-				}
-			});
-			
-			// Animate users menu
-			/*
-			var uAnim = false;
-			$('#users').mouseenter(function() {
-				if (!uAnim && (window.innerWidth < 450)) {
-					uAnim = true;
-					$(this).find('li').animate({"width":"+180"}).ready(function() {
-						setTimeout(function() {
-							uAnim = false;
-						}, 300);
-					});
-				}
-			}).mouseleave(function() {
-				if (!uAnim && (window.innerWidth < 450)) {
-					uAnim = true;
-					$(this).find('li').animate({"width":"-180"}).ready(function() {
-						setTimeout(function() {
-							uAnim = false;
-						}, 300);
-					});
-				}
-			});
-			*/
+				});
 
+				// Define textarea keydown event
+				$("#message").keydown(function(e) {
+					if (e.keyCode == 13 && !e.shiftKey) {
+						e.preventDefault();
+						var whisper = $(this).parent().find("#whisper"),
+						message = $(this).parent().find("#message");
+						if (whisper.val().length) {
+							chat.setWhisper( whisper.val(), message.val() );
+							message.val('');
+						} else {
+							chat.setSubmit( message );
+						}
+					}
+				});
+			} //end-if-socket.io
+		}; // end-init
+
+		// Check if server info already exists
+		if (localStorage.server && localStorage.port) {
+			// Do user wan't to use existing server detail to connect?
+			$.fn.nConfirm({
+				title: "Connect to existing server",
+				message: "Do you wan't to <b>connect</b> to<br><b>"+ localStorage.server + " : "+ localStorage.port +"</b> ?",
+				enableBackground: true,
+				onSubmit: function() {
+					// Call init
+					init_chat(localStorage.server, localStorage.port);
+				},
+				onCancel: function() {
+					// Ask user for server address and port
+					// Will init_chat after detail is given
+					ask_server();
+				}
+			});
+		} else {
+			// Ask user for server address and port
+			// Will init_chat after detail is given
+			ask_server();
 		}
-		
+
 	});
 
 }
