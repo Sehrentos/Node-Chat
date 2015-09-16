@@ -18,7 +18,7 @@
 		"min_width": 400,
 		"min_height": 200
 	},
-	"nodejs": false,
+	"nodejs": true,
 	"node-main": "data/nw-app.js",
 	"webkit": {
 		"plugin": true

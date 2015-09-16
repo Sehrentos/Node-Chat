@@ -27,31 +27,13 @@
 if (typeof(process) === 'object') {
 	if (process.mainModule.loaded) {
 
-		var exports = process.mainModule.exports;
+        // This is where I have stored all node related functions
+		var node = process.mainModule.exports;
 
-		var gui = require('nw.gui') || global.window.nwDispatcher.requireNwGui();
+		//var gui = require('nw.gui') || global.window.nwDispatcher.requireNwGui();
 
-		//Count how many times page will be loaded on this session
-		exports.pageload();
-
-		// Start your own chat-server function
-		//@localhost:9000
-		function server_start() {
-			$.fn.nConfirm({
-				title: "Start Chat Server",
-				message: "Do you wan't to <b>start</b> the chat server?",
-				enableBackground: false,
-				onSubmit: function() {
-					if (!exports.server_online) {
-						exports.server_start(function() {
-							setTimeout(function() {
-								location.reload();
-							}, 1000);
-						});
-					}
-				}
-			});
-		}
+		// Count how many times page will be loaded on this session
+		node.pageload();
 
 	}
 }
@@ -61,20 +43,44 @@ if ("jQuery" in window) {
 	// Document is loaded and ready to use
 	$(function() {
 
-		// Prevent submit while chat has not been initialized
+		// Prevent form submit while chat has not been initialized
 		$("form").submit(function(e) {
 			e.preventDefault();
 			return false;
 		});
 
-		// Start your own chat-server
+        // Listen keypush events
+		/* window.addEventListener('keydown', function(e) {
+			if (e.keyCode == 13) console.log(e);
+            return this;
+		}); */
+
+		// Start your own chat server @ localhost:9000
 		if (typeof(process) === 'object') {
 			if (process.mainModule.loaded) {
-				if (!process.mainModule.exports.server_online) {
+
+                // Check if server is online
+				if (!process.mainModule.exports.server.online) {
 					setTimeout(function() {
-						server_start();
+                        // jQuery prompt plugin
+                        $.fn.nConfirm({
+                            title: "Start Chat Server",
+                            message: "Do you wan't to <b>start</b> the chat server?",
+                            enableBackground: false,
+                            onSubmit: function() {
+                                if (!node.server.online) {
+                                    node.server.start();
+                                }
+                            }
+                        });
 					}, 1000);
 				}
+    
+                // (TEST) Use node to copy a file:
+                node.readFile('package.json', function(data) {
+                  node.writeFile('test.txt', data);
+                });
+    
 			}
 		}
 
