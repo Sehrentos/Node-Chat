@@ -36,7 +36,7 @@
 
         // callback function
         if (callback && typeof(callback) === "function") {
-            return callback();
+            return callback(true);
         }
     };
 

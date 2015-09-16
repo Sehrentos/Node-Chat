@@ -23,13 +23,18 @@ Frontend [HTML5] (http://www.w3.org/TR/html5/), [jQuery] (https://jquery.com/)
  - Rename your .zip to package.nw
 
 ### Make executable
- - Use package-make-exe.bat - this will create app.exe for you.
- - Or use command line: copy /b nw.exe+package.nw app.exe
+ - Use package-make-exe.bat - this will create app.exe for you (windows).
+ - Or use command line:
+ (win) copy /b nw.exe+package.nw app.exe
+ (win) copy /b nw.exe+package.nw > app.exe
+ (mac) cp package.nw nw/Contents/Resources/
+ (linux) cat nw package.nw > app
 
 ### Help
  - [How to package and distribute your apps] (https://github.com/nwjs/nw.js/wiki/How-to-package-and-distribute-your-apps)
 
 ### Sources
  - (https://github.com/nwjs/nw.js)
+ - (http://oldgeeksguide.github.io/presentations/html5devconf2013/wtod.html#/)
 
 Happy editing.
