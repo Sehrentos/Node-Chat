@@ -169,6 +169,36 @@ form input#send:hover {
 	border-top: 1px solid #ccc;
 }
 
+#windowOptions {
+    display: block;
+    position: fixed;
+    top: 0.5%;
+    right: 0.5%;
+    z-index: +1;
+}
+#windowOptions button {
+	border-width: 1px;
+	border-color: #CCCCCC;
+	border-style: solid;
+	border-radius: 4px;
+	padding: 4px 10px;
+	margin: 0px -1px;
+	color: #1c94c4;
+	font-size: 100%;
+	line-height: normal;
+	font-variant: small-caps;
+	background-color: #ffffff;
+	white-space: nowrap;
+	overflow: hidden;
+	o-text-overflow: ellipsis;
+	text-overflow: ellipsis;
+	cursor: pointer;
+}
+#windowOptions button:hover {
+	color: #c77405;
+	box-shadow: 0 5px 8px 5px #f3f4f6 inset;
+}
+
 .border {
 	border-width: 1px;
 	border-color: #CCCCCC;

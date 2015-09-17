@@ -22,200 +22,225 @@
 	<!-- Javascripts -->
 	<script src="js/plugins.js" charset="utf-8"></script>
 	<script src="js/scripts.js" charset="utf-8"></script>
-<script>
-// Call exported functions from node nw-app.js
-if (typeof(process) === 'object') {
-	if (process.mainModule.loaded) {
+    <script>
+    // Call exported functions from node nw-app.js
+    if (typeof (process) === 'object') {
+        if (process.mainModule.loaded) {
+            var gui = require('nw.gui') || global.window.nwDispatcher.requireNwGui();
+            var win = gui.Window.get();
+            //win.hide();
+            //win.show();
+            //win.maximize();
+            //win.minimize();
+            //window.open();
+            //window.close();
+            //window.moveBy(10,30);
+            //window.resizeTo(800,600);
 
-        // This is where I have stored all node related functions
-		var node = process.mainModule.exports;
+            // Helper function for window resize
+            var win_opts = {
+                full: 0,
+                w: window.innerWidth,
+                h: window.innerHeight
+            };
+            var win_resize = function () {
+                if (win_opts.full === 0) {
+                    win_opts.full = 1;
+                    win.maximize();
+                } else {
+                    win_opts.full = 0;
+                    window.resizeTo(win_opts.w, win_opts.h);
+                }
+            };
 
-		//var gui = require('nw.gui') || global.window.nwDispatcher.requireNwGui();
+            // This is where I have stored all node related functions
+            var node = process.mainModule.exports;
 
-		// Count how many times page will be loaded on this session
-		node.pageload();
+            // Count how many times page will be loaded on this session
+            node.pageload();
 
-        // Start node server @ localhost : 9000
-        var chat_server = function() {
-            if (!process.mainModule.exports.server.online) {
-                // jQuery prompt plugin
-                $.fn.nConfirm({
-                    title: "Start Chat Server",
-                    message: "Do you want to <b>start</b> the chat server?",
-                    enableBackground: false,
-                    onSubmit: function() {
-                        if (!node.server.online) {
-                            node.server.start();
-                        }
-                    }
-                });
-            }
-        };
-
-	}
-}
-// jQuery initialized
-if ("jQuery" in window) {
-
-	// Document is loaded and ready to use
-	$(function() {
-
-		// Prevent form submit while chat has not been initialized
-		$("form").submit(function(e) {
-			e.preventDefault();
-			return false;
-		});
-
-        // Listen keypush events
-		/* window.addEventListener('keydown', function(e) {
-			if (e.keyCode == 13) console.log(e);
-            return this;
-		}); */
-
-		// Do node stuff
-		if (typeof(process) === 'object') {
-			if (process.mainModule.loaded) {
-
-                // (TEST) Use node to copy a file:
-                /* node.readFile('package.json', function(data) {
-                  node.writeFile('test.txt', data);
-                }); */
-    
-			}
-		}
-
-		// Ask user for server address
-		var ask_server = function() {
-			$.fn.nPrompt({
-				title: "Set Server Address",
-				message: "Please enter server <b>address</b> at the field below.",
-				value: (localStorage.server ? localStorage.server : 'localhost'),
-				enableBackground: true,
-				onSubmit: function(server) {
-					if (server === null) return;
-					localStorage.server = server;
-
-					// Continue to ask server port
-					ask_port(server);
-				}
-			}); //end-address
-		};
-
-		var ask_port = function(server) {
-			// Ask user for server port or use existing one
-			$.fn.nPrompt({
-				title: "Set Server Port",
-				message: "Please enter server <b>port</b> at the field below.",
-				value: (localStorage.port ? localStorage.port : 9000),
-				enableBackground: true,
-				onSubmit: function(port) {
-					if (port === null) return;
-					localStorage.port = port;
-
-					// Call init...
-					init_chat(server, port);
-				}
-			}); //end-port
-		};
-
-		var init_chat = function(server, port) {
-			// Over-write default chat settings before init
-			$.extend( chat || {}, {
-				method: 'ws', //https/http/ws
-				address: server,
-				port: port,
-				channel: '',
-				debug_mode: true
-			});
-
-			// Initialize socket.io and set events
-			chat.init();
-
-			// Initialize chat socket.io and set events
-			if ("io" in window) {
-				// Focus input/textarea.
-				chat.setFocus();
-
-				// Set main menu
-                chat.mainMenu("click", {
-                    timeout: 1500,
-                    menu: [
-                        { name:'Nickname', link:'chat.setName()' },
-                        { name:'Channel', link:'chat.setChannel()' },
-                        { name:'Sound on/off', link:'chat.playSettings()' }
-                    ]
-                });
-
-				// Set default volume level: 0.1 - 1.0
-				chat.playVolume( 0.5 );
-
-				// Define submit event
-				$("form").submit(function(e) {
-					e.preventDefault();
-					var whisper = $(this).parent().find("#whisper"),
-						message = $(this).parent().find("#message");
-					if (whisper.val().length) {
-						chat.setWhisper( whisper.val(), message.val() );
-						message.val('');
-					} else {
-						chat.setSubmit( message );
-					}
-				});
-
-				// Define textarea keydown event
-				$("#message").keydown(function(e) {
-					if (e.keyCode == 13 && !e.shiftKey) {
-						e.preventDefault();
-						var whisper = $(this).parent().find("#whisper"),
-						message = $(this).parent().find("#message");
-						if (whisper.val().length) {
-							chat.setWhisper( whisper.val(), message.val() );
-							message.val('');
-						} else {
-							chat.setSubmit( message );
-						}
-					}
-				});
-			} //end-if-socket.io
-		}; // end-init
-
-		// Check if server info already exists
-		if (localStorage.server && localStorage.port) {
-			// Do user wan't to use existing server detail to connect?
-			$.fn.nConfirm({
-				title: "Connect to existing server",
-				message: "Do you want to <b>connect</b> to<br><b>"+ localStorage.server + " : "+ localStorage.port +"</b> ?",
-				enableBackground: true,
-				onSubmit: function() {
-					// Call init
-					init_chat(localStorage.server, localStorage.port);
-				},
-				onCancel: function() {
-					// Ask user for server address and port
-					// Will init_chat after detail is given
-					ask_server();
-				}
-			});
-		} else {
-			// Ask user for server address and port
-			// Will init_chat after detail is given
-			ask_server();
-		}
-
-        // If node is active
-        // Ask user to start chat server @ localhost : 9000
-        if (typeof(process) === 'object') {
-            if (process.mainModule.loaded) {
+            // Start node server @ localhost : 9000
+            var chat_server = function () {
                 if (!process.mainModule.exports.server.online) {
-                    chat_server();
+                    // jQuery prompt plugin
+                    $.fn.nConfirm({
+                        title: "Start Chat Server",
+                        message: "Do you want to <b>start</b> the chat server?",
+                        enableBackground: false,
+                        onSubmit: function () {
+                            if (!node.server.online) {
+                                node.server.start();
+
+                            }
+                        }
+                    });
+                }
+            };
+
+        }
+    }
+    // jQuery initialized
+    if ("jQuery" in window) {
+
+        // Document is loaded and ready to use
+        $(function () {
+
+            // Prevent form submit while chat has not been initialized
+            $("form").submit(function (e) {
+                e.preventDefault();
+                return false;
+            });
+
+            // Listen keypush events
+            /* window.addEventListener('keydown', function(e) {
+            if (e.keyCode == 13) console.log(e);
+            return this;
+            }); */
+
+            // Do node stuff
+            if (typeof (process) === 'object') {
+                if (process.mainModule.loaded) {
+
+                    // (TEST) Use node to copy a file:
+                    /* node.readFile('package.json', function(data) {
+                    node.writeFile('test.txt', data);
+                    }); */
+
                 }
             }
-        }
 
-	});
+            // Ask user for server address
+            var ask_server = function () {
+                $.fn.nPrompt({
+                    title: "Set Server Address",
+                    message: "Please enter server <b>address</b> at the field below.",
+                    value: (localStorage.server ? localStorage.server : 'localhost'),
+                    enableBackground: true,
+                    onSubmit: function (server) {
+                        if (server === null) return;
+                        localStorage.server = server;
 
-}
-</script>
+                        // Continue to ask server port
+                        ask_port(server);
+                    }
+                }); //end-address
+            };
+
+            var ask_port = function (server) {
+                // Ask user for server port or use existing one
+                $.fn.nPrompt({
+                    title: "Set Server Port",
+                    message: "Please enter server <b>port</b> at the field below.",
+                    value: (localStorage.port ? localStorage.port : 9000),
+                    enableBackground: true,
+                    onSubmit: function (port) {
+                        if (port === null) return;
+                        localStorage.port = port;
+
+                        // Call init...
+                        init_chat(server, port);
+                    }
+                }); //end-port
+            };
+
+            var init_chat = function (server, port) {
+                // Over-write default chat settings before init
+                $.extend(chat || {}, {
+                    method: 'ws', //https/http/ws
+                    address: server,
+                    port: port,
+                    channel: '',
+                    debug_mode: true
+                });
+
+                // Initialize socket.io and set events
+                chat.init();
+
+                // Initialize chat socket.io and set events
+                if ("io" in window) {
+                    // Focus input/textarea.
+                    chat.setFocus();
+
+                    // Set main menu
+                    chat.mainMenu("click", {
+                        timeout: 1500,
+                        menu: [
+                            { name: 'Nickname', link: 'chat.setName()' },
+                            { name: 'Channel', link: 'chat.setChannel()' },
+                            { name: 'Sound on/off', link: 'chat.playSettings()' }
+                        ]
+                    });
+
+                    // Set default volume level: 0.1 - 1.0
+                    chat.playVolume(0.5);
+
+                    // Define submit event
+                    $("form").submit(function (e) {
+                        e.preventDefault();
+                        var whisper = $(this).parent().find("#whisper"),
+                            message = $(this).parent().find("#message");
+                        if (whisper.val().length) {
+                            chat.setWhisper(whisper.val(), message.val());
+                            message.val('');
+                        } else {
+                            chat.setSubmit(message);
+                        }
+                    });
+
+                    // Define textarea keydown event
+                    $("#message").keydown(function (e) {
+                        if (e.keyCode == 13 && !e.shiftKey) {
+                            e.preventDefault();
+                            var whisper = $(this).parent().find("#whisper"),
+                            message = $(this).parent().find("#message");
+                            if (whisper.val().length) {
+                                chat.setWhisper(whisper.val(), message.val());
+                                message.val('');
+                            } else {
+                                chat.setSubmit(message);
+                            }
+                        }
+                    });
+                } //end-if-socket.io
+            }; // end-init
+
+            // Check if server info already exists
+            if (localStorage.server && localStorage.port) {
+                // Do user wan't to use existing server detail to connect?
+                $.fn.nConfirm({
+                    title: "Connect to existing server",
+                    message: "Do you want to <b>connect</b> to<br><b>" + localStorage.server + " : " + localStorage.port + "</b> ?",
+                    enableBackground: true,
+                    onSubmit: function () {
+                        // Call init
+                        init_chat(localStorage.server, localStorage.port);
+                    },
+                    onCancel: function () {
+                        // Ask user for server address and port
+                        // Will init_chat after detail is given
+                        ask_server();
+                    }
+                });
+            } else {
+                // Ask user for server address and port
+                // Will init_chat after detail is given
+                ask_server();
+            }
+
+            // If node is active
+            // Ask user to start chat server @ localhost : 9000
+            if (typeof (process) === 'object') {
+                if (process.mainModule.loaded) {
+                    if (!process.mainModule.exports.server.online) {
+                        chat_server();
+                    }
+                }
+            }
+
+        });
+
+    }
+    </script>
 	</head>
 	<body>
 		<div id="wrap">
@@ -264,6 +289,13 @@ if ("jQuery" in window) {
 					Your browser does not support HTML5 audio.
 				</audio>
 			</div>
+            <!-- if you disable window frame, these buttons might come handy.
+            <div id="windowOptions">
+                <button type="button" onclick="win.minimize();" name="Minimize">_</button>
+                <button type="button" onclick="win_resize();" name="Mazimize">O</button>
+                <button type="button" onclick="window.close();" name="Close">X</button>
+            </div>
+            -->
 		</div>
 	</body>
 </html>
