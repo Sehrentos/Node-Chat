@@ -35,6 +35,23 @@ if (typeof(process) === 'object') {
 		// Count how many times page will be loaded on this session
 		node.pageload();
 
+        // Start node server @ localhost : 9000
+        var chat_server = function() {
+            if (!process.mainModule.exports.server.online) {
+                // jQuery prompt plugin
+                $.fn.nConfirm({
+                    title: "Start Chat Server",
+                    message: "Do you want to <b>start</b> the chat server?",
+                    enableBackground: false,
+                    onSubmit: function() {
+                        if (!node.server.online) {
+                            node.server.start();
+                        }
+                    }
+                });
+            }
+        };
+
 	}
 }
 // jQuery initialized
@@ -55,31 +72,14 @@ if ("jQuery" in window) {
             return this;
 		}); */
 
-		// Start your own chat server @ localhost:9000
+		// Do node stuff
 		if (typeof(process) === 'object') {
 			if (process.mainModule.loaded) {
 
-                // Check if server is online
-				if (!process.mainModule.exports.server.online) {
-					setTimeout(function() {
-                        // jQuery prompt plugin
-                        $.fn.nConfirm({
-                            title: "Start Chat Server",
-                            message: "Do you wan't to <b>start</b> the chat server?",
-                            enableBackground: false,
-                            onSubmit: function() {
-                                if (!node.server.online) {
-                                    node.server.start();
-                                }
-                            }
-                        });
-					}, 1000);
-				}
-    
                 // (TEST) Use node to copy a file:
-                node.readFile('package.json', function(data) {
+                /* node.readFile('package.json', function(data) {
                   node.writeFile('test.txt', data);
-                });
+                }); */
     
 			}
 		}
@@ -137,7 +137,14 @@ if ("jQuery" in window) {
 				chat.setFocus();
 
 				// Set main menu
-				chat.drawMenu();
+                chat.mainMenu("click", {
+                    timeout: 1500,
+                    menu: [
+                        { name:'Nickname', link:'chat.setName()' },
+                        { name:'Channel', link:'chat.setChannel()' },
+                        { name:'Sound on/off', link:'chat.playSettings()' }
+                    ]
+                });
 
 				// Set default volume level: 0.1 - 1.0
 				chat.playVolume( 0.5 );
@@ -177,7 +184,7 @@ if ("jQuery" in window) {
 			// Do user wan't to use existing server detail to connect?
 			$.fn.nConfirm({
 				title: "Connect to existing server",
-				message: "Do you wan't to <b>connect</b> to<br><b>"+ localStorage.server + " : "+ localStorage.port +"</b> ?",
+				message: "Do you want to <b>connect</b> to<br><b>"+ localStorage.server + " : "+ localStorage.port +"</b> ?",
 				enableBackground: true,
 				onSubmit: function() {
 					// Call init
@@ -194,6 +201,16 @@ if ("jQuery" in window) {
 			// Will init_chat after detail is given
 			ask_server();
 		}
+
+        // If node is active
+        // Ask user to start chat server @ localhost : 9000
+        if (typeof(process) === 'object') {
+            if (process.mainModule.loaded) {
+                if (!process.mainModule.exports.server.online) {
+                    chat_server();
+                }
+            }
+        }
 
 	});
 

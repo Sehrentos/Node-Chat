@@ -72,7 +72,7 @@ chat.init = function(url) {
 		// Ask to reconnect
 		$.fn.nConfirm({
 			title: "Disconnected!",
-			message: "Do you wan't to <b>reconnect</b> to the server?",
+			message: "Do you want to <b>reconnect</b> to the server?",
 			enableBackground: false,
 			onSubmit: function(str) {
 				self.socket.connect();
@@ -231,7 +231,7 @@ chat.setSubmit = function(elementId) {
 					case "/h":
 					case "/help":
 					case "/commands":
-						self.mes("Commands:\n /h/help/commands - Display help.\n /log/messages - Display logged channel messages.\n /c/channel &lt;name&gt; - Change channel.\n /n/name/nick/nickname &lt;name&gt; - Change name.");
+						self.mes("Commands:\n /h, /help, /commands - Display help.\n /log, /messages - Display logged channel messages.\n /c, /channel &lt;name&gt; - Change channel.\n /n, /name, /nick &lt;name&gt; - Change name.");
 					break;
 
 					// Log/Get messages
@@ -260,7 +260,6 @@ chat.setSubmit = function(elementId) {
 								case "/n":
 								case "/name":
 								case "/nick":
-								case "/nickname":
 									var name = command[2] === undefined ? null : command[2].trim();
 									if (name) {
 										self.setName( name );
@@ -295,8 +294,7 @@ chat.setSubmit = function(elementId) {
 * @require user: id, name, channel
 */
 chat.menuAddUser = function(id, name, channel) {
-	var self = this,
-		active = 0;
+	var self = this, active = 0;
 
 	// New menu object
 	var $menu = $('<ul/>');
@@ -306,8 +304,7 @@ chat.menuAddUser = function(id, name, channel) {
 		class: 'user',
 		id: id,
 		title: name
-	})
-	.html('&rsaquo; '+ name);
+	}).html('&rsaquo; '+ name);
 
 	$user.click(function() {
 		active++;
@@ -318,34 +315,25 @@ chat.menuAddUser = function(id, name, channel) {
 				// Whisper
 				$('<li/>', {
 					class: 'menu'
-				})
-				.click(function() {
+				}).click(function() {
 					chat.setWhisper();
-				})
-				.html('&lsaquo; New whisper')
-				.appendTo($menuSub);
+				}).html('&lsaquo; New whisper').appendTo($menuSub);
 
 				// Change name
 				$('<li/>', {
 					class: 'menu'
-				})
-				.click(function() {
+				}).click(function() {
 					self.setName();
-				})
-				.html('&lsaquo; Change name')
-				.appendTo($menuSub);
+				}).html('&lsaquo; Change name').appendTo($menuSub);
 
 				// Change channel
 				$('<li/>', {
 					class: 'menu'
-				})
-				.click(function() {
+				}).click(function() {
 					self.setChannel();
-				})
-				.html('&lsaquo; Change channel')
-				.appendTo($menuSub);
+				}).html('&lsaquo; Change channel').appendTo($menuSub);
 
-				// Append to user
+				// Add to user element
 				$($menuSub).appendTo($user);
 			}
 			else {
@@ -353,12 +341,9 @@ chat.menuAddUser = function(id, name, channel) {
 				// Whisper menu
 				$('<li/>', {
 					class: 'menu'
-				})
-				.click(function() {
-					self.setWhisper( name );
-				})
-				.html('&lsaquo; Whisper')
-				.appendTo($menuSub);
+				}).click(function() {
+					self.setWhisper(name);
+				}).html('&lsaquo; Whisper').appendTo($menuSub);
 
 				// Append to user
 				$($menuSub).appendTo($user);
@@ -415,7 +400,6 @@ chat.menuClear = function() {
 * Update user list & menu
 * @require user: id, name, channel
 */
-// chat.updateUserMenu('CuYkSRtA7LtB4kzZAAAF','tester','bla bla bla');
 chat.menuUpdateUser = function(id, name, channel) {
 	chat.debug('Menu update user');
 	var self = this;
@@ -792,9 +776,9 @@ chat.reconnect = function() {
 
 /*
 * Make main menu
-* @require: none
+* @require: string, object
 */
-chat.drawMenu = function() {
+chat.mainMenu = function(event, object) {
 	// Create main menu
 	var menuHolder = $('<div/>', {
 		id: 'myMenu'
@@ -856,14 +840,7 @@ chat.drawMenu = function() {
 		});
 	});
 
-	menuHolder.dropdown("click", {
-		timeout: 1500,
-		menu: [
-			{ name:'Nickname', link:'chat.setName()' },
-			{ name:'Channel', link:'chat.setChannel()' },
-			{ name:'Sound on/off', link:'chat.playSettings()' }
-		]
-	});
+	menuHolder.dropdown(event, object);
 
 	// Display
 	menuHolder.appendTo('body');

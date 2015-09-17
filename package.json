@@ -1,5 +1,5 @@
 {
-	"name": "My App",
+	"name": "MyApp",
 	"main": "data/index.html",
 	"description": "My nw application",
 	"version": "0.1.1",

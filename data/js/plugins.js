@@ -56,7 +56,7 @@
 	options = {
 		title: string,					-optional
 		message: string,				-optional
-		value: string,					-optional/exept nPromt required
+		value: string,					-optional(nPromt required)
 		enableBackground: true/false,	-optional
 		onSubmit: callback,				-optional
 		onCancel: callback				-optional
@@ -318,7 +318,7 @@
 					// Add menu content
 					if (typeof options === "object") {
 						$.each(options.menu, function (key, value) {
-							dropMenu += '<li><span onclick="'+ value.link +'">'+ value.name +'</span></li>';
+                            dropMenu += '<li onclick="'+ value.link +'"><span>'+ value.name +'</span></li>';
 						});
 					}
 					dropBody.find("ul").html(dropMenu);
