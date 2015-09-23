@@ -299,7 +299,7 @@
 			var dropBody = $('<div class="custom-dropdown" style="display:none;"><ul></ul></div>');
 			// Extend objects
 			var opt = $.extend({}, settings, {
-				dropItDown: function($this) {
+				dropMenuShow: function($this) {
 					var self = this;
 
 					clearTimeout(self.timer);
@@ -333,7 +333,7 @@
 						self.active = true;
 					});
 				},
-				dropItBack: function() {
+				dropMenuHide: function() {
 					//Start timer for hiding element
 					opt.timer = setTimeout(function() {
 						dropBody.slideUp(opt.speed, function(){
@@ -348,16 +348,16 @@
 			switch (event) {
 				case "mouseenter":
 					$(this).mouseenter(function() {
-						opt.dropItDown(this);
+						opt.dropMenuShow(this);
 					})
 					.mouseleave(function() {
-						opt.dropItBack();
+						opt.dropMenuHide();
 					});
 				break;
 
 				default: //click
 					$(this).click(function() {
-						opt.dropItDown(this);
+						opt.dropMenuShow(this);
 					});
 				break;
 			}
@@ -367,7 +367,7 @@
 				clearTimeout(opt.timer);
 			})
 			.mouseleave(function () {
-				opt.dropItBack();
+				opt.dropMenuHide();
 			});
 
 			// Window resize
