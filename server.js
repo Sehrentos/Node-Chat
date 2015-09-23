@@ -38,6 +38,7 @@ var io = require('socket.io')(9000);
 */
 var Messages = function() {
 	this.max = 10; //zero count aswell
+	this.maxLength = 3000;
 	this.data = [];
 
 	this.remove = function(vals, all) {
@@ -212,7 +213,8 @@ var chatData = {
 // Store all messages so you can log them
 // TODO: extend memory for each channels
 var messagesData =  new Messages();
-messagesData.max = 25; //Increase max messages
+messagesData.max = 25; //Increase max msg to store
+//messagesData.maxLength = 3000; //Increase max msg length
 
 // Event listener's on socket open
 io.sockets.on('connection', function(socket) {
@@ -258,8 +260,8 @@ io.sockets.on('connection', function(socket) {
 			//console.log(data);
 			var _date = new Date();
 
-			// Message delay 1000ms length 1000 characters
-			if (data.message.length <= 1000) {
+			// Message max chars
+			if (data.message.length <= messagesData.maxLength) {
 				// Send to client
 				io.to(user.channel).emit('message', {
 					date: _date,
@@ -288,8 +290,8 @@ io.sockets.on('connection', function(socket) {
 				_to = data.to.encodeHTML(),
 				_msg = data.message.encodeHTML();
 
-			// Message length 1000 characters
-			if (_msg.length <= 1000) {
+			// Message max chars
+			if (_msg.length <= messagesData.maxLength) {
 				for (var i=0; i<chatData.users.length; i++) {
 					if (chatData.users[i].name.length && (chatData.users[i].name === _to || chatData.users[i].name === _from) ) {
 						if (user.whisper !== _to) {

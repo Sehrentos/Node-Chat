@@ -9,7 +9,8 @@ var chat = {
 	address: 'localhost',
 	port: 9000,
 	channel: '',
-	debug_mode: false
+	debugMode: false,
+	messageMaxLength: 3000
 };
 
 /*
@@ -18,7 +19,7 @@ var chat = {
 * @require String
 */
 chat.debug = function(str) {
-	return !chat.debug_mode || console.log(str);
+	return !chat.debugMode || console.log(str);
 };
 
 /*
@@ -211,9 +212,9 @@ chat.setSubmit = function(elementId) {
 	var messageStr = elementId.val().trim();
 
 	if (messageStr.length) {
-		if (messageStr.trim().length > 1000) {
+		if (messageStr.trim().length > self.messageMaxLength) {
 			$.fn.nNotice({
-				message: "Message is too long! 1000 letters max.",
+				message: "Message is too long! "+ self.messageMaxLength +" chars max.",
 				enableBackground: true
 			});
 		}
@@ -602,9 +603,9 @@ chat.sendWhisper = function(nickname, messageStr) {
 	var self = this;
 
 	if (nickname.length && messageStr.length) {
-		if (messageStr.length > 1000) {
+		if (messageStr.length > self.messageMaxLength) {
 			$.fn.nNotice({
-				message: "Message is too long! 1000 letters max.",
+				message: "Message is too long! "+ self.messageMaxLength +" chars max.",
 				enableBackground: true
 			});
 		}
