@@ -20,7 +20,7 @@
     exports.server.online = false;
     exports.server.start = function(callback) {
         //var gui = require('nw.gui') || global.window.nwDispatcher.requireNwGui();
-        require('../server.js');
+        require('./server.js');
 
         console.log('Server started.');
 		exports.server.online = true;

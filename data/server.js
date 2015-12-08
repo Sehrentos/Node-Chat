@@ -28,6 +28,11 @@ function handler(req, res) {
 var io = require('socket.io')(9000);
 	//io.listen(9000);
 
+// Save global users array object { id, name, channel, whisper, joined, timestamp }
+var chatData = {
+	users: []
+};
+
 /*
 * Messages data object
 * @Messages.max - Max messages to start removing the first
@@ -204,13 +209,8 @@ function cooldown(user, time) {
 	return false;
 }
 
-// Save global data
-// @users array object { id, name, channel, whisper, joined, timestamp }
-var chatData = {
-	users: []
-};
 // Messages object
-// Store all messages so you can log them
+// - Store all messages
 // TODO: extend memory for each channels
 var messagesData =  new Messages();
 messagesData.max = 25; //Increase max msg to store
@@ -228,8 +228,13 @@ io.sockets.on('connection', function(socket) {
 	console.log('Connection '+ socket.id +' '+ user.name +' '+ socket.request.connection.remoteAddress);
 	//console.log( socket.adapter.rooms ); //{ R5czp2k6xwFBEKK8AAAA: { R5czp2k6xwFBEKK8AAAA: true } }
 
-	// Join default channel/room
-	socket.join(user.channel);
+	// Add new user to the channel
+	// @event: channel-user-add
+	channelAddUser(socket, user.channel, {
+		id: user.id,
+		name: user.name,
+		message: 'Joined channel'
+	});
 
 	// Welcome new user to the server.
 	// @event: header-topic
@@ -240,14 +245,6 @@ io.sockets.on('connection', function(socket) {
 	// Send updated user settings
 	// @event: update-user
 	updateUser(socket, user);
-
-	// Add new user to the channel
-	// @event: channel-user-add
-	channelAddUser(socket, user.channel, {
-		id: user.id,
-		name: user.name,
-		message: 'Joined channel'
-	});
 
 	// Send list of users in this channel to the current user
 	// @event: channel-user-list
@@ -305,6 +302,8 @@ io.sockets.on('connection', function(socket) {
 							from: _from,
 							message: _msg
 						});
+
+						//break; //Stop loop
 					}
 				}
 			}

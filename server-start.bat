@@ -1,2 +1,2 @@
 @echo on
-node server.js
+node data/server.js

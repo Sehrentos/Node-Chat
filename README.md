@@ -15,8 +15,8 @@ Frontend [HTML5] (http://www.w3.org/TR/html5/), [jQuery] (https://jquery.com/)
  - Open console and cd to your work dir
  - Install socket.io node module by typing: [npm install socket.io] (http://socket.io/)
  - Edit socket address and port from client side (https://github.com/Sehrentos/NodeJS-SocketIO-Chat/blob/master/data/index.html) or [/data/js/scripts.js] (https://github.com/Sehrentos/NodeJS-SocketIO-Chat/blob/master/data/js/scripts.js)
- - Edit socket address and port from server side [server.js] (https://github.com/Sehrentos/NodeJS-SocketIO-Chat/blob/master/server.js)
- - Start chat server by typing: node server.js
+ - Edit socket address and port from server side [server.js] (https://github.com/Sehrentos/NodeJS-SocketIO-Chat/blob/master/data/server.js)
+ - Start chat server by typing: node data/server.js
 
 ### Make package
  - Zip your data directory with package.json file so that package.json is it's root.
