@@ -37,19 +37,28 @@
 			//window.moveBy(10,30);
 			//window.resizeTo(800,600);
 
-			// Helper function for window resize
-			var win_opts = {
+			// Helper function for window options
+			win.options = {
 				full: 0,
-				w: window.innerWidth,
-				h: window.innerHeight
+				w: win.width, //window.innerWidth,
+				h: win.height, //window.innerHeight
+				x: win.x,
+				y: win.y
 			};
-			var win_resize = function () {
-				if (win_opts.full === 0) {
-					win_opts.full = 1;
+
+			// Resize window
+			win.resize = function () {
+				if (win.options.full === 0) {
+					win.options.full = 1;
+					win.options.w = win.width;
+					win.options.h = win.height;
+					win.options.x = win.x;
+					win.options.y = win.y;
 					win.maximize();
 				} else {
-					win_opts.full = 0;
-					window.resizeTo(win_opts.w, win_opts.h);
+					win.options.full = 0;
+					window.resizeTo(win.options.w, win.options.h);
+					window.moveBy(win.options.x, win.options.y);
 				}
 			};
 
@@ -290,13 +299,12 @@
 					Your browser does not support HTML5 audio.
 				</audio>
 			</div>
-			<!-- if you disable window frame, these buttons might come handy.
+			<!-- if you disable window frame, these buttons might come handy. -->
 			<div id="windowOptions">
 				<button type="button" onclick="win.minimize();" name="Minimize">_</button>
-				<button type="button" onclick="win_resize();" name="Mazimize">O</button>
+				<button type="button" onclick="win.resize();" name="Maximize">O</button>
 				<button type="button" onclick="window.close();" name="Close">X</button>
 			</div>
-			-->
 		</div>
 	</body>
 </html>

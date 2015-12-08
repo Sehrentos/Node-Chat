@@ -11,8 +11,6 @@
 	exports.pageloads = 0;
 	exports.pageload = function () {
 		exports.pageloads = exports.pageloads + 1;
-		console.log(exports.pageloads + ": pageloads.");
-		//window.location - this would return current filename and line
 	};
 
     // Start your own chat server @ localhost:9000
