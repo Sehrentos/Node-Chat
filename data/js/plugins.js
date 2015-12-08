@@ -29,15 +29,16 @@
 			var n = childNodes[i];
 			if (n.nodeType == 3) {
 				var html = n.nodeValue; //$.trim(n.nodeValue);
-				//if (html) {
-				if (html.match(/\.(jpeg|jpg|gif|png)$/) != null) {
-					html = html.replace(/&/g, '&amp;')
-					.replace(/</g, '&lt;')
-					.replace(/>/g, '&gt;')
-					.replace(url1, '$1<img src="http://$2">$3')
-					.replace(url2, '$1<img src="$2">$5');
-					$(n).after(html).remove();
-				} else {
+				if (html) {
+					// Load images
+					/* if (html.match(/\.(jpeg|jpg|gif|png)$/) != null) {
+						html = html.replace(/&/g, '&amp;')
+						.replace(/</g, '&lt;')
+						.replace(/>/g, '&gt;')
+						.replace(url1, '$1<img src="http://$2">$3')
+						.replace(url2, '$1<img src="$2">$5');
+						$(n).after(html).remove();
+					} else { */
 					html = html.replace(/&/g, '&amp;')
 					.replace(/</g, '&lt;')
 					.replace(/>/g, '&gt;')
