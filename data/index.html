@@ -62,30 +62,31 @@
 				}
 			};
 
-			// This is where I have stored all node related functions
-			var node = process.mainModule.exports;
+			// node related functions
+			var nodeExports = process.mainModule.exports;
 
 			// Count how many times page will be loaded on this session
-			node.pageload();
+			nodeExports.pageload();
 
 			// Start node server @ localhost : 9000
 			var chat_server = function () {
-				if (!process.mainModule.exports.server.online) {
+				if (!nodeExports.server.online) {
 					// jQuery prompt plugin
 					$.fn.nConfirm({
 						title: "Start Chat Server",
 						message: "Do you want to <b>start</b> the chat server?",
 						enableBackground: false,
 						onSubmit: function () {
-							if (!node.server.online) {
-								node.server.start();
-
-							}
+							nodeExports.server.start();
 						}
 					});
 				}
 			};
 
+			// (TEST) Use node to copy a file
+			/* nodeExports.readFile('package.json', function(data) {
+				nodeExports.writeFile('test.txt', data);
+			}); */
 		}
 	}
 	// jQuery initialized
@@ -102,21 +103,9 @@
 
 			// Listen keypush events
 			/* window.addEventListener('keydown', function(e) {
-			if (e.keyCode == 13) console.log(e);
-			return this;
+				if (e.keyCode == 13) console.log(e);
+				return this;
 			}); */
-
-			// Do node stuff
-			if (typeof (process) === 'object') {
-				if (process.mainModule.loaded) {
-
-					// (TEST) Use node to copy a file:
-					/* node.readFile('package.json', function(data) {
-					node.writeFile('test.txt', data);
-					}); */
-
-				}
-			}
 
 			// Ask user for server address
 			var ask_server = function () {
@@ -305,6 +294,22 @@
 				<button type="button" onclick="win.resize();" name="Maximize">O</button>
 				<button type="button" onclick="window.close();" name="Close">X</button>
 			</div>
+			<script>
+			if (typeof (process) === 'object') {
+				if (process.mainModule.loaded) {
+					var fs = fs || require('fs');
+					var jsonData;
+					// readFile is asynchronous action
+					fs.readFile('package.json', 'utf8', function (err, data) {
+						if (err) throw err;
+						jsonData = JSON.parse(data);
+						if (jsonData.window.frame === false) {
+							document.getElementById('windowOptions').style.display = "block";
+						}
+					});
+				}
+			}
+			</script>
 		</div>
 	</body>
 </html>

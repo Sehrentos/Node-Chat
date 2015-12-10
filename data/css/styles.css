@@ -180,11 +180,11 @@ form input#send:hover {
 
 #windowOptions {
 	-webkit-app-region: no-drag;
-    display: block;
-    position: fixed;
-    top: 0.5%;
-    right: 0.5%;
-    z-index: +1;
+	display: none;
+	position: fixed;
+	top: 0.5%;
+	right: 0.5%;
+	z-index: +1;
 }
 #windowOptions button {
 	border-width: 1px;
