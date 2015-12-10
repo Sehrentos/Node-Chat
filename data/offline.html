@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Offline</title>
+<style>
+body {
+	margin: 0;
+	padding: 0;
+	background-color: #eee;
+	font-family: "Helvetica", "Arial", sans-serif;
+}
+.message h1 {
+	margin: 0;
+	font-weight: 300;
+	font-size: 20pt;
+	color: #666;
+}
+h3 {
+	margin-top: 1em;
+	font-weight: 300;
+	font-size: 12pt;
+	color: #666;
+	text-wrap: normal;
+}
+.offline h1 {
+	margin: 0;
+	font-weight: 300;
+	font-size: 24pt;
+	color: #666;
+}
+.more h2 {
+	display: block;
+	margin: 0;
+	font-weight: 300;
+	line-height: 2em;
+}
+.message {
+	position: relative;
+	max-width: 35em;
+	margin-top: 2em;
+	margin-left: 2em;
+	padding: 2em;
+	background-color: #ddd;
+	border-radius: 0.3em;
+}
+.offline {
+	margin-top: 1em;
+	text-align: left;
+}
+.more {
+	position: relative;
+	margin-top: 32px;
+	height: 3em;
+	width: 12em;
+	background-color: #66F;
+	color: #EEE;
+	text-align: center;
+	border-bottom: inset 5px rgba(0,0,0,0.2);
+	transition: 0.1s;
+	border-radius: 0.3em;
+	-webkit-user-select: none;
+	cursor: pointer;
+}
+.more:active {
+	background-color: #6F6FFF;
+	margin-top: 37px;
+	border-bottom: inset 0px rgba(0,0,0,0.1);
+}
+.active {
+	background-color: #BBB;
+	margin-top: 37px;
+	border-bottom: inset 0px rgba(0,0,0,0.1);
+}
+.info {
+	margin-top: 1em;
+	opacity: 0;
+	transition: 0.2s;
+}
+.fadein {
+	-webkit-animation: fadein 0.5s ease-out;
+}
+@-webkit-keyframes fadein {
+	0% {
+		margin-top: 0;
+		opacity: 0;
+	}
+}
+</style>
+<script type="text/javascript">
+function expand() {
+	var info = document.getElementById("info");
+	var button = document.getElementById("button");
+	var btext = document.getElementById("btext");
+	if (info.style.opacity == 0) {
+		info.style.opacity = 1;
+		button.className += " active";
+		btext.innerHTML = "HIDE INFO";
+	} else {
+		info.style.opacity = 0;
+		button.className = "more";
+		btext.innerHTML = "SHOW INFO";
+	}
+}
+</script>
+</head>
+<body>
+<div class="message fadein">
+	<div class="offline"><h1>You are not connected to the Internet.</h1></div>
+	<div class="more" id="button" onclick="expand();"><h2 id="btext">MORE INFO</h2></div>
+</div>
+<div class="message info" id="info">
+	<h1>Check your router</h1>
+	<h3>You should check your router and see if all of your lights are on. If there are any flashing or unlit lights, please reset your router or call your ISP.</h3>
+	<br>
+	<h1>Don't have a router?</h1>
+	<h3>You need a router to access the Internet. How did you even get Chrome on your computer, anyway?</h3>
+</div>
+</body>
+</html>
