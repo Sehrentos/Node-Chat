@@ -2,6 +2,7 @@ chat-app
 ======================
 
 A NW(Node-Webkit) chat application.
+ - Will run on web host or as nw.js application.
 
 Backend [node.js] (https://nodejs.org/), [socket.io] (http://socket.io/)
 Frontend [HTML5] (http://www.w3.org/TR/html5/), [jQuery] (https://jquery.com/)
