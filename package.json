@@ -1,13 +1,13 @@
 {
 	"name": "chat-app",
-	"main": "data/index.html",
+	"main": "data/public/index.html",
 	"description": "My nw chat application",
 	"version": "0.1.1",
 	"keywords": [ "Chat App", "node-webkit" ],
 	"readme": "README.md",
 	"window": {
 		"title": "Chat",
-		"icon": "data/images/favicon.png",
+		"icon": "data/public/images/favicon.png",
 		"toolbar": false,
 		"frame": false,
 		"resizable": true,
@@ -20,7 +20,7 @@
 		"min_height": 200
 	},
 	"nodejs": true,
-	"node-main": "data/nw-app.js",
+	"node-main": "data/nw.js",
 	"webkit": {
 		"plugin": true
 	},

@@ -5,28 +5,23 @@
 * Install socket.io module:
 * cd <my_directory>
 * npm install socket.io
-*
-* Create http server with socket.io and filesystem
-*
-var app = require('http').createServer(handler),
-	io = require('socket.io').listen(app), //socket.io
-	fs = require('fs'); //FileSystem
-app.listen(9000);
-function handler(req, res) {
-	fs.readFile(__dirname + '/data/index.html',
-	function (err, data) {
-		if (err) {
-			res.writeHead(500);
-			return res.end('Error loading /data/index.html');
-		}
-		res.writeHead(200);
-		res.end(data);
-	});
-}
 */
+// Setup basic express server
+var express = require('express');
+var app = express();
+var server = require('http').createServer(app);
+var io = require('socket.io')(server);
+var port = process.env.PORT || 3000;
+
+server.listen(port, function () {
+  console.log('Server listening at port %d', port);
+});
+
+// Routing
+app.use(express.static(__dirname + '/public'));
+
 // Start socket.io standalone server:
-var io = require('socket.io')(9000);
-	//io.listen(9000);
+//var io = require('socket.io')(3000);
 
 // Save global users array object { id, name, channel, whisper, joined, timestamp }
 var chatData = {
@@ -34,7 +29,53 @@ var chatData = {
 };
 
 /*
-* Messages data object
+* deepmerge function - merge/extend object or array.
+* @target
+* @source
+* @return combined object/array
+* var object = deepmerge(obj1, obj2);
+*/
+var deepmerge = function(target, src) {
+	var array = Array.isArray(src);
+	var dst = array && [] || {};
+	if (array) {
+		target = target || [];
+		dst = dst.concat(target);
+		src.forEach(function(e, i) {
+			if (typeof dst[i] === 'undefined') {
+				dst[i] = e;
+			} else if (typeof e === 'object') {
+				dst[i] = deepmerge(target[i], e);
+			} else {
+				if (target.indexOf(e) === -1) {
+					dst.push(e);
+				}
+			}
+		});
+	} else {
+		if (target && typeof target === 'object') {
+			Object.keys(target).forEach(function (key) {
+				dst[key] = target[key];
+			})
+		}
+		Object.keys(src).forEach(function (key) {
+			if (typeof src[key] !== 'object' || !src[key]) {
+				dst[key] = src[key];
+			}
+			else {
+				if (!target[key]) {
+					dst[key] = src[key];
+				} else {
+					dst[key] = deepmerge(target[key], src[key]);
+				}
+			}
+		});
+	}
+	return dst;
+};
+
+/*
+* Messages data array
 * @Messages.max - Max messages to start removing the first
 * @Messages.get()
 * @Messages.set( object ) - ignore max setting
