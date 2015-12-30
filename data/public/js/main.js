@@ -1,5 +1,5 @@
 /*
-* scripts.js - default javascripts
+* main.js - default javascripts
 *
 * Define chat object:
 */
@@ -7,8 +7,8 @@ var chat = {
 	user: {},
 	method: 'http', // https, http, ws
 	address: 'localhost',
-	port: 9000,
-	channel: '',
+	port: 3000,
+	channel: '/',
 	debugMode: false,
 	messageMaxLength: 3000
 };
@@ -19,30 +19,34 @@ var chat = {
 * @require String
 */
 chat.debug = function(str) {
-	return !chat.debugMode || console.log(str);
+	if (chat.debugMode) {
+		console.log(str || "debug");
+	}
+	return;
 };
 
 /*
-* WebSocket init
+* Socket.IO init
 * @require: url - optional
 *
 * @urlSource: @http://socket.io/docs/client-api/
 */
 chat.init = function(url) {
 	var self = this;
-	var link = url || chat.method +'://'+ chat.address +':'+ chat.port + chat.channel;
 
 	// Open socket
-	self.socket = io.connect(link);
+	self.socket = io(url || chat.method +'://'+ chat.address +':'+ chat.port + chat.channel);
 
 	// Successful connection
 	self.socket.on('connect', function (data) {
-		self.setName();
+		chat.debug(data);
+		//self.setName();
 	});
 
 	// Error
 	self.socket.on('error', function (data) {
 		chat.debug(data);
+		self.mes(data);
 	});
 
 	// Connect error
@@ -71,10 +75,10 @@ chat.init = function(url) {
 		// Clear user menu
 		self.menuClear();
 		// Ask to reconnect
-		$.fn.nConfirm({
+		nconfirm({
 			title: "Disconnected!",
 			message: "Do you want to <b>reconnect</b> to the server?",
-			enableBackground: false,
+			background: false,
 			onSubmit: function(str) {
 				self.socket.connect();
 			}
@@ -86,7 +90,7 @@ chat.init = function(url) {
 		chat.debug('header-topic:');
 		chat.debug(data);
 		//self.mes(data.message);
-		$("#header").find("#topic").html(data.message);
+		$("#header").find("#topic").text(data.message);
 	});
 
 	// Notice
@@ -140,18 +144,22 @@ chat.init = function(url) {
 		var d = new Date(data.date),
 			hours = d.getHours(),
 			minutes = d.getMinutes(),
-			seconds = d.getSeconds();
+			seconds = d.getSeconds(),
+			_to = data.to.toString(),
+			_from = data.from.toString(),
+			message = data.message.toString();
 
 		var msg = "["+ self.twoDigits(hours) + ":" + self.twoDigits(minutes) + ":" + self.twoDigits(seconds) +"] ";
-		if (data.from === data.to || data.from === self.user.name) {
-			msg += "Whisper to <a href=\"javascript:void(0)\" class=\"nickname\" onclick=\"chat.setWhisper('"+ data.to +"')\">&lt;"+ data.to +"&gt;</a> ";
+		if (_from === _to || _from === self.user.name) {
+			msg += "Whisper to <a href=\"javascript:void(0)\" class=\"nickname\" onclick=\"chat.setWhisper('"+ _to +"')\">&lt;"+ _to +"&gt;</a> ";
 		} else {
-			msg += "<a href=\"javascript:void(0)\" class=\"nickname\" onclick=\"chat.setWhisper('"+ data.from +"')\">&lt;"+ data.from +"&gt;</a> Whispers: ";
+			msg += "<a href=\"javascript:void(0)\" class=\"nickname\" onclick=\"chat.setWhisper('"+ _from +"')\">&lt;"+ _from +"&gt;</a> Whispers: ";
 		}
-		msg += data.message;
+		msg += message;
+		
 		self.mes(msg,true);
 		// Play audio
-		if (data.to !== self.user.name) {
+		if (_to !== self.user.name) {
 			self.playAudio();
 		}
 		// Scroll down the chat and set focus to input.
@@ -165,15 +173,17 @@ chat.init = function(url) {
 		var d = new Date(data.date),
 			hours = d.getHours(),
 			minutes = d.getMinutes(),
-			seconds = d.getSeconds();
+			seconds = d.getSeconds(),
+			name = data.name.toString(),
+			message = data.message.toString();
 
 		var msg = "["+ self.twoDigits(hours) + ":" + self.twoDigits(minutes) + ":" + self.twoDigits(seconds) +"] ";
-			msg += "<a href=\"javascript:void(0)\" class=\"nickname\" onclick=\"chat.setWhisper('"+ data.name +"')\">&lt;"+ data.name +"&gt;</a> ";
-			msg += data.message;
+			msg += "<a href=\"javascript:void(0)\" class=\"nickname\" onclick=\"chat.setWhisper('"+ name +"')\">&lt;"+ name +"&gt;</a> ";
+			msg += message;
 
 		self.mes(msg);
 		// Play audio
-		if (data.name !== self.user.name) {
+		if (name !== self.user.name) {
 			self.playAudio();
 		}
 	});
@@ -188,11 +198,13 @@ chat.init = function(url) {
 			var d = new Date( this.date ),
 				hours = d.getHours(),
 				minutes = d.getMinutes(),
-				seconds = d.getSeconds();
+				seconds = d.getSeconds(),
+				name = this.name.toString(),
+				message = this.message.toString();
 
 			var msg = "["+ self.twoDigits(hours) + ":" + self.twoDigits(minutes) + ":" + self.twoDigits(seconds) +"] ";
-			msg += "<a href=\"javascript:void(0)\" class=\"nickname\" onclick=\"chat.setWhisper('"+ this.name +"')\">&lt;"+ this.name +"&gt;</a> ";
-			msg += this.message;
+			msg += "<a href=\"javascript:void(0)\" class=\"nickname\" onclick=\"chat.setWhisper('"+ name +"')\">&lt;"+ name +"&gt;</a> ";
+			msg += message;
 
 			self.mes(msg);
 		});
@@ -213,9 +225,9 @@ chat.setSubmit = function(elementId) {
 
 	if (messageStr.length) {
 		if (messageStr.trim().length > self.messageMaxLength) {
-			$.fn.nNotice({
+			nalert({
 				message: "Message is too long! "+ self.messageMaxLength +" chars max.",
-				enableBackground: true
+				background: true
 			});
 		}
 		else {
@@ -279,10 +291,6 @@ chat.setSubmit = function(elementId) {
 			}
 		}
 		elementId.val(null);
-		/* else {
-			self.socket.emit('message', { message: messageStr });
-			elementId.val(null);
-		} */
 	}
 
 	self.setFocus();
@@ -446,10 +454,10 @@ chat.updateUsers = function(data) {
 chat.connect = function(callback) {
 	var self = this;
 
-	$.fn.nConfirm({
+	nconfirm({
 		title: "Welcome to Chat",
 		message: "Do you wish to <b>connect</b> to the server?",
-		enableBackground: true,
+		background: true,
 		onSubmit: function() {
 			// Initialize
 			chat.init();
@@ -469,16 +477,21 @@ chat.connect = function(callback) {
 */
 chat.setName = function(nameStr) {
 	if (nameStr === undefined) {
-		$.fn.nPrompt({
+		nprompt({
 			title: "Set Name",
 			message: "Please enter your <b>name</b> at the field below.",
-			value: (localStorage.name ? localStorage.name : chat.user.name),
-			enableBackground: false,
-			onSubmit: function(str) {
-				if (str !== null) {
-					chat.user.name = str;
-					localStorage.name = str;
-					chat.socket.emit('setName', { name: str });
+			input: [{
+				"type": "text",
+				"name": "name",
+				"placeholder": "Your name",
+				"value": (localStorage.name ? localStorage.name : chat.user.name)
+			}],
+			background: false,
+			onSubmit: function(data) {
+				if (data.name !== null) {
+					chat.user.name = data.name;
+					localStorage.name = data.name;
+					chat.socket.emit('setName', { name: data.name });
 					chat.setFocus();
 				}
 			}
@@ -486,14 +499,14 @@ chat.setName = function(nameStr) {
 	}
 	else {
 		if (nameStr.length < 2) {
-			$.fn.nNotice({
+			nalert({
 				message: "Name is too short! 2 min.",
-				enableBackground: true
+				background: true
 			});
 		} else if (nameStr.length > 25) {
-			$.fn.nNotice({
+			nalert({
 				message: "Name is too long! 25 max.",
-				enableBackground: true
+				background: true
 			});
 		} else {
 			chat.user.name = nameStr;
@@ -514,28 +527,33 @@ chat.setChannel = function(channelName) {
 	var self = this;
 
 	if (channelName === undefined) {
-		$.fn.nPrompt({
+		nprompt({
 			title: "Set Channel",
 			message: "Please enter <b>channel</b> name at the field below.",
-			value: "General",
-			enableBackground: false,
-			onSubmit: function(str) {
-				if (str !== null) {
-					self.socket.emit('setChannel', { channel: str.toLowerCase() });
+			input: [{
+				"type": "text",
+				"name": "channel",
+				"placeholder": "Channel name",
+				"value": "general"
+			}],
+			background: false,
+			onSubmit: function(data) {
+				if (data.channel !== null) {
+					self.socket.emit('setChannel', { channel: data.channel.toLowerCase() });
 				}
 			}
 		});
 	}
 	else {
 		if (channelName.length < 2) {
-			$.fn.nNotice({
+			nalert({
 				message: "Channel name is too short! 2 min.",
-				enableBackground: true
+				background: true
 			});
 		} else if (channelName.length > 50) {
-			$.fn.nNotice({
+			nalert({
 				message: "Channel name is too long! 50 max.",
-				enableBackground: true
+				background: true
 			});
 		} else {
 			// Send.
@@ -554,20 +572,24 @@ chat.setWhisper = function(nickname, messageStr) {
 	var self = this;
 
 	if (nickname === undefined || nickname === chat.user.name) {
-		$.fn.nPrompt({
+		nprompt({
 			title: "Send whisper",
 			message: "Please enter a whisper <b>name</b>.",
-			value: chat.user.whisper ? chat.user.whisper: '',
-			onSubmit: function(str) {
+			input: [{
+				"type": "text",
+				"name": "whisper",
+				"placeholder": "User name",
+				"value": (chat.user.whisper ? chat.user.whisper: "")
+			},{
+				"type": "text",
+				"name": "message",
+				"placeholder": "Message",
+				"value": ""
+			}],
+			onSubmit: function(data) {
 				// Don't send to your self
-				if (str !== chat.user.name) {
-					$.fn.nPrompt({
-						title: "Send whisper",
-						message: "Please enter your <b>message</b> at the field below.",
-						onSubmit: function(message) {
-							self.sendWhisper(str, message);
-						}
-					});
+				if (data.whisper !== chat.user.name) {
+					self.sendWhisper(data.whisper, data.message);
 				}
 			}
 		});
@@ -579,11 +601,17 @@ chat.setWhisper = function(nickname, messageStr) {
 			self.setFocus();
 		}
 		else if (messageStr === '') {
-			$.fn.nPrompt({
+			nprompt({
 				title: "Send whisper",
 				message: "Please enter your <b>message</b> at the field below.",
-				onSubmit: function(message) {
-					self.sendWhisper(nickname, message);
+				input: [{
+					"type": "text",
+					"name": "message",
+					"placeholder": "Message",
+					"value": ""
+				}],
+				onSubmit: function(data) {
+					self.sendWhisper(nickname, data.message);
 				}
 			});
 		}
@@ -604,9 +632,9 @@ chat.sendWhisper = function(nickname, messageStr) {
 
 	if (nickname.length && messageStr.length) {
 		if (messageStr.length > self.messageMaxLength) {
-			$.fn.nNotice({
+			nalert({
 				message: "Message is too long! "+ self.messageMaxLength +" chars max.",
-				enableBackground: true
+				background: true
 			});
 		}
 		else {

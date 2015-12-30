@@ -1,5 +1,5 @@
 <!doctype html>
-<html manifest="cache.manifest">
+<html manifest="cache.manifest" lang="en">
 	<head>
 	<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
 	<!-- Deprecated <meta http-equiv="Cache-control" content="private, max-age=0" /> -->
@@ -71,10 +71,10 @@
 			var chat_server = function () {
 				if (!nodeExports.server.online) {
 					// jQuery prompt plugin
-					$.fn.nConfirm({
+					nconfirm({
 						title: "Start Chat Server",
 						message: "Do you want to <b>start</b> the chat server?",
-						enableBackground: false,
+						background: false,
 						onSubmit: function () {
 							nodeExports.server.start();
 						}
@@ -102,46 +102,39 @@
 
 			// Ask user for server address
 			var ask_server = function () {
-				$.fn.nPrompt({
+				nprompt({
 					title: "Set Server Address",
 					message: "Please enter server <b>address</b> at the field below.",
-					value: (localStorage.server ? localStorage.server : 'localhost'),
-					enableBackground: true,
-					onSubmit: function (server) {
-						if (server === null) return;
-						localStorage.server = server;
-
-						// Continue to ask server port
-						ask_port(server);
-					}
-				}); //end-address
-			};
-
-			var ask_port = function (server) {
-				// Ask user for server port or use existing one
-				$.fn.nPrompt({
-					title: "Set Server Port",
-					message: "Please enter server <b>port</b> at the field below.",
-					value: (localStorage.port ? localStorage.port : 3000),
-					enableBackground: true,
-					onSubmit: function (port) {
-						if (port === null) return;
-						localStorage.port = port;
+					input: [{
+						"type": "text",
+						"name": "server",
+						"placeholder": "Server address",
+						"value": (localStorage.server ? localStorage.server : 'localhost')
+					},{
+						"type": "text",
+						"name": "port",
+						"placeholder": "Server port",
+						"value": (localStorage.port ? localStorage.port : 3000)
+					}],
+					background: true,
+					onSubmit: function (data) {
+						if (data.server === null && data.port === null) return;
+						localStorage.server = data.server;
 
 						// Call init...
-						init_chat(server, port);
+						init_chat(data.server, data.port);
 					}
-				}); //end-port
+				}); //end-address
 			};
 
 			// Initialize chat
 			var init_chat = function (server, port) {
 				// Over-write default chat settings before init
 				$.extend(chat || {}, {
-					method: 'ws', //https/http/ws
+					method: 'http', //https/http/ws
 					address: server,
 					port: port,
-					channel: '',
+					channel: '/',
 					debugMode: true
 				});
 
@@ -198,10 +191,10 @@
 				// Check if server info already exists
 				if (localStorage.server && localStorage.port) {
 					// Do user wan't to use existing server detail to connect?
-					$.fn.nConfirm({
+					nconfirm({
 						title: "Connect to existing server",
 						message: "Do you want to <b>connect</b> to<br><b>" + localStorage.server + " : " + localStorage.port + "</b> ?",
-						enableBackground: true,
+						background: true,
 						onSubmit: function () {
 							// Call init
 							init_chat(localStorage.server, localStorage.port);
@@ -252,7 +245,7 @@
 						<div id="footer">
 							<form action="#chat" id="sendform">
 								<input type="text" name="whisper" id="whisper" class="border" placeholder="Whisper" />
-								<!-- <input type="text" id="message" class="border" placeholder="Write message..." autocomplete="off" autofocus required/> -->
+								<!-- <input type="text" name="message" id="message" class="border" placeholder="Write message..." autocomplete="off" autofocus required/> -->
 								<textarea name="message" id="message" class="border" placeholder="Write message..." rows="1" autofocus required></textarea>
 								<input type="submit" id="send" class="border" value="Send" />
 							</form>
@@ -261,15 +254,6 @@
 				</tr>
 			</table>
 			<div id="debug"></div>
-			<div class="hidden">
-				<!-- Audio source: eng.universal-soundbank.com/hits.htm -->
-				<audio id="audio" controls hidden>
-					<source src="sound/anvil.mp3" type="audio/mpeg">
-					<source src="sound/anvil.ogg" type="audio/ogg">
-					<embed src="sound/anvil.mp3">
-					Your browser does not support HTML5 audio.
-				</audio>
-			</div>
 			<!-- if you disable window frame, these buttons might come handy. -->
 			<div id="windowOptions">
 				<button type="button" onclick="win.minimize();" name="Minimize">_</button>
@@ -292,6 +276,15 @@
 				}
 			}
 			</script>
+		</div>
+		<div id="sounds" class="hidden">
+			<!-- Audio source: eng.universal-soundbank.com/hits.htm -->
+			<audio id="audio" controls hidden>
+				<source src="sound/anvil.mp3" type="audio/mpeg">
+				<source src="sound/anvil.ogg" type="audio/ogg">
+				<embed src="sound/anvil.mp3">
+				Your browser does not support HTML5 audio.
+			</audio>
 		</div>
 	</body>
 </html>

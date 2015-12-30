@@ -1,3 +1,340 @@
+/**
+ * Pure JS: Custom prompt, confirm, alert
+ * @nprompt( options )
+ * @nconfirm( options )
+ * @nalert( options )
+ * Browser support(tested): IE9+, Mozilla/5.0 Gecko Firefox/38, Chrome/47
+  options = {
+ 	title: string,					-optional
+ 	message: string,				-optional
+ 	input: array[object],			-optional(npromt required)
+ 	background: true/false,			-optional
+ 	onSubmit: callback,				-optional
+ 	onCancel: callback				-optional
+ }
+ * input example:
+ options.input = [{
+ 	"type": "text",
+ 	"name": "test1",
+ 	"placeholder": "Test 1",
+ 	"required": "true"
+ }]
+ */
+var nprompt = function(options, pType) {
+	// Default settings
+	var defaults = {
+		type: pType || "prompt",
+		title: "",
+		message: "",
+		input: [{
+			name: "a",
+			value: "",
+			placeholder: "Write here...",
+			className: "nprompt_value"
+		}],
+		inputSubmit: [{
+			type: "submit",
+			className: "submit_ok",
+			value: "Ok"
+		},{
+			type: "button",
+			className: "submit_cancel",
+			value: "Cancel"
+		}],
+		background: false,
+		promptBody: document.createElement("DIV"),
+		onSubmit: function() {},
+		onCancel: function() {}
+	};
+
+	/*
+	* Serialize form function
+	* @form - target id
+	* @return object
+	* Browser support(tested): IE/9+, Mozilla/5.0 Gecko Firefox/38, Chrome/47
+	*/
+	var serialize = function(form) {
+		if (!form || form.nodeName !== "FORM") {
+			return;
+		}
+		var i, j, o = {};
+		for (i = 0; i < form.elements.length; i++) {
+			if (form.elements[i].name === "") {
+				continue
+			}
+			switch (form.elements[i].nodeName) {
+				case "INPUT":
+					switch (form.elements[i].type) {
+						case "text":
+						case "hidden":
+						case "password":
+						case "button":
+						case "reset":
+						case "submit":
+						//HTML5
+						case "number":
+						case "color":
+						case "range":
+						case "date":
+						case "month":
+						case "week":
+						case "time":
+						case "datetime":
+						case "datetime-local":
+						case "email":
+						case "search":
+						case "tel":
+						case "url":
+							o[form.elements[i].name] = encodeURIComponent(form.elements[i].value);
+						break;
+						case "checkbox":
+						case "radio":
+							if (form.elements[i].checked) {
+								o[form.elements[i].name] = encodeURIComponent(form.elements[i].value);
+							}
+						break;
+						case "file":
+						break;
+					}
+				break;
+				case "TEXTAREA":
+					o[form.elements[i].name] = encodeURIComponent(form.elements[i].value);
+				break;
+				case "SELECT":
+					switch (form.elements[i].type) {
+						case "select-one":
+							o[form.elements[i].name] = encodeURIComponent(form.elements[i].value);
+						break;
+						case "select-multiple":
+							for (j = 0; j < form.elements[i].options.length; j++) {
+								if (form.elements[i].options[j].selected) {
+									o[form.elements[i].name] = encodeURIComponent(form.elements[i].options[j].value);
+								}
+							}
+						break;
+					}
+				break;
+				case "BUTTON":
+					switch (form.elements[i].type) {
+						case "reset":
+						case "submit":
+						case "button":
+							o[form.elements[i].name] = encodeURIComponent(form.elements[i].value);
+						break;
+					}
+				break;
+			}
+		}
+		return o;
+	};
+
+	/*
+	* Extend - Object merge function
+	* Browser support(tested): IE9+, Mozilla/5.0 Gecko Firefox/38, Chrome/47
+	*/
+	var extend = function(destination, source) {
+		for (var property in source) {
+			if (source[property] && source[property].constructor &&
+			 source[property].constructor === Object) {
+				destination[property] = destination[property] || {};
+				arguments.callee(destination[property], source[property]);
+			} else {
+				destination[property] = source[property];
+			}
+		}
+		return destination;
+	};
+
+	// New 2015 not working in IE yet.
+	//var settings = Object.assign(defaults, options);
+	// Custom function extend(destination, source)
+	var settings = extend(defaults, options);
+
+	// Append promptBody element settings
+	settings.promptBody.className = "nprompt_holder";
+	settings.promptBody.innerHTML = '<div class="nprompt_background"></div>' +
+		'<div class="nprompt_main">' +
+		'<div class="nprompt_inner">' +
+		'<div class="nprompt_message">' +
+		'<p class="title"></p>' +
+		'<p class="message"><p>' +
+		'</div>' +
+		'<form class="nprompt_inputs"></form>' +
+		'</div>' +
+		'</div>';
+
+	settings.remove = function(t) {
+		return t.parentNode.removeChild(t);
+	};
+
+	/* settings.promptKeydown = function(event) {
+		if (event.target.nodeName.toLowerCase() === "textarea") {
+			if (!event.shiftKey && event.keyCode === 13) {
+				event.preventDefault();
+				settings.promptSubmit(event);
+			} else if (event.keyCode == 27) {
+				event.preventDefault();
+				settings.promptCancel(event);
+			}
+		} else if (event.keyCode === 13) {
+			event.preventDefault();
+			settings.promptSubmit(event);
+		} else if (event.keyCode == 27) {
+			event.preventDefault();
+			settings.promptCancel(event);
+		}
+	}; */
+
+	settings.promptSubmit = function(event) {
+		event.preventDefault();
+		var inputObject = serialize(settings.promptBody.querySelector(".nprompt_inputs"), "object");
+		settings.onSubmit(inputObject);
+		settings.remove(settings.promptBody);
+		return this;
+	};
+
+	settings.promptCancel = function(event) {
+		settings.onCancel(null);
+		settings.remove(settings.promptBody);
+		//settings.promptBody.removeEventListener("keydown", settings.promptKeydown, false);
+		settings.promptBody.querySelector(".nprompt_inputs").removeEventListener("submit", settings.promptSubmit, false);
+		settings.promptBody.querySelector(".submit_cancel").removeEventListener("click", settings.promptCancel, false);
+		//window.removeEventListener("resize", settings.promptResize, false);
+		return this;
+	};
+
+	/* settings.promptResize = function(event) {
+		setTimeout(function() {
+			settings.promptBody.querySelector(".nprompt_main").style.left = (window.innerWidth / 2 - settings.promptBody.querySelector(".nprompt_main").offsetWidth / 2) + "px";
+		}, 200);
+	}; */
+
+	// Add title
+	if (settings.title.length > 0) {
+		settings.promptBody.querySelector(".nprompt_message").querySelector(".title").innerHTML = settings.title;
+	} else {
+		settings.remove( settings.promptBody.querySelector(".nprompt_message").querySelector(".title") );
+	}
+
+	// Add message
+	settings.promptBody.querySelector(".nprompt_message").querySelector(".message").innerHTML = settings.message;
+
+	// Add Submit/Cancel buttons
+	var i = 0;
+	var array = settings.inputSubmit;
+	while (array[i]) {
+		var elem = document.createElement('INPUT');
+		inputElem = extend(elem, array[i]);
+		settings.promptBody.querySelector(".nprompt_inputs").appendChild(inputElem);
+		i++;
+	}
+
+	// Add inputs
+	if (!settings.type || settings.type === "prompt") {
+		var i = 0;
+		var array = settings.input;
+		while (array[i]) {
+			var value = array[i];
+			var type = array[i].type || "text";
+			switch (type) {
+				case "textarea":
+					var elem = document.createElement('TEXTAREA');
+					inputElem = extend(elem, array[i]);
+					inputElem.className = array[i].className || "nprompt_value";
+					// Insert before submit and cancel button
+					settings.promptBody.querySelector(".nprompt_inputs").insertBefore(inputElem, settings.promptBody.querySelector(".nprompt_inputs").childNodes[settings.promptBody.querySelector(".nprompt_inputs").childNodes.length-2]);
+				break;
+				case "radio":
+				case "checkbox":
+					var elem = document.createElement('INPUT');
+					inputElem = extend(elem, array[i]);
+					inputElem.id = array[i].id || Math.random();
+					inputElem.className = array[i].className || "nprompt_value";
+					var newElement = document.createElement("P");
+					
+					var newItem = document.createElement("LABEL");
+					newItem.htmlFor = inputElem.id;
+					newItem.innerHTML = array[i].desc || "";
+					
+					newElement.appendChild(inputElem);
+					newElement.appendChild(newItem);
+					
+					var newItem = document.createElement("BR");
+					newElement.appendChild(newItem);
+					// Insert before submit and cancel button
+					settings.promptBody.querySelector(".nprompt_inputs").insertBefore(newElement, settings.promptBody.querySelector(".nprompt_inputs").childNodes[settings.promptBody.querySelector(".nprompt_inputs").childNodes.length-2]);
+				break;
+				default:
+					var elem = document.createElement('INPUT');
+					inputElem = extend(elem, array[i]);
+					//inputElem.id = array[i].id || Math.random();
+					inputElem.className = array[i].className || "nprompt_value";
+					// Insert before submit and cancel button
+					settings.promptBody.querySelector(".nprompt_inputs").insertBefore(inputElem, settings.promptBody.querySelector(".nprompt_inputs").childNodes[settings.promptBody.querySelector(".nprompt_inputs").childNodes.length-2]);
+				break;
+			}
+			i++;
+		}
+	}
+
+	// Hide cancel button
+	if (settings.type !== "prompt" && settings.type !== "confirm") {
+		settings.promptBody.querySelector(".submit_cancel").style.display = "none";
+	}
+
+	// Bind event click submit
+	settings.promptBody.querySelector(".nprompt_inputs").addEventListener("submit", settings.promptSubmit, false);
+
+	// Bind event keydown
+	//settings.promptBody.addEventListener("keydown", settings.promptKeydown, false);
+
+	// Bind event click cancel
+	settings.promptBody.querySelector(".submit_cancel").addEventListener("click", settings.promptCancel, false);
+
+	// Resize window event
+	//window.addEventListener("resize", settings.promptResize, false);
+
+	// Append to the body
+	document.body.appendChild(settings.promptBody);
+
+	// Enable/Disable background
+	if (settings.background) {
+		//settings.promptBody.classList.remove("disabled");
+		//settings.promptBody.classList.add("enabled");
+		settings.promptBody.querySelector(".nprompt_background").className.replace(" disabled", "");
+		settings.promptBody.querySelector(".nprompt_background").className += " enabled";
+	} else {
+		//settings.promptBody.classList.remove("enabled");
+		//settings.promptBody.classList.add("disabled");
+		settings.promptBody.querySelector(".nprompt_background").className.replace(" enabled", "");
+		settings.promptBody.querySelector(".nprompt_background").className += " disabled";
+	}
+
+	// Display
+	settings.promptBody.querySelector(".nprompt_background").style.display = "block";
+
+	// Center (should be done in CSS)
+	//settings.promptBody.querySelector(".nprompt_main").style.left = (window.innerWidth / 2 - settings.promptBody.querySelector(".nprompt_main").offsetWidth / 2) + "px";
+
+	// Focus
+	if (settings.type === false || settings.type === "prompt") {
+		settings.promptBody.querySelector(".nprompt_value").focus();
+		settings.promptBody.querySelector(".nprompt_value").select();
+	} else {
+		settings.promptBody.querySelector(".submit_ok").focus();
+	}
+
+	return this;
+};
+// New confirm event
+var nconfirm = function(options) {
+	return nprompt(options, "confirm");
+};
+// New alert event
+var nalert = function(options) {
+	return nprompt(options, "alert");
+};
+
 /*
 * plugins.js - jQuery plugins
 */
@@ -56,233 +393,6 @@
 		return this.each(linkifyThis);
 	};
 	
-	/*
-	* New prompt, confirm, alert/notice windows plugin
-	* @jQuery.fn.nPrompt( options )
-	* @jQuery.fn.nConfirm( options )
-	* @jQuery.fn.nAlert( options )
-	* @jQuery.fn.nNotice( options )
-	options = {
-		title: string,					-optional
-		message: string,				-optional
-		value: string,					-optional(nPromt required)
-		enableBackground: true/false,	-optional
-		onSubmit: callback,				-optional
-		onCancel: callback				-optional
-	}
-	*/
-	$.fn.nPromptIt = function (options) {
-		// Create new nPrompt body element
-		var promptBody = $(
-			'<div class="nprompt_background">' +
-			'<div class="nprompt_main">' +
-			'<div class="nprompt_inner">' +
-			'<div class="nprompt_message">' +
-			'<p class="title"></p>' +
-			'<p class="message"><p>' +
-			'</div>' +
-			'<div class="nprompt_inputs">' +
-			'<input type="text" class="nprompt_value" placeholder="Write here..." value="" />' +
-			'<input type="button" class="submit_ok" value="Ok" />' +
-			'<input type="button" class="submit_cancel" value="Cancel" />' +
-			'</div>' +
-			'</div>' +
-			'</div>' +
-			'</div>');
-
-		// Append promptBody to the body
-		$("body").append(promptBody);
-
-		// Options, Defaults and Methods
-		var defaults = {
-			//Options
-			type: false,
-			title: "",
-			message: "",
-			value: "",
-			enableBackground: false,
-			onSubmit: function () {},
-			onCancel: function () {},
-			//Defaults
-			promptId: promptBody,
-			promptMainId: promptBody.find(".nprompt_main"),
-			promptMsgId: promptBody.find(".nprompt_message"),
-			promptValueId: promptBody.find(".nprompt_value"),
-			promptSubmitId: promptBody.find(".submit_ok"),
-			promptCancelId: promptBody.find(".submit_cancel"),
-			//Functions
-			promptFocus: function (e) {
-				if (e === undefined || e === false) {
-					this.promptValueId.focus().select();
-				} else {
-					e.focus();
-				}
-				return this;
-			},
-			promptHide: function () {
-				this.promptId.css("display", "none");
-				return this;
-			},
-			promptRemove: function () {
-				this.promptId.remove();
-				return this;
-			},
-			promptShow: function () {
-				var center = ($(document).width() / 2 - this.promptMainId.width() / 2);
-				if (this.enableBackground) {
-					this.promptId.css({
-						"display": "block",
-						"background": "#b2b2b2",
-						"opacity": "0.90"
-					});
-					this.promptMainId.css({
-						"left": center + "px"
-					});
-				} else {
-					this.promptId.css({
-						"display": "block"
-					});
-					this.promptMainId.css({
-						"left": center + "px"
-					});
-				}
-				this.promptFocus(this.type === "prompt" ? this.promptValueId : this.promptSubmitId);
-				return this;
-			},
-			promptUnbind: function () {
-				this.promptSubmitId.unbind("click");
-				if (!this.type) {
-					this.promptCancelId.unbind("click");
-					this.promptValueId.unbind("keydown");
-				} else if (this.type === "confirm") {
-					this.promptCancelId.unbind("click");
-				}
-				return this;
-			},
-			promptSubmit: function () {
-				var promptOk = $.trim(this.promptValueId.val());
-				this.promptValueId.val("");
-				this.promptUnbind().onSubmit(promptOk);
-				//this.promptHide();
-				this.promptId.remove();
-				return this;
-			},
-			promptCancel: function () {
-				this.promptValueId.val("");
-				this.promptUnbind().onCancel(null);
-				//this.promptHide();
-				this.promptId.remove();
-				return this;
-			},
-			promptKeyDown: function (event) {
-				if (event.keyCode == 13) {
-					event.preventDefault();
-					this.promptSubmit();
-				} else if (event.keyCode == 27) {
-					event.preventDefault();
-					if (!this.type || this.type === "confirm") {
-						this.promptCancel();
-					} else {
-						this.promptSubmit();
-					}
-				}
-				return this;
-			}
-		};
-
-		var settings = $.extend({}, defaults, options);
-
-		// Add default values in to the nPrompt element
-		if (settings.title.length > 0) {
-			settings.promptMsgId.find(".title").html(settings.title);
-		} else {
-			settings.promptMsgId.find(".title").remove();
-		}
-		if (settings.message.length > 0) {
-			settings.promptMsgId.find(".message").html(settings.message);
-		} else {
-			settings.promptMsgId.find(".message").remove();
-		}
-		if (!settings.type || settings.type === "prompt") {
-			settings.promptValueId.val(settings.value);
-		} else if (settings.type === "confirm") {
-			settings.promptValueId.hide();
-		} else {
-			settings.promptValueId.hide();
-			settings.promptCancelId.hide();
-		}
-
-		// Show nPrompt element
-		settings.promptShow();
-
-		// Bind event keydown
-		if (!settings.type) {
-			settings.promptValueId.bind("keydown", function (e) {
-				settings.promptKeyDown(e);
-			});
-		} else {
-			settings.promptMainId.bind("keydown", function (e) {
-				settings.promptKeyDown(e);
-			});
-		}
-
-		// Bind event click OK
-		settings.promptSubmitId.bind("click", function () {
-			settings.promptSubmit();
-		});
-
-		// Bind event click onCancel
-		if (!settings.type || settings.type === "prompt" || settings.type === "confirm") {
-			settings.promptCancelId.bind("click", function () {
-				settings.promptCancel();
-			});
-		}
-
-		// Resize event
-		$(window).resize(function () {
-			if (settings.promptMainId.length) {
-				settings.promptMainId.css("left", ($(document).width() / 2 - settings.promptMainId.width() / 2) + "px");
-			}
-		});
-		return this;
-	};
-
-	// Duplicate nPromptIt: New prompt event
-	$.fn.nPrompt = function (options) {
-		var defaults = {
-				"type": "prompt"
-		},
-		settings = $.extend({}, defaults, options);
-		return $.fn.nPromptIt(settings);
-	};
-
-	// Duplicate nPromptIt: New confirm event
-	$.fn.nConfirm = function (options) {
-		var defaults = {
-				"type": "confirm"
-		},
-		settings = $.extend({}, defaults, options);
-		return $.fn.nPromptIt(settings);
-	};
-
-	// Duplicate nPromptIt: New alert event
-	$.fn.nAlert = function (options) {
-		var defaults = {
-				"type": "alert"
-		},
-		settings = $.extend({}, defaults, options);
-		return $.fn.nPromptIt(settings);
-	};
-
-	// Duplicate nPromptIt: New notice event
-	$.fn.nNotice = function (options) {
-		var defaults = {
-				"type": "notice"
-		},
-		settings = $.extend({}, defaults, options);
-		return $.fn.nPromptIt(settings);
-	};
-
 	/*
 	 * jQuery plugin: dropdown menu
 	 *

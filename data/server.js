@@ -13,12 +13,17 @@ var server = require('http').createServer(app);
 var io = require('socket.io')(server);
 var port = process.env.PORT || 3000;
 
-server.listen(port, function () {
+server.listen(port, function() {
   console.log('Server listening at port %d', port);
 });
 
 // Routing
 app.use(express.static(__dirname + '/public'));
+
+// Route for everything else.
+app.get('*', function(req, res) {
+	res.send('Route not found.');
+});
 
 // Start socket.io standalone server:
 //var io = require('socket.io')(3000);
@@ -86,7 +91,6 @@ var Messages = function() {
 	this.max = 10; //zero count aswell
 	this.maxLength = 3000;
 	this.data = [];
-
 	this.remove = function(vals, all) {
 		var arr = this.data, i, removedItems = [];
 		if (!Array.isArray(vals)) vals = [vals];
@@ -103,7 +107,6 @@ var Messages = function() {
 		}
 		return removedItems;
 	};
-
 	this.add = function(obj) {
 		var arr = this.data;
 		if (arr.length >= this.max) {
@@ -111,11 +114,9 @@ var Messages = function() {
 		}
 		return arr.push(obj);
 	};
-
 	this.get = function() {
 		return this.data;
 	};
-
 	this.set = function(arr) {
 		if (typeof(arr) === "object") {
 			this.data = arr;
@@ -134,7 +135,7 @@ if (!String.prototype.encodeHTML) {
 			.replace(/</g, '&lt;')
 			.replace(/>/g, '&gt;')
 			.replace(/"/g, '&quot;')
-			.replace(/'/g, '&apos;');
+			.replace(/'/g, '&apos;').toString();
 	};
 }
 
@@ -280,7 +281,7 @@ io.sockets.on('connection', function(socket) {
 	// Welcome new user to the server.
 	// @event: header-topic
 	socket.emit('header-topic', {
-		message: 'You are in '+ user.channel +' channel.'
+		message: 'You are in '+ user.channel.toString() +' channel.'
 	});
 
 	// Send updated user settings
@@ -290,7 +291,7 @@ io.sockets.on('connection', function(socket) {
 	// Send list of users in this channel to the current user
 	// @event: channel-user-list
 	channelListUsers(socket, user.channel);
-
+	
 	// Message event
 	// @event: message
 	socket.on('message', function (data) {
@@ -337,6 +338,7 @@ io.sockets.on('connection', function(socket) {
 							updateUser(socket, user);
 						}
 						//console.log(chatData.users[i].id);
+						//socket.broadcast.to(chatData.users[i].id).emit('whisper', {
 						io.to(chatData.users[i].id).emit('whisper', {
 							date: _date,
 							to: _to,
