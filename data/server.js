@@ -12,9 +12,13 @@ var app = express();
 var server = require('http').createServer(app);
 var io = require('socket.io')(server);
 var port = process.env.PORT || 3000;
+var debugMode = false;
+var chatData = { //Users array object { id, name, channel, whisper, joined, timestamp }
+	users: []
+};
 
 server.listen(port, function() {
-  console.log('Server listening at port %d', port);
+  if (debugMode) console.log('Server listening at port %d', port);
 });
 
 // Routing
@@ -27,11 +31,6 @@ app.get('*', function(req, res) {
 
 // Start socket.io standalone server:
 //var io = require('socket.io')(3000);
-
-// Save global users array object { id, name, channel, whisper, joined, timestamp }
-var chatData = {
-	users: []
-};
 
 /*
 * deepmerge function - merge/extend object or array.
@@ -88,7 +87,7 @@ var deepmerge = function(target, src) {
 * @Messages.remove( object, all(true) ) 
 */
 var Messages = function() {
-	this.max = 10; //zero count aswell
+	this.max = 25; //zero count aswell
 	this.maxLength = 3000;
 	this.data = [];
 	this.remove = function(vals, all) {
@@ -219,7 +218,7 @@ function channelSwitch(socket, user, from_channel, to_channel) {
 		channelRemoveUser(socket, from_channel, { id: user.id, name: user.name, message: 'Leaved channel' });
 		channelAddUser(socket, to_channel, { id: user.id, name: user.name, message: 'Joined channel' });
 	} else {
-		channelUpdateUser(socket, user.channel, { id: user.id, name: user.name, message: 'Update' });
+		channelUpdateUser(socket, user.channel, { id: user.id, name: user.name, message: 'Switched channel' });
 	}
 }
 
@@ -230,7 +229,12 @@ function channelListUsers(socket, channel) {
 
 	for (var i=0; i<chatData.users.length; i++) {
 		if (channel === chatData.users[i].channel) {
-			arr.users.push( { id: chatData.users[i].id, name: chatData.users[i].name, channel: chatData.users[i].channel } );
+			arr.users.push({
+				id: chatData.users[i].id,
+				name: chatData.users[i].name,
+				channel: chatData.users[i].channel,
+				message: "Channel list all users"
+			});
 		}
 	}
 
@@ -254,12 +258,12 @@ function cooldown(user, time) {
 // Messages object
 // - Store all messages
 // TODO: extend memory for each channels
-var messagesData =  new Messages();
-messagesData.max = 25; //Increase max msg to store
-//messagesData.maxLength = 3000; //Increase max msg length
+chatData.messages = new Messages();
+//chatData.messages.max = 25; // max messages to store
+//chatData.messages.maxLength = 3000; // max message length
 
-// Event listener's on socket open
-io.sockets.on('connection', function(socket) {
+// Event listener's on socket
+io.on('connection', function(socket) {
 
 	// Set new user data
 	var user = addUser(socket.id);
@@ -267,8 +271,8 @@ io.sockets.on('connection', function(socket) {
 	// Console log new connection.
 	//var client = socket.handshake.address;
 	//var client = socket.request.connection;
-	console.log('Connection '+ socket.id +' '+ user.name +' '+ socket.request.connection.remoteAddress);
-	//console.log( socket.adapter.rooms ); //{ R5czp2k6xwFBEKK8AAAA: { R5czp2k6xwFBEKK8AAAA: true } }
+	if (debugMode) if (debugMode) console.log('Connection '+ socket.id +' '+ user.name +' '+ socket.request.connection.remoteAddress);
+	//if (debugMode) console.log( socket.adapter.rooms ); //{ R5czp2k6xwFBEKK8AAAA: { R5czp2k6xwFBEKK8AAAA: true } }
 
 	// Add new user to the channel
 	// @event: channel-user-add
@@ -279,8 +283,8 @@ io.sockets.on('connection', function(socket) {
 	});
 
 	// Welcome new user to the server.
-	// @event: header-topic
-	socket.emit('header-topic', {
+	// @event: set-topic
+	socket.emit('set-topic', {
 		message: 'You are in '+ user.channel.toString() +' channel.'
 	});
 
@@ -292,15 +296,17 @@ io.sockets.on('connection', function(socket) {
 	// @event: channel-user-list
 	channelListUsers(socket, user.channel);
 	
+	if (debugMode) console.log( socket.adapter.rooms.general );
+	
 	// Message event
 	// @event: message
 	socket.on('message', function (data) {
 		if (cooldown(user, 800)) {
-			//console.log(data);
+			if (debugMode) console.log(data);
 			var _date = new Date();
 
 			// Message max chars
-			if (data.message.length <= messagesData.maxLength) {
+			if (data.message.length <= chatData.messages.maxLength) {
 				// Send to client
 				io.to(user.channel).emit('message', {
 					date: _date,
@@ -309,7 +315,7 @@ io.sockets.on('connection', function(socket) {
 				});
 				// Save message data
 				//chatData.messages.push({
-				messagesData.add({
+				chatData.messages.add({
 					channel: user.channel,
 					date: _date,
 					name: user.name,
@@ -323,21 +329,21 @@ io.sockets.on('connection', function(socket) {
 	// @event: whisper
 	socket.on('whisper', function (data) {
 		if (cooldown(user, 800)) {
-			//console.log(data);
+			if (debugMode) console.log(data);
 			var _date = new Date(),
 				_from = data.from.encodeHTML(),
 				_to = data.to.encodeHTML(),
 				_msg = data.message.encodeHTML();
 
 			// Message max chars
-			if (_msg.length <= messagesData.maxLength) {
+			if (_msg.length <= chatData.messages.maxLength) {
 				for (var i=0; i<chatData.users.length; i++) {
 					if (chatData.users[i].name.length && (chatData.users[i].name === _to || chatData.users[i].name === _from) ) {
 						if (user.whisper !== _to) {
 							user.whisper = _to;
 							updateUser(socket, user);
 						}
-						//console.log(chatData.users[i].id);
+						//if (debugMode) console.log(chatData.users[i].id);
 						//socket.broadcast.to(chatData.users[i].id).emit('whisper', {
 						io.to(chatData.users[i].id).emit('whisper', {
 							date: _date,
@@ -345,7 +351,6 @@ io.sockets.on('connection', function(socket) {
 							from: _from,
 							message: _msg
 						});
-
 						//break; //Stop loop
 					}
 				}
@@ -354,13 +359,14 @@ io.sockets.on('connection', function(socket) {
 	});
 
 	// Name change
-	// @event: setName
-	socket.on('setName', function (data) {
+	// @event: set-nick
+	socket.on('set-nick', function (data) {
 		if (cooldown(user, 1000)) {
-			//console.log(data);
+			if (debugMode) console.log(data);
 			//updateName(socket, user, data);
 			var exist = false,
-				data_name = data.name.encodeHTML() || 0;
+				data_name = data.name.encodeHTML() || 0,
+				data_lastName = user.name;
 
 			if (data_name.length <= 1) {
 				socket.emit('notice', {
@@ -396,7 +402,7 @@ io.sockets.on('connection', function(socket) {
 							channelUpdateUser(socket, user.channel, {
 								id: user.id,
 								name: user.name,
-								message: 'Update'
+								message: 'has changed name from ' + data_lastName
 							});
 
 							socket.emit('notice', {
@@ -412,10 +418,10 @@ io.sockets.on('connection', function(socket) {
 	});
 
 	// Channel switch
-	// @event: setChannel
-	socket.on('setChannel', function (data) {
+	// @event: set-channel
+	socket.on('set-channel', function (data) {
 		if (cooldown(user, 1000)) {
-			//console.log(data);
+			if (debugMode) console.log(data);
 			var from_channel = user.channel.encodeHTML() || 0,
 				to_channel = data.channel.encodeHTML() || 0;
 
@@ -439,7 +445,7 @@ io.sockets.on('connection', function(socket) {
 						channelSwitch(socket, user, from_channel, to_channel);
 
 						socket.emit('notice', { message: 'You moved to <strong>'+ user.channel +'</strong> channel' });
-						socket.emit('header-topic', { message: 'You are in '+ user.channel +' channel.' });
+						socket.emit('set-topic', { message: 'You are in '+ user.channel +' channel.' });
 
 						// Get list of users in channel
 						channelListUsers(socket, user.channel);
@@ -456,9 +462,10 @@ io.sockets.on('connection', function(socket) {
 	socket.on('get-messages', function (data) {
 		if (data) {
 			if (cooldown(user, 3000)) {
+				if (debugMode) console.log(data);
 				//getMessages(socket, user);
 				var arr = { messages:[] };
-				var messages = messagesData.get();
+				var messages = chatData.messages.get();
 
 				for (var i=0; i<messages.length; i++) {
 					if (messages[i].channel === user.channel) {
@@ -479,7 +486,7 @@ io.sockets.on('connection', function(socket) {
 	// Client disconnect from server
 	// @event: disconnect
 	socket.on('disconnect', function (data) {
-		//console.log('disconnect '+ socket.id);
+		if (debugMode) console.log('disconnect '+ socket.id);
 
 		// Remove user from global users array
 		removeUser(user);
@@ -488,7 +495,7 @@ io.sockets.on('connection', function(socket) {
 		channelRemoveUser(socket, user.channel, {
 			id: user.id,
 			name: user.name,
-			message: 'User disconnect'
+			message: 'User disconnected'
 		});
 
 		delete user;

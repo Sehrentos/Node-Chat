@@ -85,12 +85,12 @@ var nprompt = function(options, pType) {
 						case "search":
 						case "tel":
 						case "url":
-							o[form.elements[i].name] = encodeURIComponent(form.elements[i].value);
+							o[form.elements[i].name] = form.elements[i].value;
 						break;
 						case "checkbox":
 						case "radio":
 							if (form.elements[i].checked) {
-								o[form.elements[i].name] = encodeURIComponent(form.elements[i].value);
+								o[form.elements[i].name] = form.elements[i].value;
 							}
 						break;
 						case "file":
@@ -98,17 +98,17 @@ var nprompt = function(options, pType) {
 					}
 				break;
 				case "TEXTAREA":
-					o[form.elements[i].name] = encodeURIComponent(form.elements[i].value);
+					o[form.elements[i].name] = form.elements[i].value;
 				break;
 				case "SELECT":
 					switch (form.elements[i].type) {
 						case "select-one":
-							o[form.elements[i].name] = encodeURIComponent(form.elements[i].value);
+							o[form.elements[i].name] = form.elements[i].value;
 						break;
 						case "select-multiple":
 							for (j = 0; j < form.elements[i].options.length; j++) {
 								if (form.elements[i].options[j].selected) {
-									o[form.elements[i].name] = encodeURIComponent(form.elements[i].options[j].value);
+									o[form.elements[i].name] = form.elements[i].options[j].value;
 								}
 							}
 						break;
@@ -119,7 +119,7 @@ var nprompt = function(options, pType) {
 						case "reset":
 						case "submit":
 						case "button":
-							o[form.elements[i].name] = encodeURIComponent(form.elements[i].value);
+							o[form.elements[i].name] = form.elements[i].value;
 						break;
 					}
 				break;
@@ -145,8 +145,6 @@ var nprompt = function(options, pType) {
 		return destination;
 	};
 
-	// New 2015 not working in IE yet.
-	//var settings = Object.assign(defaults, options);
 	// Custom function extend(destination, source)
 	var settings = extend(defaults, options);
 
@@ -167,27 +165,9 @@ var nprompt = function(options, pType) {
 		return t.parentNode.removeChild(t);
 	};
 
-	/* settings.promptKeydown = function(event) {
-		if (event.target.nodeName.toLowerCase() === "textarea") {
-			if (!event.shiftKey && event.keyCode === 13) {
-				event.preventDefault();
-				settings.promptSubmit(event);
-			} else if (event.keyCode == 27) {
-				event.preventDefault();
-				settings.promptCancel(event);
-			}
-		} else if (event.keyCode === 13) {
-			event.preventDefault();
-			settings.promptSubmit(event);
-		} else if (event.keyCode == 27) {
-			event.preventDefault();
-			settings.promptCancel(event);
-		}
-	}; */
-
 	settings.promptSubmit = function(event) {
 		event.preventDefault();
-		var inputObject = serialize(settings.promptBody.querySelector(".nprompt_inputs"), "object");
+		var inputObject = serialize(settings.promptBody.querySelector(".nprompt_inputs"));
 		settings.onSubmit(inputObject);
 		settings.remove(settings.promptBody);
 		return this;
@@ -196,18 +176,10 @@ var nprompt = function(options, pType) {
 	settings.promptCancel = function(event) {
 		settings.onCancel(null);
 		settings.remove(settings.promptBody);
-		//settings.promptBody.removeEventListener("keydown", settings.promptKeydown, false);
 		settings.promptBody.querySelector(".nprompt_inputs").removeEventListener("submit", settings.promptSubmit, false);
 		settings.promptBody.querySelector(".submit_cancel").removeEventListener("click", settings.promptCancel, false);
-		//window.removeEventListener("resize", settings.promptResize, false);
 		return this;
 	};
-
-	/* settings.promptResize = function(event) {
-		setTimeout(function() {
-			settings.promptBody.querySelector(".nprompt_main").style.left = (window.innerWidth / 2 - settings.promptBody.querySelector(".nprompt_main").offsetWidth / 2) + "px";
-		}, 200);
-	}; */
 
 	// Add title
 	if (settings.title.length > 0) {
@@ -267,7 +239,6 @@ var nprompt = function(options, pType) {
 				default:
 					var elem = document.createElement('INPUT');
 					inputElem = extend(elem, array[i]);
-					//inputElem.id = array[i].id || Math.random();
 					inputElem.className = array[i].className || "nprompt_value";
 					// Insert before submit and cancel button
 					settings.promptBody.querySelector(".nprompt_inputs").insertBefore(inputElem, settings.promptBody.querySelector(".nprompt_inputs").childNodes[settings.promptBody.querySelector(".nprompt_inputs").childNodes.length-2]);
@@ -285,36 +256,23 @@ var nprompt = function(options, pType) {
 	// Bind event click submit
 	settings.promptBody.querySelector(".nprompt_inputs").addEventListener("submit", settings.promptSubmit, false);
 
-	// Bind event keydown
-	//settings.promptBody.addEventListener("keydown", settings.promptKeydown, false);
-
 	// Bind event click cancel
 	settings.promptBody.querySelector(".submit_cancel").addEventListener("click", settings.promptCancel, false);
-
-	// Resize window event
-	//window.addEventListener("resize", settings.promptResize, false);
 
 	// Append to the body
 	document.body.appendChild(settings.promptBody);
 
 	// Enable/Disable background
 	if (settings.background) {
-		//settings.promptBody.classList.remove("disabled");
-		//settings.promptBody.classList.add("enabled");
 		settings.promptBody.querySelector(".nprompt_background").className.replace(" disabled", "");
 		settings.promptBody.querySelector(".nprompt_background").className += " enabled";
 	} else {
-		//settings.promptBody.classList.remove("enabled");
-		//settings.promptBody.classList.add("disabled");
 		settings.promptBody.querySelector(".nprompt_background").className.replace(" enabled", "");
 		settings.promptBody.querySelector(".nprompt_background").className += " disabled";
 	}
 
 	// Display
 	settings.promptBody.querySelector(".nprompt_background").style.display = "block";
-
-	// Center (should be done in CSS)
-	//settings.promptBody.querySelector(".nprompt_main").style.left = (window.innerWidth / 2 - settings.promptBody.querySelector(".nprompt_main").offsetWidth / 2) + "px";
 
 	// Focus
 	if (settings.type === false || settings.type === "prompt") {

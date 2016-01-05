@@ -1,290 +1,412 @@
-<!doctype html>
-<html manifest="cache.manifest" lang="en">
-	<head>
+<!DOCTYPE html>
+<html lang="en"><!-- <html manifest="cache.manifest" lang="en"> -->
+<head>
 	<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
-	<!-- Deprecated <meta http-equiv="Cache-control" content="private, max-age=0" /> -->
-	<meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, height=device-height" />
-	<meta name="mobile-web-app-capable" content="yes" />
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	
 	<meta name="description" content="A node chat project." />
-	<meta name="keywords" content="Project" />
+	<meta name="keywords" content="Chat" />
 	<meta name="author" content="Niko H. (Sehrentos)" />
 	<meta name="robots" content="noindex, nofollow" />
 	<link rel="shortcut icon" href="images/icon32.ico" sizes="32x32" type="image/x-icon" />
 	<link rel="icon" href="images/favicon64.ico" sizes="64x64" type="image/x-icon" />
 	<title>Chat</title>
 	<!-- Stylesheet -->
-	<link href="css/main.css" rel="stylesheet" />
-	<link href="css/plugins.css" rel="stylesheet" />
+	<link rel="stylesheet" href="http://www.w3schools.com/lib/w3.css">
+	<link rel="stylesheet" href="css/main.css" />
+	<link rel="stylesheet" href="css/plugins.css" />
 	<!-- Javascript libraries -->
 	<script src="js/lib/jquery.js"></script>
 	<script src="js/lib/socket.io.js"></script>
 	<!-- Javascripts -->
-	<script src="js/plugins.js" charset="utf-8"></script>
-	<script src="js/main.js" charset="utf-8"></script>
-	<script>
-	// Call exported node functions from nw-app.js
-	if (typeof (process) === 'object') {
-		if (process.mainModule.loaded) {
-			var gui = require('nw.gui') || global.window.nwDispatcher.requireNwGui();
-			var win = gui.Window.get();
-			//win.hide();
-			//win.show();
-			//win.maximize();
-			//win.minimize();
-			//window.open();
-			//window.close();
-			//window.moveBy(10,30);
-			//window.resizeTo(800,600);
+	<script src="js/plugins.js"></script>
+	<script src="js/main.js"></script>
+	<script type="text/javascript">
+	// Prevent forms submit while chat has not been initialized
+	function formSubmit(event) {
+		event.preventDefault();
+		var elem = document.querySelector("#sendform");
+		var myObj = serialize(elem);
+		var message = decodeURIComponent(myObj.message) || myObj.message;
+		var whisper = decodeURIComponent(myObj.whisper) || myObj.whisper;
 
-			// Helper function for window options
-			win.options = {
-				full: 0,
-				w: win.width, //window.innerWidth,
-				h: win.height, //window.innerHeight
-				x: win.x,
-				y: win.y
-			};
-
-			// Resize window
-			win.resize = function () {
-				if (win.options.full === 0) {
-					win.options.full = 1;
-					win.options.w = win.width;
-					win.options.h = win.height;
-					win.options.x = win.x;
-					win.options.y = win.y;
-					win.maximize();
-				} else {
-					win.options.full = 0;
-					window.resizeTo(win.options.w, win.options.h);
-					window.moveBy(win.options.x, win.options.y);
-				}
-			};
-
-			// node related functions
-			var nodeExports = process.mainModule.exports;
-
-			// Count how many times page will be loaded on this session
-			nodeExports.pageload();
-
-			// Start node server @ localhost : 3000
-			var chat_server = function () {
-				if (!nodeExports.server.online) {
-					// jQuery prompt plugin
-					nconfirm({
-						title: "Start Chat Server",
-						message: "Do you want to <b>start</b> the chat server?",
-						background: false,
-						onSubmit: function () {
-							nodeExports.server.start();
-						}
-					});
-				}
-			};
+		if (whisper.length) {
+			chat.setWhisper(whisper, message);
+		} else {
+			chat.setSubmit(message);
+		}
+		
+		elem.querySelector("#message").value = "";
+	}
+	
+	function formKeydown(event) {
+		if (event.keyCode == 13 && !event.shiftKey) {
+			event.preventDefault();
+			var elem = document.querySelector("#sendform");
+			var myObj = serialize(elem);
+			var message = decodeURIComponent(myObj.message) || myObj.message;
+			var whisper = decodeURIComponent(myObj.whisper) || myObj.whisper;
+			
+			if (whisper.length) {
+				chat.setWhisper(whisper, message);
+			} else {
+				chat.setSubmit(message);
+			}
+			
+			elem.querySelector("#message").value = "";
 		}
 	}
-	// jQuery initialized
-	if ("jQuery" in window) {
-		// Document is loaded and ready to use
-		$(function () {
 
-			// Prevent forms submit while chat has not been initialized
-			$("form").submit(function (e) {
-				e.preventDefault();
-				return false;
-			});
-
-			// Listen keypush events
-			/* window.addEventListener('keydown', function(e) {
-				if (e.keyCode == 13) console.log(e);
-				return this;
-			}); */
-
-			// Ask user for server address
-			var ask_server = function () {
-				nprompt({
-					title: "Set Server Address",
-					message: "Please enter server <b>address</b> at the field below.",
-					input: [{
-						"type": "text",
-						"name": "server",
-						"placeholder": "Server address",
-						"value": (localStorage.server ? localStorage.server : 'localhost')
-					},{
-						"type": "text",
-						"name": "port",
-						"placeholder": "Server port",
-						"value": (localStorage.port ? localStorage.port : 3000)
-					}],
-					background: true,
-					onSubmit: function (data) {
-						if (data.server === null && data.port === null) return;
-						localStorage.server = data.server;
-
-						// Call init...
-						init_chat(data.server, data.port);
-					}
-				}); //end-address
-			};
-
-			// Initialize chat
-			var init_chat = function (server, port) {
-				// Over-write default chat settings before init
-				$.extend(chat || {}, {
-					method: 'http', //https/http/ws
-					address: server,
-					port: port,
-					channel: '/',
-					debugMode: true
-				});
-
-				// Initialize WebSocket
-				chat.init();
-
-				// Focus input/textarea.
-				chat.setFocus();
-
-				// Set default volume level: 0.1 - 1.0
-				chat.playVolume(0.5);
-
-				// Set main menu objects
-				chat.mainMenu("click", {
-					timeout: 1500,
-					menu: [
-						{ name: 'Nickname', link: 'chat.setName()' },
-						{ name: 'Channel', link: 'chat.setChannel()' },
-						{ name: 'Sound on/off', link: 'chat.playSettings()' }
-					]
-				});
-
-				// Submit message event
-				$("form#sendform").submit(function (e) {
-					e.preventDefault();
-					var whisper = $(this).parent().find("#whisper"),
-						message = $(this).parent().find("#message");
-					if (whisper.val().length) {
-						chat.setWhisper(whisper.val(), message.val());
-						message.val('');
-					} else {
-						chat.setSubmit(message);
-					}
-				})
-				// Textarea keydown event
-				.find("#message").keydown(function (e) {
-					if (e.keyCode == 13 && !e.shiftKey) {
-						e.preventDefault();
-						var whisper = $(this).parent().find("#whisper"),
-						message = $(this).parent().find("#message");
-						if (whisper.val().length) {
-							chat.setWhisper(whisper.val(), message.val());
-							message.val('');
-						} else {
-							chat.setSubmit(message);
-						}
-					}
-				});
-
-			}; // end-init
-
-			// socket.io initialized
-			if ("io" in window) {
-				// Check if server info already exists
-				if (localStorage.server && localStorage.port) {
-					// Do user wan't to use existing server detail to connect?
-					nconfirm({
-						title: "Connect to existing server",
-						message: "Do you want to <b>connect</b> to<br><b>" + localStorage.server + " : " + localStorage.port + "</b> ?",
-						background: true,
-						onSubmit: function () {
-							// Call init
-							init_chat(localStorage.server, localStorage.port);
-						},
-						onCancel: function () {
-							// Ask user for server address and port
-							// Will init_chat after detail is given
-							ask_server();
-						}
-					});
-				} else {
-					// Ask user for server address and port
-					// Will init_chat after detail is given
-					ask_server();
-				}
-
-			} //end-if-socket.io
-		});
+	// UI W3 Sidenav show/hide
+	function sidenav_left_open() {
+		//document.getElementsByClassName("w3-sidenav")[0].style.display = "block";
+		document.querySelector("#menu-left").style.display = "block";
 	}
-	</script>
-	</head>
-	<body>
-		<div id="wrap">
-			<table>
-				<tr>
-					<td colspan="2">
-						<div id="header">
-							<div id="topic">Not connected.</div>
-						</div>
-					</td>
-				</tr>
-				<tr>
-					<td>
-						<div id="content">
-							<ul id="messages"></ul>
-						</div>
-					</td>
-					<td>
-						<div id="users">
-							<ul>
-								<li class="user">&rsaquo; No users</li>
-							</ul>
-						</div>
-					</td>
-				</tr>
-				<tr>
-					<td colspan="2">
-						<div id="footer">
-							<form action="#chat" id="sendform">
-								<input type="text" name="whisper" id="whisper" class="border" placeholder="Whisper" />
-								<!-- <input type="text" name="message" id="message" class="border" placeholder="Write message..." autocomplete="off" autofocus required/> -->
-								<textarea name="message" id="message" class="border" placeholder="Write message..." rows="1" autofocus required></textarea>
-								<input type="submit" id="send" class="border" value="Send" />
-							</form>
-						</div>
-					</td>
-				</tr>
-			</table>
-			<div id="debug"></div>
-			<!-- if you disable window frame, these buttons might come handy. -->
-			<div id="windowOptions">
-				<button type="button" onclick="win.minimize();" name="Minimize">_</button>
-				<button type="button" onclick="win.resize();" name="Maximize">O</button>
-				<button type="button" onclick="window.close();" name="Close">X</button>
-			</div>
-			<script>
-			if (typeof (process) === 'object') {
-				if (process.mainModule.loaded) {
-					var fs = fs || require('fs');
-					var jsonData;
-					// readFile is asynchronous action
-					fs.readFile('package.json', 'utf8', function (err, data) {
-						if (err) throw err;
-						jsonData = JSON.parse(data);
-						if (jsonData.window.frame === false) {
-							document.getElementById('windowOptions').style.display = "block";
-						}
-					});
-				}
+	function sidenav_left_close() {
+		document.querySelector("#menu-left").style.display = "none";
+	}
+	function sidenav_right_open() {
+		document.querySelector("#menu-right").style.display = "block";
+	}
+	function sidenav_right_close() {
+		document.querySelector("#menu-right").style.display = "none";
+	}
+
+	/*
+	 * Extend - Object merge function
+	 * Browser support(tested): IE9+, Mozilla/5.0 Gecko Firefox/38, Chrome/47
+	 */
+	function extend(destination, source) {
+		for (var property in source) {
+			if (source[property] && source[property].constructor &&
+			 source[property].constructor === Object) {
+				destination[property] = destination[property] || {};
+				arguments.callee(destination[property], source[property]);
+			} else {
+				destination[property] = source[property];
 			}
-			</script>
+		}
+		return destination;
+	}
+
+	/*
+	* Serialize - HTML form serialize function
+	* @form - target id
+	* @return object
+	* Browser support(tested): IE/9+, Mozilla/5.0 Gecko Firefox/38, Chrome/47
+	*/
+	function serialize(form) {
+		if (!form || form.nodeName !== "FORM") {
+			return;
+		}
+		var i, j, o = {};
+		for (i = 0; i < form.elements.length; i++) {
+			if (form.elements[i].name === "") {
+				continue
+			}
+			switch (form.elements[i].nodeName) {
+				case "INPUT":
+					switch (form.elements[i].type) {
+						case "text":
+						case "hidden":
+						case "password":
+						case "button":
+						case "reset":
+						case "submit":
+						//HTML5
+						case "number":
+						case "color":
+						case "range":
+						case "date":
+						case "month":
+						case "week":
+						case "time":
+						case "datetime":
+						case "datetime-local":
+						case "email":
+						case "search":
+						case "tel":
+						case "url":
+							o[form.elements[i].name] = form.elements[i].value;
+						break;
+						case "checkbox":
+						case "radio":
+							if (form.elements[i].checked) {
+								o[form.elements[i].name] = form.elements[i].value;
+							}
+						break;
+						case "file":
+						break;
+					}
+				break;
+				case "TEXTAREA":
+					o[form.elements[i].name] = form.elements[i].value;
+				break;
+				case "SELECT":
+					switch (form.elements[i].type) {
+						case "select-one":
+							o[form.elements[i].name] = form.elements[i].value;
+						break;
+						case "select-multiple":
+							for (j = 0; j < form.elements[i].options.length; j++) {
+								if (form.elements[i].options[j].selected) {
+									o[form.elements[i].name] = form.elements[i].options[j].value;
+								}
+							}
+						break;
+					}
+				break;
+				case "BUTTON":
+					switch (form.elements[i].type) {
+						case "reset":
+						case "submit":
+						case "button":
+							o[form.elements[i].name] = form.elements[i].value;
+						break;
+					}
+				break;
+			}
+		}
+		return o;
+	}
+
+	// Ask user for server address
+	function ask_server() {
+		nprompt({
+			title: "Set Server Address",
+			message: "Please enter server <b>address</b> at the field below.",
+			input: [{
+				"type": "text",
+				"name": "server",
+				"placeholder": "Server address",
+				"value": (localStorage.server ? localStorage.server : window.location.host || 'localhost')
+			},{
+				"type": "text",
+				"name": "port",
+				"placeholder": "Server port",
+				"value": (localStorage.port ? localStorage.port : 3000)
+			}],
+			background: true,
+			onSubmit: function (data) {
+				if (data.server === null && data.port === null) return;
+				localStorage.server = data.server;
+				localStorage.port = data.port;
+				
+				init_chat(data.server, data.port);
+			}
+		})
+	}
+
+	// Initialize chat
+	function init_chat(server, port) {
+		// Over-write default chat settings before init
+		//$.extend(chat || {}, {
+		extend(chat || {}, {
+			method: 'http', //https/http/ws
+			address: server,
+			port: port,
+			channel: '/',
+			debugMode: true
+		});
+		// Initialize socket
+		chat.init();
+		// Set default volume level: 0.1 - 1.0
+		chat.playVolume(0.5);
+		// Focus input/textarea.
+		//chat.setFocus();
+	}
+
+	/*
+	* Draw canvas - Menu
+	*/
+	function canvasMenu(elem) {
+		try {
+			var canvas = document.createElement("CANVAS");
+			canvas.width = 35;
+			canvas.height =  35;
+
+			var x = canvas.width,
+				y = canvas.height,
+				ctx = canvas.getContext("2d");
+
+			//ctx.lineJoin="round";
+			ctx.lineCap = "round";
+			//Border
+			ctx.lineWidth = 4 * y / 100;
+			ctx.strokeRect(2 * y / 100, 2 * y / 100, x-4* y / 100, y-4* y / 100);
+			// lines
+			ctx.lineWidth = 8 * y / 100;
+			ctx.moveTo(10 * x / 100, 25 * y / 100);
+			ctx.lineTo(90 * x / 100, 25 * y / 100);
+			ctx.moveTo(10 * x / 100, 50 * y / 100);
+			ctx.lineTo(90 * x / 100, 50 * y / 100);
+			ctx.moveTo(10 * x / 100, 75 * y / 100);
+			ctx.lineTo(90 * x / 100, 75 * y / 100);
+			//ctx.closePath();
+			ctx.scale(0.8, 1.0);
+			ctx.stroke();
+
+			// display
+			elem.appendChild(canvas);
+
+		} catch(error) {
+			console.log(error);
+		}
+	}
+	/*
+	* Draw canvas - Team
+	*/
+	function canvasTeam(elem) {
+		try {
+			var canvas = document.createElement("CANVAS");
+			canvas.width = 35;
+			canvas.height =  35;
+
+			// Draw canvas - Team
+			var x = canvas.width,
+			  y = canvas.height,
+			  ctx = canvas.getContext("2d");
+
+			// head 1
+			ctx.beginPath();
+			ctx.strokeStyle = "#626262";
+			ctx.fillStyle = "#626262";
+			ctx.arc(25 * x / 100, 25 * y / 100, 20 * x / 100, 0, 2 * Math.PI);
+			ctx.fill();
+			// body 1
+			ctx.moveTo(25 * x / 100, 25 * y / 100);
+			ctx.lineTo(5 * x / 100, 80 * y / 100);
+			ctx.lineTo(45 * x / 100, 80 * y / 100);
+			ctx.closePath();
+			ctx.fill();
+			// head 2
+			ctx.beginPath();
+			ctx.strokeStyle = "#626262";
+			ctx.fillStyle = "#626262";
+			ctx.arc(75 * x / 100, 25 * y / 100, 20 * x / 100, 0, 2 * Math.PI);
+			ctx.fill();
+			// body 2
+			ctx.moveTo(75 * x / 100, 25 * y / 100);
+			ctx.lineTo(55 * x / 100, 80 * y / 100);
+			ctx.lineTo(95 * x / 100, 80 * y / 100);
+			ctx.closePath();
+			ctx.fill();
+			// Head 3
+			ctx.beginPath();
+			ctx.strokeStyle = "#1F1F1F";
+			ctx.fillStyle = "#1F1F1F";
+			ctx.arc(50 * x / 100, 50 * y / 100, 20 * x / 100, 0, 2 * Math.PI);
+			ctx.fill();
+			// body 3
+			ctx.moveTo(50 * x / 100, 50 * y / 100);
+			ctx.lineTo(30 * x / 100, 95 * y / 100);
+			ctx.lineTo(70 * x / 100, 95 * y / 100);
+			ctx.closePath();
+			ctx.fill();
+			ctx.stroke();
+
+			// display
+			elem.appendChild(canvas);
+
+		} catch(error) {
+			console.log(error);
+		}
+	}
+
+	// Document is loaded.
+	document.addEventListener("DOMContentLoaded", function() {
+	
+		// On form submit event
+		document.querySelector("#sendform").addEventListener("submit", formSubmit, false);
+
+		// Listen keypush events
+		document.querySelector("#sendform").addEventListener("keydown", formKeydown, false);
+
+		// socket.io initialized
+		if ("io" in window) {
+			// Initialize socket
+			chat.init();
+			// Set default volume level: 0.1 - 1.0
+			chat.playVolume(0.5);
+			// Canvas menu
+			canvasMenu( document.querySelector("#canvasMenu") );
+			canvasTeam( document.querySelector("#canvasTeam") );
+		}
+
+	}); // document-ready
+	</script>
+</head>
+<body>
+
+<div id="wrap">
+
+	<nav id="menu-left" class="w3-sidenav w3-card-2 w3-white" style="display:none">
+		<a href="javascript:void(0)" onclick="sidenav_left_close()" class="w3-closenav w3-large">Close &times;</a>
+		<header class="w3-container">
+			<h5>Settings:</h5>
+		</header>
+		<div id="settings" class="w3-container">
+			<a href="javascript:void(0)" onclick="chat.setNick()">Change name</a> 
+			<a href="javascript:void(0)" onclick="chat.setChannel()">Change channel</a> 
+			<a href="javascript:void(0)" onclick="chat.playSettings()">Sound on/off</a>
 		</div>
-		<div id="sounds" class="hidden">
-			<!-- Audio source: eng.universal-soundbank.com/hits.htm -->
-			<audio id="audio" controls hidden>
-				<source src="sound/anvil.mp3" type="audio/mpeg">
-				<source src="sound/anvil.ogg" type="audio/ogg">
-				<embed src="sound/anvil.mp3">
-				Your browser does not support HTML5 audio.
-			</audio>
+		<!-- 
+		<header class="w3-container">
+			<h5>Users connected:</h5>
+		</header>
+		<div id="users" class="users-list w3-container"></div>
+		-->
+	</nav>
+
+	<nav id="menu-right" class="w3-sidenav w3-card-2 w3-white" style="right:0; display:none">
+		<a href="javascript:void(0)" onclick="sidenav_right_close()" class="w3-closenav w3-large">Close &times;</a>
+		<header class="w3-container">
+			<h5>Users connected:</h5>
+		</header>
+		<div id="users" class="users-list w3-container"></div>
+	</nav>
+
+	<header id="header" class="w3-container w3-light-grey">
+		<div class="w3-container">
+			<span id="canvasMenu" class="menu-canvas w3-opennav w3-padding-top" onclick="sidenav_left_open()"></span>
+			<span id="canvasTeam" class="menu-canvas w3-opennav w3-padding-top w3-right" onclick="sidenav_right_open()"></span>
+			<h1 id="topic">Not connected.</h1>
 		</div>
-	</body>
+	</header>
+
+	<div id="content" class="w3-container w3-white">
+		<ul id="messages"></ul>
+	</div>
+
+	<footer id="footer" class="w3-container w3-blue-grey">
+		<form action="#chat" id="sendform" class="w3-container w3-padding-top">
+			<div class="w3-row">
+				<div class="w3-col m6">
+					<p><textarea name="message" id="message" class="w3-input w3-border w3-white" placeholder="message..." rows="1" autofocus required></textarea></p>
+				</div>
+				
+				<div class="w3-col m2">
+					<p><input type="text" name="whisper" id="whisper" class="w3-input w3-border w3-white" placeholder="to..." autocomplete="off" /></p>
+				</div>
+				
+				<div class="w3-col m2">
+					<p><input type="submit" id="send" class="w3-input w3-btn w3-border w3-blue" value="Send" /></p>
+				</div>
+			</div>
+			
+		</form>
+	</footer>
+
+	<div id="sounds" class="hidden">
+		<audio id="audio" controls hidden>
+			<source src="sound/anvil.ogg" type="audio/ogg">
+			<source src="sound/anvil.mp3" type="audio/mpeg">
+			<embed src="sound/anvil.mp3">
+			Your browser does not support HTML5 audio.
+		</audio>
+	</div>
+
+</div>
+
+</body>
 </html>

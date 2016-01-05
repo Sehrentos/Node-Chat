@@ -1,212 +1,74 @@
 /* styles.css - default stylesheet */
-@charset "utf-8";
 * {
 	margin: 0;
 	padding: 0;
 	box-sizing: border-box;
 }
 
-html {
+html, body {
 	height: 100%;
-}
-
-body {
-	height: 100%;
-	font: 100% Helvetica, Arial;
-	border-width: 1px;
-	border-color: #CCCCCC;
-	border-style: solid;
-	border-radius: 2px;
 }
 
 #wrap {
 	height: 100%;
-	background-color: #FFFFFF;
+	font: 100% Helvetica, Arial;
 }
 
-table {
-	width: 100%;
-	height: 100%;
-	border-collapse: collapse;
-}
-
-table tr {
-	height: 100%;
-	text-align: left;
-	vertical-align: top;
-}
-
-table tr:first-child {
-	height: .1%;
-}
-
-table td {
-	width: 100%;
-}
-
-form {
-	padding: 3px;
-}
-
-form input#whisper {
-	width: 15%;
-	height: 36px;
-	vertical-align: top;
-	padding: .7%;
-	margin-right: .5%;
-}
-
-form textarea#message {
-	display: inline-block;
-	width: 82%;
-	height: 36px;
-	vertical-align: top;
-	padding: .7%;
-	margin-right: .5%;
+textarea {
+	max-height: 40px; /* for FireFox */
 	resize: none;
-	/*outline: none;*/
-}
-
-form input#send {
-	display: none;
-	width: 10%;
-	height: 36px;
-	padding: .7%;
-	color: #1C94C4;
-	font-weight: bold;
-	line-height: normal;
-	font-variant: small-caps;
-	background-color: #ffffff;
-}
-
-form input#send:hover {
-	color: #c77405;
-	box-shadow: 0 5px 8px 5px #f3f4f6 inset;
 }
 
 #header {
 	-webkit-app-region: drag;
-	padding: 12px;
-	height: 42px;
-	word-break: break-all;
+	position: fixed;
+	width: 100%;
+	height: 125px;
 	overflow: hidden;
-	background: #fff;
-	border-bottom: 1px solid #ccc;
-}
-#myMenu {
-	-webkit-app-region: no-drag;
-}
-
-#header #topic {
-	padding: 0 35px;
+	white-space: nowrap;
+	overflow: hidden;
+	o-text-overflow: ellipsis;
+	text-overflow: ellipsis;
 }
 
 #content {
+	display: block;
 	width: 100%;
-	height: 100%;
+	min-height: 100%;
+	word-break: break-all;
 	overflow: auto;
 }
 
-#content ul {
+#content:before, #content:after {
+	display: block;
+	content: "";
+	height: 125px;
+}
+
+#content  ul {
 	list-style-type: none;
 	margin: 0;
 	padding: 0;
 }
-
 #content ul li {
 	padding: 2px 5px;
 	white-space: pre-wrap;
 }
 /*#content ul li:nth-child(odd) { background: #eee; }*/
 
-#users ul {
-	display: block;
-	list-style-type: none;
-	margin: 0;
-	padding: 2px 0;
-}
-
-#users ul > li {
-	width: 180px;
-	border-width: 1px;
-	border-color: #CCCCCC;
-	border-style: solid;
-	border-radius: 4px;
-	padding: 4px 10px;
-	margin: 0px 2px;
-	color: #1c94c4;
-	font-size: 100%;
-	line-height: normal;
-	font-variant: small-caps;
-	background-color: #ffffff;
-	white-space: nowrap;
-	overflow: hidden;
-	o-text-overflow: ellipsis;
-	text-overflow: ellipsis;
-	cursor: pointer;
-}
-
-#users ul > li li {
-	width: 100%;
-	border-width: 1px;
-	border-color: #CCCCCC;
-	border-style: solid;
-	border-radius: 4px;
-	padding: 4px 10px;
-	margin: 0px 2px;
-	color: #1c94c4;
-	font-size: 100%;
-	line-height: normal;
-	font-variant: small-caps;
-	background-color: #ffffff;
-	white-space: nowrap;
-	overflow: hidden;
-	o-text-overflow: ellipsis;
-	text-overflow: ellipsis;
-	cursor: pointer;
-}
-
-#users ul li:hover {
-	color: #c77405;
-	box-shadow: 0 5px 8px 5px #f3f4f6 inset;
-}
-
 #footer {
+	position: fixed;
+	bottom: 0;
 	width: 100%;
-	background: #ccc;
-	box-shadow: 0 5px 8px 5px #f3f4f6 inset;
-	border-top: 1px solid #ccc;
+	height: 125px;
+	overflow: hidden;
 }
 
-#windowOptions {
-	-webkit-app-region: no-drag;
-	display: none;
-	position: fixed;
-	top: 0.5%;
-	right: 0.5%;
-	z-index: +1;
-}
-#windowOptions button {
-	border-width: 1px;
-	border-color: #CCCCCC;
-	border-style: solid;
-	border-radius: 4px;
-	padding: 4px 10px;
-	margin: 0px -1px;
-	color: #1c94c4;
-	font-size: 100%;
-	line-height: normal;
-	font-variant: small-caps;
-	background-color: #ffffff;
-	white-space: nowrap;
-	overflow: hidden;
-	o-text-overflow: ellipsis;
-	text-overflow: ellipsis;
-	cursor: pointer;
-}
-#windowOptions button:hover {
-	color: #c77405;
-	box-shadow: 0 5px 8px 5px #f3f4f6 inset;
+.menu-canvas {
+	display: inline-block;
+	width: 35px;
+	height: 35px;
+	opacity: .6;
 }
 
 .border {
@@ -227,6 +89,10 @@ form input#send:hover {
 .nickname {
 	text-decoration: none;
 	color: #1C94C4;
+}
+
+.visible {
+	display: block;
 }
 
 .hidden {
