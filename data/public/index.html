@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en"><!-- <html manifest="cache.manifest" lang="en"> -->
+<html manifest="cache.manifest" lang="en">
 <head>
 	<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1">
@@ -22,6 +22,18 @@
 	<script src="js/plugins.js"></script>
 	<script src="js/main.js"></script>
 	<script type="text/javascript">
+	// Check if a new cache is available on page load.
+	window.addEventListener('load', function(e) {
+
+		window.applicationCache.addEventListener('updateready', function(e) {
+			if (window.applicationCache.status == window.applicationCache.UPDATEREADY) {
+				// Browser downloaded a new app cache.
+				window.location.reload();
+			}
+		}, false);
+
+	}, false);
+
 	// Prevent forms submit while chat has not been initialized
 	function formSubmit(event) {
 		event.preventDefault();
@@ -223,7 +235,7 @@
 		try {
 			var canvas = document.createElement("CANVAS");
 			canvas.width = 35;
-			canvas.height =  35;
+			canvas.height = 35;
 
 			var x = canvas.width,
 				y = canvas.height,
@@ -260,12 +272,12 @@
 		try {
 			var canvas = document.createElement("CANVAS");
 			canvas.width = 35;
-			canvas.height =  35;
+			canvas.height = 35;
 
 			// Draw canvas - Team
 			var x = canvas.width,
-			  y = canvas.height,
-			  ctx = canvas.getContext("2d");
+				y = canvas.height,
+				ctx = canvas.getContext("2d");
 
 			// head 1
 			ctx.beginPath();
