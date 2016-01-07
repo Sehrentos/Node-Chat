@@ -9,6 +9,7 @@ var chat = {
 	address: window.location.host || 'localhost',
 	port: 3000,
 	channel: '/',
+	soundOn: false,
 	debugMode: true,
 	messageMaxLength: 3000
 };
@@ -45,7 +46,6 @@ chat.init = function(url) {
 			chat.menuClear();
 			//chat.socket.close();
 		}
-		//chat.mes(data);
 	});
 
 	// Timeout
@@ -203,7 +203,8 @@ chat.init = function(url) {
 			console.log('Get-messages:');
 			console.log(data);
 		}
-		chat.mes('Start of messages.');
+
+		chat.mes("Start of messages.");
 
 		$.each(data.messages, function() {
 			var d = new Date( this.date ),
@@ -216,11 +217,13 @@ chat.init = function(url) {
 			var msg = "["+ chat.twoDigits(hours) + ":" + chat.twoDigits(minutes) + ":" + chat.twoDigits(seconds) +"] ";
 			msg += "<a href=\"javascript:void(0)\" class=\"nickname\" onclick=\"chat.setWhisper('"+ name +"')\">&lt;"+ name +"&gt;</a> ";
 			msg += message;
-
+			
 			chat.mes(msg);
 		});
 
-		chat.mes('End of messages.');
+		chat.mes("End of messages.");
+
+		
 	});
 
 	return this;
@@ -314,14 +317,15 @@ chat.setSubmit = function(message) {
 chat.menuAddUser = function(id, name, channel) {
 	// New user object
 	var $user = $('<a/>', {
-		href: 'javascript:void(0)',
-		class: 'user w3-dropdown-hover',
-		id: id
-		//title: name
+		//'href': 'javascript:void(0)',
+		'class': 'user w3-dropdown-hover',
+		'id': id
+		//'title': name
 	});
-	//'<a href="javascript:void(0)" id="' + id + '" class="user w3-dropdown-hover">
-	var user = name + ' \
-		<span class="w3-dropdown-content w3-border">';
+
+	var user = name.toString();
+	
+	user += '<span class="w3-dropdown-content w3-border">';
 
 	if (chat.user.name === name) {
 		user += '<a href="javascript:void(0)" onclick="chat.setWhisper()">New whisper</a> \
@@ -655,14 +659,11 @@ chat.setFocus = function(id) {
 chat.scrollDown = function(id, speed) {
 	var elem = document.querySelector(id || "#content");
 
-	//var elem = document.getElementById(id);
-	//elem.scrollTop = elem.scrollHeight;
-	var scrollHeight = elem.scrollHeight;
 	if (speed === undefined) {
-		elem.scrollTop = scrollHeight;
+		elem.scrollTop = elem.scrollHeight;
 	} else {
 		elem.animate({
-			scrollTop: scrollHeight
+			scrollTop: elem.scrollHeight
 		}, speed);
 	}
 
@@ -673,7 +674,6 @@ chat.scrollDown = function(id, speed) {
 * Play sound
 * @require: none
 */
-chat.soundOn = false;
 chat.playAudio = function() {
 	var audio = document.getElementsByTagName("audio")[0];
 	if (audio !== undefined && chat.soundOn) {
