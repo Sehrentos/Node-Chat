@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<html manifest="cache.manifest" lang="en">
+<html lang="en">
+<!-- On production: <html manifest="cache.manifest" lang="en"> -->
 <head>
 	<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1">
@@ -22,64 +23,20 @@
 	<script src="js/plugins.js"></script>
 	<script src="js/main.js"></script>
 	<script type="text/javascript">
-	// Check if a new cache is available on page load.
-	window.addEventListener('load', function(e) {
-
-		window.applicationCache.addEventListener('updateready', function(e) {
-			if (window.applicationCache.status == window.applicationCache.UPDATEREADY) {
-				// Browser downloaded a new app cache.
-				window.location.reload();
-			}
-		}, false);
-
-	}, false);
-
-	// Prevent forms submit while chat has not been initialized
-	function formSubmit(event) {
-		event.preventDefault();
-		var elem = document.querySelector("#sendform");
-		var myObj = serialize(elem);
-		var message = decodeURIComponent(myObj.message) || myObj.message;
-		var whisper = decodeURIComponent(myObj.whisper) || myObj.whisper;
-
-		if (whisper.length) {
-			chat.setWhisper(whisper, message);
-		} else {
-			chat.setSubmit(message);
-		}
-		
-		elem.querySelector("#message").value = "";
-	}
-	
-	function formKeydown(event) {
-		if (event.keyCode == 13 && !event.shiftKey) {
-			event.preventDefault();
-			var elem = document.querySelector("#sendform");
-			var myObj = serialize(elem);
-			var message = decodeURIComponent(myObj.message) || myObj.message;
-			var whisper = decodeURIComponent(myObj.whisper) || myObj.whisper;
-			
-			if (whisper.length) {
-				chat.setWhisper(whisper, message);
-			} else {
-				chat.setSubmit(message);
-			}
-			
-			elem.querySelector("#message").value = "";
-		}
-	}
-
 	// UI W3 Sidenav show/hide
 	function sidenav_left_open() {
 		//document.getElementsByClassName("w3-sidenav")[0].style.display = "block";
 		document.querySelector("#menu-left").style.display = "block";
 	}
+	
 	function sidenav_left_close() {
 		document.querySelector("#menu-left").style.display = "none";
 	}
+	
 	function sidenav_right_open() {
 		document.querySelector("#menu-right").style.display = "block";
 	}
+	
 	function sidenav_right_close() {
 		document.querySelector("#menu-right").style.display = "none";
 	}
@@ -325,27 +282,80 @@
 		}
 	}
 
-	// Document is loaded.
-	document.addEventListener("DOMContentLoaded", function() {
+	function formDataHandler() {
+		var elem = document.querySelector("#chatform");
+		var myObj = serialize(elem);
+		
+		if (myObj.whisper.length) {
+			chat.setWhisper(myObj.whisper, myObj.message);
+		} else if (myObj.message.length) {
+			chat.submitMessage(myObj.message);
+		}
+		
+		elem.querySelector("#chatmessage").value = "";
+	}
+
+	function formSubmit(event) {
+		event.preventDefault();
+		formDataHandler();
+	}
 	
+	function formKeydown(event) {
+		if (event.keyCode == 13 && !event.shiftKey) {
+			event.preventDefault();
+			document.querySelector("#chatsubmit").click();
+			//formDataHandler();
+		}
+	}
+	
+	// Document is loaded.
+	document.addEventListener("DOMContentLoaded", function(e) {
+		// event.target = document
+		// this = document
+		var doc = e.target || event.target || this;
+
 		// On form submit event
-		document.querySelector("#sendform").addEventListener("submit", formSubmit, false);
+		doc.querySelector("#chatform").addEventListener("submit", formSubmit, false);
 
 		// Listen keypush events
-		document.querySelector("#sendform").addEventListener("keydown", formKeydown, false);
+		doc.querySelector("#chatform").addEventListener("keydown", formKeydown, false);
 
 		// socket.io initialized
 		if ("io" in window) {
 			// Initialize socket
 			chat.init();
+			
 			// Set default volume level: 0.1 - 1.0
-			chat.playVolume(0.5);
-			// Canvas menu
-			canvasMenu( document.querySelector("#canvasMenu") );
-			canvasTeam( document.querySelector("#canvasTeam") );
+			var vol = localStorage.volume || 0.5;
+			chat.playVolume(vol);
+			
+			// Set canvas menus
+			canvasMenu( doc.querySelector("#canvasMenu") );
+			canvasTeam( doc.querySelector("#canvasTeam") );
 		}
 
-	}); // document-ready
+	}, false); // document-ready
+	
+	// Window is loaded
+	window.addEventListener('load', function(e) {
+
+		// Check if a new cache is available on page load.
+		window.applicationCache.addEventListener('updateready', function(e) {
+			if (window.applicationCache.status == window.applicationCache.UPDATEREADY) {
+				// Browser downloaded a new app cache.
+				window.location.reload();
+			}
+		}, false);
+
+	}, false); // window-ready
+
+	// Before leaving page
+	window.addEventListener("beforeunload", function(e) {
+		var confirmationMessage = "Do you wan't to leave the page?"; // "\o/"
+		e.returnValue = confirmationMessage; // Gecko, Trident, Chrome 34+
+		
+		return confirmationMessage; // Gecko, WebKit, Chrome <34
+	}, false);
 	</script>
 </head>
 <body>
@@ -391,18 +401,16 @@
 	</div>
 
 	<footer id="footer" class="w3-container w3-blue-grey">
-		<form action="#chat" id="sendform" class="w3-container w3-padding-top">
+		<form id="chatform" class="w3-container w3-padding-top">
 			<div class="w3-row">
 				<div class="w3-col m6">
-					<p><textarea name="message" id="message" class="w3-input w3-border w3-white" placeholder="message..." rows="1" autofocus required></textarea></p>
+					<p><textarea name="message" id="chatmessage" class="w3-input w3-border w3-white" placeholder="message..." rows="1" autofocus required></textarea></p>
 				</div>
-				
 				<div class="w3-col m2">
-					<p><input type="text" name="whisper" id="whisper" class="w3-input w3-border w3-white" placeholder="to..." autocomplete="off" /></p>
+					<p><input type="text" name="whisper" id="chatwhisper" class="w3-input w3-border w3-white" placeholder="to..." autocomplete="off" /></p>
 				</div>
-				
 				<div class="w3-col m2">
-					<p><input type="submit" id="send" class="w3-input w3-btn w3-border w3-blue" value="Send" /></p>
+					<p><input type="submit" id="chatsubmit" class="w3-input w3-btn w3-border w3-blue" value="Send" /></p>
 				</div>
 			</div>
 			
@@ -419,6 +427,38 @@
 	</div>
 
 </div>
+<script type="text/javascript">
+(function() {
+	// Window resize
+	window.addEventListener("resize", resizeThrottler, false);
+	var resizeTimeout;
+	function resizeThrottler() {
+		// ignore resize events as long as an actualResizeHandler execution is in the queue
+		if ( !resizeTimeout ) {
+			resizeTimeout = setTimeout(function() {
+				resizeTimeout = null;
+				actualResizeHandler();
+				// The actualResizeHandler will execute at a rate of 15fps
+			}, 66);
+		}
+	}
 
+	// Set content messages height (ui)
+	function actualResizeHandler() {
+		// handle the resize event
+		var wrap = document.getElementById("wrap");
+		var header = document.getElementById("header");
+		var footer = document.getElementById("footer");
+		var messages = document.getElementById("messages");
+		var intHeight = wrap.offsetHeight - (header.offsetHeight + footer.offsetHeight);
+		messages.style.overflow = 'auto';
+		messages.style.height = intHeight + 'px';
+		messages.scrollTop = messages.scrollHeight;
+	}
+
+	// Set content messages height (ui)
+	actualResizeHandler();
+}());
+</script>
 </body>
 </html>

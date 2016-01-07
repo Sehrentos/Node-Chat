@@ -11,7 +11,9 @@ var chat = {
 	channel: '/',
 	soundOn: false,
 	debugMode: true,
-	messageMaxLength: 3000
+	messageMaxLength: 3000,
+	connectionCount: 0,
+	connectionCountMax: 5
 };
 
 /*
@@ -41,36 +43,41 @@ chat.init = function(url) {
 	chat.socket.on('connect_error', function (data) {
 		if (chat.debugMode) console.log(data);
 		if (data.type === "TransportError") {
-			chat.mes("Unable to connect server.");
+			chat.mes("(" + chat.connectionCount + ") Unable to connect server.");
 			// Clear user menu
 			chat.menuClear();
-			//chat.socket.close();
+			
+			if (chat.connectionCount >= chat.connectionCountMax) {
+				chat.quit();
+			}
+			chat.connectionCount++;
 		}
 	});
 
 	// Timeout
 	chat.socket.on('connect_timeout', function (data) {
 		if (chat.debugMode) console.log(data);
-		chat.mes("Connection timeout.");
+		chat.mes("(" + chat.connectionCount + ") Connection timeout.");
 		// Clear user menu
 		chat.menuClear();
+		
+		if (chat.connectionCount >= chat.connectionCountMax) {
+			chat.quit();
+		}
+		chat.connectionCount++;
 	});
 
 	// Disconnect
 	chat.socket.on('disconnect', function (data) {
-		if (chat.debugMode) console.log(data);
+		if (chat.debugMode) console.log(data); // transport close = server closed connection.
 		chat.mes("Disconnected.");
 		// Clear user menu
 		chat.menuClear();
-		// Ask to reconnect
-		/* nconfirm({
-			title: "Disconnected!",
-			message: "Do you want to <b>reconnect</b> to the server?",
-			background: false,
-			onSubmit: function(str) {
-				chat.socket.connect();
-			}
-		}); */
+
+		if (chat.connectionCount >= chat.connectionCountMax) {
+			chat.quit();
+		}
+		chat.connectionCount++;
 	});
 
 	// Welcome
@@ -233,7 +240,7 @@ chat.init = function(url) {
 * Socket submit data
 * @require: elementId
 */
-chat.setSubmit = function(message) {
+chat.submitMessage = function(message) {
 	var messageStr = message;
 
 	if (messageStr.length) {
@@ -317,10 +324,8 @@ chat.setSubmit = function(message) {
 chat.menuAddUser = function(id, name, channel) {
 	// New user object
 	var $user = $('<a/>', {
-		//'href': 'javascript:void(0)',
 		'class': 'user w3-dropdown-hover',
 		'id': id
-		//'title': name
 	});
 
 	var user = name.toString();
@@ -403,7 +408,7 @@ chat.updateUsers = function(data) {
 			channel = this.channel,
 			active = 0;
 
-		// Build new user menu
+		// Add new user
 		chat.menuAddUser(id, name, channel);
 
 	});
@@ -554,7 +559,7 @@ chat.setWhisper = function(nickname, messageStr) {
 	// Dont send to your self
 	else if (nickname.length && nickname !== chat.user.name) {
 		if (nickname.length && messageStr === undefined) {
-			$("#sendform").find("#whisper").val(nickname);
+			$("#chatform").find("#chatwhisper").val(nickname);
 			chat.setFocus();
 		}
 		else if (messageStr === '') {
@@ -598,7 +603,7 @@ chat.sendWhisper = function(nickname, messageStr) {
 				from: chat.user.name,
 				message: messageStr
 			});
-			$("#sendform").find("#whisper").val(nickname);
+			$("#chatform").find("#chatwhisper").val(nickname);
 			chat.setFocus();
 		}
 	}
@@ -647,23 +652,28 @@ chat.mes = function(message, whisper) {
 * @require: element id
 */
 chat.setFocus = function(id) {
-	document.querySelector(id || "#message").focus();
+	document.querySelector(id || "#chatmessage").focus();
 
 	return this;
 };
 
 /*
 * Scroll down the chat window
-* @require: element id, speed
+* @require: speed
 */
-chat.scrollDown = function(id, speed) {
-	var elem = document.querySelector(id || "#content");
+chat.scrollDown = function(speed) {
+	//var elem1 = document.querySelector("#content");
+	var elem2 = document.querySelector("#messages");
 
 	if (speed === undefined) {
-		elem.scrollTop = elem.scrollHeight;
+		//elem1.scrollTop = elem1.scrollHeight;
+		elem2.scrollTop = elem2.scrollHeight;
 	} else {
-		elem.animate({
-			scrollTop: elem.scrollHeight
+		/*elem1.animate({
+			scrollTop: elem1.scrollHeight
+		}, speed);*/
+		elem2.animate({
+			scrollTop: elem2.scrollHeight
 		}, speed);
 	}
 
@@ -722,11 +732,21 @@ chat.twoDigits = function(string) {
 * @require: none
 */
 chat.quit = function() {
-	if (socket != null) {
-		if (chat.debugMode) console.log("Socket close");
-		chat.socket.close();
-		socket=null;
-	}
+	if (chat.debugMode) console.log("Socket close");
+	chat.socket.close();
+	//chat.socket = null;
+
+	chat.mes("(" + chat.connectionCount + "/" + chat.connectionCountMax + ") Socket stop polling.");
+
+	// Ask to reconnect
+	nconfirm({
+		title: "Exit socket",
+		message: "Do you want to <b>reconnect</b> to the server?",
+		background: false,
+		onSubmit: function(str) {
+			chat.reconnect();
+		}
+	});
 
 	return this;
 }
@@ -736,11 +756,10 @@ chat.quit = function() {
 * @require: none
 */
 chat.reconnect = function() {
-	chat.quit();
-	setTimeout(function(){
-		if (chat.debugMode) console.log("Socket init");
-		chat.init();
-	},2000);
+	if (chat.debugMode) console.log("Socket reconnect");
+	chat.connectionCount = 1;
+	chat.mes("Reconnecting...");
+	chat.socket.connect();
 
 	return this;
 }
