@@ -83,8 +83,7 @@ chat.init = function(url) {
 	// Welcome
 	chat.socket.on('set-topic', function (data) {
 		if (chat.debugMode) {
-			console.log('set-topic:');
-			console.log(data);
+			console.log('set-topic', data);
 		}
 		chat.mes("Set topic: " + data.message);
 		$("#header").find("#topic").text(data.message);
@@ -93,8 +92,7 @@ chat.init = function(url) {
 	// Notice
 	chat.socket.on('notice', function (data) {
 		if (chat.debugMode) {
-			console.log('Notice:');
-			console.log(data);
+			console.log('Notice', data);
 		}
 		chat.mes(data.message);
 	});
@@ -102,8 +100,7 @@ chat.init = function(url) {
 	// Update user data
 	chat.socket.on('update-user', function (data) {
 		if (chat.debugMode) {
-			console.log('Update-user:');
-			console.log(data);
+			console.log('Update-user', data);
 		}
 		chat.user = data;
 	});
@@ -111,8 +108,7 @@ chat.init = function(url) {
 	// New updater: add user
 	chat.socket.on('channel-user-add', function (data) {
 		if (chat.debugMode) {
-			console.log('Channel-user-add:');
-			console.log(data);
+			console.log('Channel-user-add', data);
 		}
 		chat.mes(data.name + " - " + data.message);
 		chat.menuAddUser(data.id, data.name, data.channel);
@@ -121,8 +117,7 @@ chat.init = function(url) {
 	// New updater: add user
 	chat.socket.on('channel-user-list', function (data) {
 		if (chat.debugMode) {
-			console.log('Channel-user-list:');
-			console.log(data);
+			console.log('Channel-user-list', data);
 		}
 		//chat.menuAddUser(data.id, data.name, data.channel);
 		chat.updateUsers(data);
@@ -131,8 +126,7 @@ chat.init = function(url) {
 	//New updater: remove user
 	chat.socket.on('channel-user-remove', function (data) {
 		if (chat.debugMode) {
-			console.log('Channel-user-remove:');
-			console.log(data);
+			console.log('Channel-user-remove', data);
 		}
 		//chat.mes(data.name + " has left the channel.");
 		chat.mes(data.name + " - " + data.message);
@@ -142,8 +136,7 @@ chat.init = function(url) {
 	// New updater: user update
 	chat.socket.on('channel-user-update', function (data) {
 		if (chat.debugMode) {
-			console.log('Channel-user-update:');
-			console.log(data);
+			console.log('Channel-user-update', data);
 		}
 		chat.mes(data.name + " - " + data.message);
 		chat.menuUpdateUser(data.id, data.name, data.channel);
@@ -152,8 +145,7 @@ chat.init = function(url) {
 	// Whisper
 	chat.socket.on('whisper', function (data) {
 		if (chat.debugMode) {
-			console.log('Whisper:');
-			console.log(data);
+			console.log('Whisper', data);
 		}
 		var d = new Date(data.date),
 			hours = d.getHours(),
@@ -183,8 +175,7 @@ chat.init = function(url) {
 	// message / chat
 	chat.socket.on('message', function(data) {
 		if (chat.debugMode) {
-			console.log('Chat:');
-			console.log(data);
+			console.log('Chat', data);
 		}
 		var d = new Date(data.date),
 			hours = d.getHours(),
@@ -207,8 +198,7 @@ chat.init = function(url) {
 	// Get all messages from channel
 	chat.socket.on('get-messages', function (data) {
 		if (chat.debugMode) {
-			console.log('Get-messages:');
-			console.log(data);
+			console.log('Get-messages', data);
 		}
 
 		chat.mes("Start of messages.");
@@ -360,7 +350,7 @@ chat.menuRemoveUser = function(id) {
 
 	// If array has any value, remove it
 	if ($menuArray.length) {
-		if (chat.debugMode) console.log('Menu remove user');
+		if (chat.debugMode) console.log('menuRemoveUser', arguments);
 		$menuArray.remove();
 	}
 
@@ -382,7 +372,7 @@ chat.menuClear = function() {
 * @require user: id, name, channel
 */
 chat.menuUpdateUser = function(id, name, channel) {
-	if (chat.debugMode) console.log('Menu update user');
+	if (chat.debugMode) console.log('menuUpdateUser', arguments);
 	// Remove old
 	chat.menuRemoveUser(id);
 
@@ -397,7 +387,7 @@ chat.menuUpdateUser = function(id, name, channel) {
 * @require user object { id, name, channel }
 */
 chat.updateUsers = function(data) {
-	if (chat.debugMode) console.log('Menu update users');
+	if (chat.debugMode) console.log('Menu updateUsers', data);
 	// Start from fresh(remove old)
 	chat.menuClear();
 

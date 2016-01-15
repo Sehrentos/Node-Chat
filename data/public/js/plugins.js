@@ -1,4 +1,148 @@
-/**
+/*
+ * Serialize form function
+ * @form - target id
+ * @return object
+ * Browser support(tested): IE/9+, Mozilla/5.0 Gecko Firefox/38, Chrome/47
+ */
+function serialize(form) {
+	if (!form || form.nodeName !== "FORM") {
+		return;
+	}
+	var i, j, o = {};
+	for (i = 0; i < form.elements.length; i++) {
+		if (form.elements[i].name === "") {
+			continue
+		}
+		switch (form.elements[i].nodeName) {
+			case "INPUT":
+				switch (form.elements[i].type) {
+					case "text":
+					case "hidden":
+					case "password":
+					case "button":
+					case "reset":
+					case "submit":
+					//HTML5
+					case "number":
+					case "color":
+					case "range":
+					case "date":
+					case "month":
+					case "week":
+					case "time":
+					case "datetime":
+					case "datetime-local":
+					case "email":
+					case "search":
+					case "tel":
+					case "url":
+						o[form.elements[i].name] = form.elements[i].value;
+					break;
+					case "checkbox":
+					case "radio":
+						if (form.elements[i].checked) {
+							o[form.elements[i].name] = form.elements[i].value;
+						}
+					break;
+					case "file":
+					break;
+				}
+			break;
+			case "TEXTAREA":
+				o[form.elements[i].name] = form.elements[i].value;
+			break;
+			case "SELECT":
+				switch (form.elements[i].type) {
+					case "select-one":
+						o[form.elements[i].name] = form.elements[i].value;
+					break;
+					case "select-multiple":
+						for (j = 0; j < form.elements[i].options.length; j++) {
+							if (form.elements[i].options[j].selected) {
+								o[form.elements[i].name] = form.elements[i].options[j].value;
+							}
+						}
+					break;
+				}
+			break;
+			case "BUTTON":
+				switch (form.elements[i].type) {
+					case "reset":
+					case "submit":
+					case "button":
+						o[form.elements[i].name] = form.elements[i].value;
+					break;
+				}
+			break;
+		}
+	}
+	return o;
+}
+
+/*
+ *extend() - Object merge function
+ * Browser support(tested): IE/9+, Mozilla/5.0 Gecko Firefox/38, Chrome/47
+ */
+var extend = function(destination, source) {
+	for (var property in source) {
+		if (source[property] && source[property].constructor &&
+		 source[property].constructor === Object &&
+		 source[property] !== null) {
+			destination[property] = destination[property] || {};
+			arguments.callee(destination[property], source[property]);
+		} else {
+			destination[property] = source[property];
+		}
+	}
+	return destination;
+};
+
+/*
+ * deepExtend() - Object deep extend function
+ * Browser support(tested): IE9+, Mozilla/5.0 Gecko Firefox/38, Chrome/47
+ */
+function deepExtend(target, src) {
+	var array = Array.isArray(src);
+	var dst = array && [] || {};
+
+	if (array) {
+		target = target || [];
+		dst = dst.concat(target);
+		src.forEach(function(e, i) {
+			if (typeof dst[i] === 'undefined') {
+				dst[i] = e;
+			} else if (typeof e === 'object') {
+				dst[i] = arguments.callee(target[i], e);
+			} else {
+				if (target.indexOf(e) === -1) {
+					dst.push(e);
+				}
+			}
+		});
+	} else {
+		if (target && typeof target === 'object') {
+			Object.keys(target).forEach(function (key) {
+				dst[key] = target[key];
+			})
+		}
+		Object.keys(src).forEach(function (key) {
+			if (typeof src[key] !== 'object' || !src[key]) {
+				dst[key] = src[key];
+			}
+			else {
+				if (!target[key]) {
+					dst[key] = src[key];
+				} else {
+					dst[key] = arguments.callee(target[key], src[key]);
+				}
+			}
+		});
+	}
+
+	return dst;
+}
+
+/*
  * Pure JS: Custom prompt, confirm, alert
  * @nprompt( options )
  * @nconfirm( options )
@@ -45,104 +189,6 @@ var nprompt = function(options, pType) {
 		promptBody: document.createElement("DIV"),
 		onSubmit: function() {},
 		onCancel: function() {}
-	};
-
-	/*
-	* Serialize form function
-	* @form - target id
-	* @return object
-	* Browser support(tested): IE/9+, Mozilla/5.0 Gecko Firefox/38, Chrome/47
-	*/
-	var serialize = function(form) {
-		if (!form || form.nodeName !== "FORM") {
-			return;
-		}
-		var i, j, o = {};
-		for (i = 0; i < form.elements.length; i++) {
-			if (form.elements[i].name === "") {
-				continue
-			}
-			switch (form.elements[i].nodeName) {
-				case "INPUT":
-					switch (form.elements[i].type) {
-						case "text":
-						case "hidden":
-						case "password":
-						case "button":
-						case "reset":
-						case "submit":
-						//HTML5
-						case "number":
-						case "color":
-						case "range":
-						case "date":
-						case "month":
-						case "week":
-						case "time":
-						case "datetime":
-						case "datetime-local":
-						case "email":
-						case "search":
-						case "tel":
-						case "url":
-							o[form.elements[i].name] = form.elements[i].value;
-						break;
-						case "checkbox":
-						case "radio":
-							if (form.elements[i].checked) {
-								o[form.elements[i].name] = form.elements[i].value;
-							}
-						break;
-						case "file":
-						break;
-					}
-				break;
-				case "TEXTAREA":
-					o[form.elements[i].name] = form.elements[i].value;
-				break;
-				case "SELECT":
-					switch (form.elements[i].type) {
-						case "select-one":
-							o[form.elements[i].name] = form.elements[i].value;
-						break;
-						case "select-multiple":
-							for (j = 0; j < form.elements[i].options.length; j++) {
-								if (form.elements[i].options[j].selected) {
-									o[form.elements[i].name] = form.elements[i].options[j].value;
-								}
-							}
-						break;
-					}
-				break;
-				case "BUTTON":
-					switch (form.elements[i].type) {
-						case "reset":
-						case "submit":
-						case "button":
-							o[form.elements[i].name] = form.elements[i].value;
-						break;
-					}
-				break;
-			}
-		}
-		return o;
-	};
-
-	/*
-	* Extend - Object merge function
-	* Browser support(tested): IE9+, Mozilla/5.0 Gecko Firefox/38, Chrome/47
-	*/
-	var extend = function(destination, source) {
-		for (var property in source) {
-			if (source[property] && source[property].constructor &&
-			 source[property].constructor === Object) {
-				destination[property] = destination[property] || {};
-				arguments.callee(destination[property], source[property]);
-			} else {
-				destination[property] = source[property];
-			}
-		}
-		return destination;
 	};
 
 	// Custom function extend(destination, source)

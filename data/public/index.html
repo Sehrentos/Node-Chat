@@ -41,104 +41,6 @@
 		document.querySelector("#menu-right").style.display = "none";
 	}
 
-	/*
-	 * Extend - Object merge function
-	 * Browser support(tested): IE9+, Mozilla/5.0 Gecko Firefox/38, Chrome/47
-	 */
-	function extend(destination, source) {
-		for (var property in source) {
-			if (source[property] && source[property].constructor &&
-			 source[property].constructor === Object) {
-				destination[property] = destination[property] || {};
-				arguments.callee(destination[property], source[property]);
-			} else {
-				destination[property] = source[property];
-			}
-		}
-		return destination;
-	}
-
-	/*
-	* Serialize - HTML form serialize function
-	* @form - target id
-	* @return object
-	* Browser support(tested): IE/9+, Mozilla/5.0 Gecko Firefox/38, Chrome/47
-	*/
-	function serialize(form) {
-		if (!form || form.nodeName !== "FORM") {
-			return;
-		}
-		var i, j, o = {};
-		for (i = 0; i < form.elements.length; i++) {
-			if (form.elements[i].name === "") {
-				continue
-			}
-			switch (form.elements[i].nodeName) {
-				case "INPUT":
-					switch (form.elements[i].type) {
-						case "text":
-						case "hidden":
-						case "password":
-						case "button":
-						case "reset":
-						case "submit":
-						//HTML5
-						case "number":
-						case "color":
-						case "range":
-						case "date":
-						case "month":
-						case "week":
-						case "time":
-						case "datetime":
-						case "datetime-local":
-						case "email":
-						case "search":
-						case "tel":
-						case "url":
-							o[form.elements[i].name] = form.elements[i].value;
-						break;
-						case "checkbox":
-						case "radio":
-							if (form.elements[i].checked) {
-								o[form.elements[i].name] = form.elements[i].value;
-							}
-						break;
-						case "file":
-						break;
-					}
-				break;
-				case "TEXTAREA":
-					o[form.elements[i].name] = form.elements[i].value;
-				break;
-				case "SELECT":
-					switch (form.elements[i].type) {
-						case "select-one":
-							o[form.elements[i].name] = form.elements[i].value;
-						break;
-						case "select-multiple":
-							for (j = 0; j < form.elements[i].options.length; j++) {
-								if (form.elements[i].options[j].selected) {
-									o[form.elements[i].name] = form.elements[i].options[j].value;
-								}
-							}
-						break;
-					}
-				break;
-				case "BUTTON":
-					switch (form.elements[i].type) {
-						case "reset":
-						case "submit":
-						case "button":
-							o[form.elements[i].name] = form.elements[i].value;
-						break;
-					}
-				break;
-			}
-		}
-		return o;
-	}
-
 	// Ask user for server address
 	function ask_server() {
 		nprompt({
@@ -299,7 +201,7 @@
 		event.preventDefault();
 		formDataHandler();
 	}
-	
+
 	function formKeydown(event) {
 		if (event.keyCode == 13 && !event.shiftKey) {
 			event.preventDefault();
@@ -307,7 +209,7 @@
 			//formDataHandler();
 		}
 	}
-	
+
 	// Document is loaded.
 	document.addEventListener("DOMContentLoaded", function(e) {
 		// event.target = document
@@ -324,18 +226,18 @@
 		if ("io" in window) {
 			// Initialize socket
 			chat.init();
-			
+
 			// Set default volume level: 0.1 - 1.0
 			var vol = localStorage.volume || 0.5;
 			chat.playVolume(vol);
-			
+
 			// Set canvas menus
 			canvasMenu( doc.querySelector("#canvasMenu") );
 			canvasTeam( doc.querySelector("#canvasTeam") );
 		}
 
-	}, false); // document-ready
-	
+	}, false); // document ready
+
 	// Window is loaded
 	window.addEventListener('load', function(e) {
 
@@ -347,15 +249,17 @@
 			}
 		}, false);
 
-	}, false); // window-ready
+	}, false); // window ready
 
 	// Before leaving page
 	window.addEventListener("beforeunload", function(e) {
+
 		var confirmationMessage = "Do you wan't to leave the page?"; // "\o/"
 		e.returnValue = confirmationMessage; // Gecko, Trident, Chrome 34+
 		
 		return confirmationMessage; // Gecko, WebKit, Chrome <34
-	}, false);
+
+	}, false); // before unload
 	</script>
 </head>
 <body>
@@ -451,7 +355,7 @@
 		var footer = document.getElementById("footer");
 		var messages = document.getElementById("messages");
 		var intHeight = wrap.offsetHeight - (header.offsetHeight + footer.offsetHeight);
-		messages.style.overflow = 'auto';
+		//messages.style.overflow = 'auto'; // In-CSS
 		messages.style.height = intHeight + 'px';
 		messages.scrollTop = messages.scrollHeight;
 	}
