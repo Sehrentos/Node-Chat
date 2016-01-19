@@ -285,7 +285,7 @@ io.on('connection', function(socket) {
 	// Welcome new user to the server.
 	// @event: set-topic
 	socket.emit('set-topic', {
-		message: 'You are in '+ user.channel.toString() +' channel.'
+		message: user.channel.toString() /* 'Welcome to general channel.' */
 	});
 
 	// Send updated user settings

@@ -22,7 +22,7 @@ textarea {
 	-webkit-app-region: drag; /* nw.js */
 	position: fixed;
 	width: 100%;
-	height: 125px;
+	height: 88px;
 	white-space: nowrap;
 }
 
@@ -31,6 +31,18 @@ textarea {
 	overflow: hidden;
 	text-overflow: ellipsis;
 	o-text-overflow: ellipsis;
+}
+
+#menu-canvas-left {
+	position: fixed;
+	top: 5px;
+	left: 5px;
+}
+
+#menu-canvas-right {
+	position: fixed;
+	top: 5px;
+	right: 5px;
 }
 
 #content {
@@ -42,7 +54,13 @@ textarea {
 	overflow: auto;
 }
 
-#content:before, #content:after {
+#content:before {
+	display: block;
+	content: "";
+	height: 88px;
+}
+
+#content:after {
 	display: block;
 	content: "";
 	height: 125px;

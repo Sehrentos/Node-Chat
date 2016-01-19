@@ -295,7 +295,8 @@ chat.menuAddUser = function(id, name, channel) {
 	// New user object
 	var elem = document.createElement("A");
 	elem.className = 'user w3-dropdown-hover';
-	elem.id = id;
+	//elem.id = id;
+	elem.setAttribute("data-id", id);
 	
 	var user = '<span>' + name + '</span>';
 		user += '<span class="w3-dropdown-content w3-border">';
@@ -324,12 +325,16 @@ chat.menuAddUser = function(id, name, channel) {
 */
 chat.menuRemoveUser = function(id) {
 	// User menu array
-	var menuArray = document.querySelector(".users-list").find("#" + id);
-
 	if (chat.debugMode) console.log('fn.menuRemoveUser', arguments);
-	if (menuArray) {
-		menuArray.remove();
-	}
+	var menuArray = document.querySelectorAll(".user");
+
+	each(menuArray, function(target, key) {
+		if (target.getAttribute("data-id") === id) {
+			if (target) {
+				target.remove();
+			}
+		}
+	});
 
 	return this;
 };
