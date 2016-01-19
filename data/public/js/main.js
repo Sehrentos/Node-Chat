@@ -28,20 +28,20 @@ chat.init = function(url) {
 
 	// Successful connection
 	chat.socket.on('connect', function (data) {
-		if (chat.debugMode && data) console.log(data);
+		if (chat.debugMode && data) console.log('io.connect', data);
 		chat.mes("Connected.");
 		chat.setNick();
 	});
 
 	// Error
 	chat.socket.on('error', function (data) {
-		if (chat.debugMode) console.log(data);
+		if (chat.debugMode) console.log('io.error', data);
 		chat.mes(data);
 	});
 
 	// Connect error
 	chat.socket.on('connect_error', function (data) {
-		if (chat.debugMode) console.log(data);
+		if (chat.debugMode) console.log('io.connect_error', data);
 		if (data.type === "TransportError") {
 			chat.mes("(" + chat.connectionCount + ") Unable to connect server.");
 			// Clear user menu
@@ -56,7 +56,7 @@ chat.init = function(url) {
 
 	// Timeout
 	chat.socket.on('connect_timeout', function (data) {
-		if (chat.debugMode) console.log(data);
+		if (chat.debugMode) console.log('io.connect_timeout', data);
 		chat.mes("(" + chat.connectionCount + ") Connection timeout.");
 		// Clear user menu
 		chat.menuClear();
@@ -69,7 +69,7 @@ chat.init = function(url) {
 
 	// Disconnect
 	chat.socket.on('disconnect', function (data) {
-		if (chat.debugMode) console.log(data); // transport close = server closed connection.
+		if (chat.debugMode) console.log('io.disconnect', data); // transport close = server closed connection.
 		chat.mes("Disconnected.");
 		// Clear user menu
 		chat.menuClear();
@@ -82,71 +82,54 @@ chat.init = function(url) {
 
 	// Welcome
 	chat.socket.on('set-topic', function (data) {
-		if (chat.debugMode) {
-			console.log('set-topic', data);
-		}
+		if (chat.debugMode) console.log('io.set-topic', data);
 		chat.mes("Set topic: " + data.message);
-		$("#header").find("#topic").text(data.message);
+		document.querySelector("#topic").text(data.message);
 	});
 
 	// Notice
 	chat.socket.on('notice', function (data) {
-		if (chat.debugMode) {
-			console.log('Notice', data);
-		}
+		if (chat.debugMode) console.log('io.notice', data);
 		chat.mes(data.message);
 	});
 
 	// Update user data
 	chat.socket.on('update-user', function (data) {
-		if (chat.debugMode) {
-			console.log('Update-user', data);
-		}
+		if (chat.debugMode) console.log('io.update-user', data);
 		chat.user = data;
 	});
 
 	// New updater: add user
 	chat.socket.on('channel-user-add', function (data) {
-		if (chat.debugMode) {
-			console.log('Channel-user-add', data);
-		}
+		if (chat.debugMode) console.log('io.channel-user-add', data);
 		chat.mes(data.name + " - " + data.message);
 		chat.menuAddUser(data.id, data.name, data.channel);
 	});
 
 	// New updater: add user
 	chat.socket.on('channel-user-list', function (data) {
-		if (chat.debugMode) {
-			console.log('Channel-user-list', data);
-		}
-		//chat.menuAddUser(data.id, data.name, data.channel);
+		if (chat.debugMode) console.log('io.channel-user-list', data);
 		chat.updateUsers(data);
 	});
 
 	//New updater: remove user
 	chat.socket.on('channel-user-remove', function (data) {
-		if (chat.debugMode) {
-			console.log('Channel-user-remove', data);
-		}
-		//chat.mes(data.name + " has left the channel.");
+		if (chat.debugMode) console.log('io.channel-user-remove', data);
 		chat.mes(data.name + " - " + data.message);
 		chat.menuRemoveUser(data.id); //userid
 	});
 
 	// New updater: user update
 	chat.socket.on('channel-user-update', function (data) {
-		if (chat.debugMode) {
-			console.log('Channel-user-update', data);
-		}
+		if (chat.debugMode) console.log('io.channel-user-update', data);
 		chat.mes(data.name + " - " + data.message);
 		chat.menuUpdateUser(data.id, data.name, data.channel);
 	});
 
 	// Whisper
 	chat.socket.on('whisper', function (data) {
-		if (chat.debugMode) {
-			console.log('Whisper', data);
-		}
+		if (chat.debugMode) console.log('io.whisper', data);
+
 		var d = new Date(data.date),
 			hours = d.getHours(),
 			minutes = d.getMinutes(),
@@ -174,9 +157,8 @@ chat.init = function(url) {
 
 	// message / chat
 	chat.socket.on('message', function(data) {
-		if (chat.debugMode) {
-			console.log('Chat', data);
-		}
+		if (chat.debugMode) console.log('io.message', data);
+
 		var d = new Date(data.date),
 			hours = d.getHours(),
 			minutes = d.getMinutes(),
@@ -197,30 +179,26 @@ chat.init = function(url) {
 
 	// Get all messages from channel
 	chat.socket.on('get-messages', function (data) {
-		if (chat.debugMode) {
-			console.log('Get-messages', data);
-		}
+		if (chat.debugMode) console.log('io.get-messages', data);
 
-		chat.mes("Start of messages.");
+		chat.mes("Start of messages:");
 
-		$.each(data.messages, function() {
-			var d = new Date( this.date ),
+		each(data.messages, function(data) {
+			var d = new Date( data.date ),
 				hours = d.getHours(),
 				minutes = d.getMinutes(),
 				seconds = d.getSeconds(),
-				name = this.name.toString(),
-				message = this.message.toString();
+				name = data.name.toString(),
+				message = data.message.toString();
 
 			var msg = "["+ chat.twoDigits(hours) + ":" + chat.twoDigits(minutes) + ":" + chat.twoDigits(seconds) +"] ";
-			msg += "<a href=\"javascript:void(0)\" class=\"nickname\" onclick=\"chat.setWhisper('"+ name +"')\">&lt;"+ name +"&gt;</a> ";
-			msg += message;
+				msg += "<a href=\"javascript:void(0)\" class=\"nickname\" onclick=\"chat.setWhisper('"+ name +"')\">&lt;"+ name +"&gt;</a> ";
+				msg += message;
 			
 			chat.mes(msg);
 		});
 
 		chat.mes("End of messages.");
-
-		
 	});
 
 	return this;
@@ -312,30 +290,30 @@ chat.submitMessage = function(message) {
 * @require user: id, name, channel
 */
 chat.menuAddUser = function(id, name, channel) {
+	if (chat.debugMode) console.log('fn.menuAddUser', arguments);
+	
 	// New user object
-	var $user = $('<a/>', {
-		'class': 'user w3-dropdown-hover',
-		'id': id
-	});
-
-	var user = name.toString();
+	var elem = document.createElement("A");
+	elem.className = 'user w3-dropdown-hover';
+	elem.id = id;
 	
-	user += '<span class="w3-dropdown-content w3-border">';
-
-	if (chat.user.name === name) {
-		user += '<a href="javascript:void(0)" onclick="chat.setWhisper()">New whisper</a> \
-			<a href="javascript:void(0)" onclick="chat.setNick()">Change name</a> \
-			<a href="javascript:void(0)" onclick="chat.setChannel()">Change channel</a>';
-	} else {
-		user += '<a href="javascript:void(0)" onclick="chat.setWhisper(\'' + name + '\')">Whisper</a>';
-	}
-
-	user += '</span>';
+	var user = '<span>' + name + '</span>';
+		user += '<span class="w3-dropdown-content w3-border">';
+		if (chat.user.name === name) {
+			user += '<a href="javascript:void(0)" onclick="chat.setWhisper()">New whisper</a>';
+			user += '<a href="javascript:void(0)" onclick="chat.setNick()">Change name</a>';
+			user += '<a href="javascript:void(0)" onclick="chat.setChannel()">Change channel</a>';
+		} else {
+			user += '<a href="javascript:void(0)" onclick="chat.setWhisper(\'' + name + '\')">Whisper</a>';
+		}
+		user += '</span>';
 	
-	$user.html(user);
-
+	elem.html(user);
+	
 	// Display new menu
-	$user.appendTo(".users-list");
+	document.querySelectorAll(".users-list").each(function(target) {
+		target.appendChild(elem);
+	})
 	
 	return this;
 };
@@ -346,12 +324,11 @@ chat.menuAddUser = function(id, name, channel) {
 */
 chat.menuRemoveUser = function(id) {
 	// User menu array
-	var $menuArray = $(".users-list").find("#" + id);
+	var menuArray = document.querySelector(".users-list").find("#" + id);
 
-	// If array has any value, remove it
-	if ($menuArray.length) {
-		if (chat.debugMode) console.log('menuRemoveUser', arguments);
-		$menuArray.remove();
+	if (chat.debugMode) console.log('fn.menuRemoveUser', arguments);
+	if (menuArray) {
+		menuArray.remove();
 	}
 
 	return this;
@@ -362,7 +339,8 @@ chat.menuRemoveUser = function(id) {
 * Remove all users from menu
 */
 chat.menuClear = function() {
-	$(".users-list").empty();
+	if (chat.debugMode) console.log('fn.menuClear');
+	document.querySelector(".users-list").innerHTML = '';
 
 	return this;
 };
@@ -372,7 +350,7 @@ chat.menuClear = function() {
 * @require user: id, name, channel
 */
 chat.menuUpdateUser = function(id, name, channel) {
-	if (chat.debugMode) console.log('menuUpdateUser', arguments);
+	if (chat.debugMode) console.log('fn.menuUpdateUser', arguments);
 	// Remove old
 	chat.menuRemoveUser(id);
 
@@ -387,15 +365,15 @@ chat.menuUpdateUser = function(id, name, channel) {
 * @require user object { id, name, channel }
 */
 chat.updateUsers = function(data) {
-	if (chat.debugMode) console.log('Menu updateUsers', data);
+	if (chat.debugMode) console.log('fn.updateUsers', data);
 	// Start from fresh(remove old)
 	chat.menuClear();
 
 	// Add all users in array
-	$.each(data.users, function() {
-		var id = this.id,
-			name = this.name,
-			channel = this.channel,
+	each(data.users, function(data) {
+		var id = data.id,
+			name = data.name,
+			channel = data.channel,
 			active = 0;
 
 		// Add new user
@@ -412,7 +390,7 @@ chat.updateUsers = function(data) {
 */
 chat.connect = function(callback) {
 	nconfirm({
-		title: "Welcome to Chat",
+		title: "Welcome to chat",
 		message: "Do you wish to <b>connect</b> to the server?",
 		background: true,
 		onSubmit: function() {
@@ -431,16 +409,17 @@ chat.connect = function(callback) {
 * UI open set nickname window
 * @require: nameStr -optional
 */
-chat.setNick= function(nameStr) {
+chat.setNick = function(nameStr) {
 	if (nameStr === undefined) {
 		nprompt({
-			title: "Set Name",
+			title: "Set name",
 			message: "Please enter your <b>name</b> at the field below.",
 			input: [{
 				"type": "text",
 				"name": "name",
 				"placeholder": "Your name",
-				"value": (localStorage.name ? localStorage.name : chat.user.name)
+				"value": (localStorage.name ? localStorage.name : chat.user.name),
+				"required": "true"
 			}],
 			background: false,
 			onSubmit: function(data) {
@@ -482,13 +461,14 @@ chat.setNick= function(nameStr) {
 chat.setChannel = function(channelName) {
 	if (channelName === undefined) {
 		nprompt({
-			title: "Set Channel",
+			title: "Set channel",
 			message: "Please enter <b>channel</b> name at the field below.",
 			input: [{
 				"type": "text",
 				"name": "channel",
 				"placeholder": "Channel name",
-				"value": "general"
+				"value": "general",
+				"required": "true"
 			}],
 			background: false,
 			onSubmit: function(data) {
@@ -531,12 +511,14 @@ chat.setWhisper = function(nickname, messageStr) {
 				"type": "text",
 				"name": "whisper",
 				"placeholder": "User name",
-				"value": (chat.user.whisper ? chat.user.whisper: "")
+				"value": (chat.user.whisper ? chat.user.whisper: ""),
+				"required": "true"
 			},{
 				"type": "text",
 				"name": "message",
 				"placeholder": "Message",
-				"value": ""
+				"value": "",
+				"required": "true"
 			}],
 			onSubmit: function(data) {
 				// Don't send to your self
@@ -549,7 +531,7 @@ chat.setWhisper = function(nickname, messageStr) {
 	// Dont send to your self
 	else if (nickname.length && nickname !== chat.user.name) {
 		if (nickname.length && messageStr === undefined) {
-			$("#chatform").find("#chatwhisper").val(nickname);
+			document.querySelector("#chatwhisper").value = nickname;
 			chat.setFocus();
 		}
 		else if (messageStr === '') {
@@ -560,7 +542,8 @@ chat.setWhisper = function(nickname, messageStr) {
 					"type": "text",
 					"name": "message",
 					"placeholder": "Message",
-					"value": ""
+					"value": "",
+					"required": "true"
 				}],
 				onSubmit: function(data) {
 					chat.sendWhisper(nickname, data.message);
@@ -593,7 +576,7 @@ chat.sendWhisper = function(nickname, messageStr) {
 				from: chat.user.name,
 				message: messageStr
 			});
-			$("#chatform").find("#chatwhisper").val(nickname);
+			document.querySelector("#chatwhisper").value = nickname;
 			chat.setFocus();
 		}
 	}
@@ -618,19 +601,16 @@ chat.isCommand = function(str, reg) {
 * @require: message, whisper(true/false)
 */
 chat.mes = function(message, whisper) {
-	var elem = document.querySelector("#messages");
-	var newLi = document.createElement("LI");
+	var target = document.querySelector("#messages");
+	var elem = document.createElement("LI");
 	
 	if (whisper !== undefined || whisper === true) {
-		newLi.innerHTML = "<span class=\"whisper\">" + message + "</span>";
+		elem.innerHTML = "<span class=\"whisper\">" + message.linkify() + "</span>";
 	} else {
-		newLi.innerHTML = "<span class=\"message\">" + message + "</span>";
+		elem.innerHTML = "<span class=\"message\">" + message.linkify() + "</span>";
 	}
 	
-	elem.appendChild(newLi);
-	
-	//makeLink(elem);
-	$("#messages").linkify();
+	target.appendChild(elem);
 	
 	chat.scrollDown();
 
@@ -649,23 +629,13 @@ chat.setFocus = function(id) {
 
 /*
 * Scroll down the chat window
-* @require: speed
 */
-chat.scrollDown = function(speed) {
+chat.scrollDown = function() {
 	//var elem1 = document.querySelector("#content");
 	var elem2 = document.querySelector("#messages");
 
-	if (speed === undefined) {
-		//elem1.scrollTop = elem1.scrollHeight;
-		elem2.scrollTop = elem2.scrollHeight;
-	} else {
-		/*elem1.animate({
-			scrollTop: elem1.scrollHeight
-		}, speed);*/
-		elem2.animate({
-			scrollTop: elem2.scrollHeight
-		}, speed);
-	}
+	//elem1.scrollTop = elem1.scrollHeight;
+	elem2.scrollTop = elem2.scrollHeight;
 
 	return this;
 };
@@ -722,7 +692,7 @@ chat.twoDigits = function(string) {
 * @require: none
 */
 chat.quit = function() {
-	if (chat.debugMode) console.log("Socket close");
+	if (chat.debugMode) console.log("fn.quit - Socket closed");
 	chat.socket.close();
 	//chat.socket = null;
 
@@ -746,7 +716,7 @@ chat.quit = function() {
 * @require: none
 */
 chat.reconnect = function() {
-	if (chat.debugMode) console.log("Socket reconnect");
+	if (chat.debugMode) console.log("fn.reconnect - Socket reconnect");
 	chat.connectionCount = 1;
 	chat.mes("Reconnecting...");
 	chat.socket.connect();

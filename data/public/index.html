@@ -15,9 +15,9 @@
 	<!-- Stylesheet -->
 	<link rel="stylesheet" href="http://www.w3schools.com/lib/w3.css">
 	<link rel="stylesheet" href="css/main.css" />
-	<link rel="stylesheet" href="css/plugins.css" />
+	<!-- <link rel="stylesheet" href="css/plugins.css" /> -->
 	<!-- Javascript libraries -->
-	<script src="js/lib/jquery.js"></script>
+	<!-- <script src="js/lib/jquery.js"></script> -->
 	<script src="js/lib/socket.io.js"></script>
 	<!-- Javascripts -->
 	<script src="js/plugins.js"></script>
@@ -206,7 +206,6 @@
 		if (event.keyCode == 13 && !event.shiftKey) {
 			event.preventDefault();
 			document.querySelector("#chatsubmit").click();
-			//formDataHandler();
 		}
 	}
 
@@ -266,6 +265,7 @@
 
 <div id="wrap">
 
+	<!-- Left-nav -->
 	<nav id="menu-left" class="w3-sidenav w3-card-2 w3-white" style="display:none">
 		<a href="javascript:void(0)" onclick="sidenav_left_close()" class="w3-closenav w3-large">Close &times;</a>
 		<header class="w3-container">
@@ -284,6 +284,7 @@
 		-->
 	</nav>
 
+	<!-- Right-nav -->
 	<nav id="menu-right" class="w3-sidenav w3-card-2 w3-white" style="right:0; display:none">
 		<a href="javascript:void(0)" onclick="sidenav_right_close()" class="w3-closenav w3-large">Close &times;</a>
 		<header class="w3-container">
@@ -292,29 +293,46 @@
 		<div id="users" class="users-list w3-container"></div>
 	</nav>
 
-	<header id="header" class="w3-container w3-light-grey">
+	<!-- Header -->
+	<header id="header" class="w3-container w3-border-bottom w3-light-grey">
 		<div class="w3-container">
-			<span id="canvasMenu" class="menu-canvas w3-opennav w3-padding-top" onclick="sidenav_left_open()"></span>
-			<span id="canvasTeam" class="menu-canvas w3-opennav w3-padding-top w3-right" onclick="sidenav_right_open()"></span>
-			<h1 id="topic">Not connected.</h1>
+			<h1 id="topic" class="w3-margin">Not connected.</h1>
 		</div>
 	</header>
 
-	<div id="content" class="w3-container w3-white">
+	<!-- Canvas-home-menu -->
+	<div id="menu-canvas-left" class="w3-image" style="position:absolute;top:5px;left:5px;">
+		<a id="canvasMenu" class="menu-canvas w3-opennav w3-white" onclick="sidenav_left_open()" href="javascript:void(0)"></a>
+	</div>
+
+	<!-- Canvas-users-menu -->
+	<div id="menu-canvas-right" class="w3-image" style="position:absolute;top:5px;right:5px;">
+		<a id="canvasTeam" class="menu-canvas w3-opennav w3-white" onclick="sidenav_right_open()" href="javascript:void(0)"></a>
+	</div>
+
+	<!-- Content -->
+	<div id="content" class="w3-container w3-white w3-small">
 		<ul id="messages"></ul>
 	</div>
 
-	<footer id="footer" class="w3-container w3-blue-grey">
+	<!-- Footer -->
+	<footer id="footer" class="w3-container w3-border-top w3-light-grey">
 		<form id="chatform" class="w3-container w3-padding-top">
 			<div class="w3-row">
 				<div class="w3-col m6">
-					<p><textarea name="message" id="chatmessage" class="w3-input w3-border w3-white" placeholder="message..." rows="1" autofocus required></textarea></p>
+					<p>
+						<textarea name="message" id="chatmessage" class="w3-input w3-border w3-white" placeholder="message..." rows="1" autofocus required></textarea>
+					</p>
 				</div>
 				<div class="w3-col m2">
-					<p><input type="text" name="whisper" id="chatwhisper" class="w3-input w3-border w3-white" placeholder="to..." autocomplete="off" /></p>
+					<p>
+						<input type="text" name="whisper" id="chatwhisper" class="w3-input w3-border w3-white" placeholder="to..." autocomplete="off" />
+					</p>
 				</div>
 				<div class="w3-col m2">
-					<p><input type="submit" id="chatsubmit" class="w3-input w3-btn w3-border w3-blue" value="Send" /></p>
+					<p>
+						<input type="submit" id="chatsubmit" class="w3-input w3-btn w3-border w3-dark-grey" value="Send" />
+					</p>
 				</div>
 			</div>
 			
@@ -332,37 +350,35 @@
 
 </div>
 <script type="text/javascript">
-(function() {
-	// Window resize
-	window.addEventListener("resize", resizeThrottler, false);
-	var resizeTimeout;
-	function resizeThrottler() {
-		// ignore resize events as long as an actualResizeHandler execution is in the queue
-		if ( !resizeTimeout ) {
-			resizeTimeout = setTimeout(function() {
-				resizeTimeout = null;
-				actualResizeHandler();
-				// The actualResizeHandler will execute at a rate of 15fps
-			}, 66);
-		}
+// Window resize
+window.addEventListener("resize", resizeThrottler, false);
+var resizeTimeout;
+function resizeThrottler() {
+	// ignore resize events as long as an actualResizeHandler execution is in the queue
+	if ( !resizeTimeout ) {
+		resizeTimeout = setTimeout(function() {
+			resizeTimeout = null;
+			actualResizeHandler();
+			// The actualResizeHandler will execute at a rate of 15fps
+		}, 66);
 	}
+}
 
-	// Set content messages height (ui)
-	function actualResizeHandler() {
-		// handle the resize event
-		var wrap = document.getElementById("wrap");
-		var header = document.getElementById("header");
-		var footer = document.getElementById("footer");
-		var messages = document.getElementById("messages");
-		var intHeight = wrap.offsetHeight - (header.offsetHeight + footer.offsetHeight);
-		//messages.style.overflow = 'auto'; // In-CSS
-		messages.style.height = intHeight + 'px';
-		messages.scrollTop = messages.scrollHeight;
-	}
+// Set content messages height (ui)
+function actualResizeHandler() {
+	// handle the resize event
+	var wrap = document.getElementById("wrap");
+	var header = document.getElementById("header");
+	var footer = document.getElementById("footer");
+	var messages = document.getElementById("messages");
+	var intHeight = wrap.offsetHeight - (header.offsetHeight + footer.offsetHeight);
+	//messages.style.overflow = 'auto'; // In-CSS
+	messages.style.height = intHeight + 'px';
+	messages.scrollTop = messages.scrollHeight;
+}
 
-	// Set content messages height (ui)
-	actualResizeHandler();
-}());
+// Set content messages height (ui)
+actualResizeHandler();
 </script>
 </body>
 </html>

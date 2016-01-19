@@ -1,17 +1,17 @@
 CACHE MANIFEST
-# 2016-01-07:v1.1
+# 2016-01-19:v1
 
 # Explicitly cached 'master entries'.
 CACHE:
 /favicon.ico
 index.html
 css/main.css
-css/plugins.css
+#css/plugins.css
 images/icon32.ico
 images/favicon64.ico
 js/main.js
 js/plugins.js
-js/lib/jquery.js
+#js/lib/jquery.js
 js/lib/socket.io.js
 sound/anvil.ogg
 

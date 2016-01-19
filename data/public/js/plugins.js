@@ -1,10 +1,266 @@
+/**
+ * Sehrentos.js - Just my simple lib
+ * Author Niko H.
+ */
+var Sehrentos = {
+	version: '0.1.0',
+	repository: 'https://github.com/Sehrentos'
+};
+
 /*
- * Serialize form function
+ * DOM is loaded event
+ */
+var ready = function(callback) {
+	if (typeof(callback) === "function") {
+		return document.addEventListener("DOMContentLoaded", callback, false);
+	} throw "ready() callback is not defined or is not a function.";
+};
+
+/*
+ * Element query selector
+ */
+var selector = function(s, callback) {
+	var target;
+	if (s.indexOf("#") !== -1) {
+		target = document.querySelector(s);
+		if (typeof(callback) === "function") {
+			callback(target, 0);
+		}
+	} else {
+		target = document.querySelectorAll(s);
+		if (typeof(callback) === "function") {
+			for (var p in target) {
+				if (target.hasOwnProperty(p)) {
+					callback(target[p], p);
+				}
+			}
+		}
+	}
+	return target;
+};
+
+// Short-hand selector like in jQuery
+var $ = function(s) {
+	return selector(s);
+};
+
+/*
+ * find(target, callback(target, index) ) - querySelector
+ * Works for HTML, XUL, and plain XML
+ */
+if (!Element.prototype.find) {
+	Element.prototype.find = function(s, callback) {
+		var target;
+		if (s.indexOf("#") !== -1) {
+			target = this.querySelector(s);
+			if (typeof(callback) === "function") {
+				callback(target, 0);
+			}
+		} else {
+			target = this.querySelectorAll(s);
+			if (typeof(callback) === "function") {
+				for (var p in target) {
+					if (target.hasOwnProperty(p)) {
+						callback(target[p], p);
+					}
+				}
+			}
+		}
+		return target;
+	}
+}
+
+/*
+ * Element.text() - append a string function.
+ * Element.text("String", append) - append (true/false) optional
+ */
+if (!Element.prototype.text) {
+	Element.prototype.text = function(src, append) {
+		append = append || false;
+		if (append === false) this.innerHTML = '';
+		return this.appendChild( document.createTextNode(src) );
+	}
+}
+
+/*
+ * Element.html() - append a html function.
+ * Element.html("String", append) - append (true/false) optional
+ */
+if (!Element.prototype.html) {
+	Element.prototype.html = function(src, append) {
+		append = append || false;
+		if (append === false) {
+			this.innerHTML = src;
+		} else {
+			this.innerHTML += src;
+		}
+		return this;
+	}
+}
+
+/*
+ * on() - Event binding function.
+ * Element.on("click", Function, false)
+ */
+if (!Element.prototype.on) {
+	Element.prototype.on = function(src, callback, extra) {
+		if (typeof(callback) === "function") {
+			return this.addEventListener(src, callback, extra || false);
+		}
+	}
+}
+
+/*
+ * each() - For each loop (Array/Object)
+ * each(elem, function(value, index) { console.log(index + " -> " + value); });
+ */
+var each = function(obj, callback) {
+	if (typeof(callback) === "function") {
+		for (var key in obj) {
+			if (obj.hasOwnProperty(key)) {
+				callback(obj[key], key);
+			}
+		}
+	}
+	return this;
+};
+
+/*
+ * Element.each() - For each loop (Array/Object)
+ * Element.each(function(value, index) { console.log(index + " -> " + value); });
+ */
+if (!Object.prototype.each) {
+	Object.prototype.each = function(callback) {
+		if (typeof(callback) === "function") {
+			for (var key in this) {
+				if (this.hasOwnProperty(key)) {
+					callback(this[key], key);
+				}
+			}
+		}
+		return this;
+	};
+}
+
+/*
+ * Storage - localStorage JSON
+ * Methods to load, save, remove data from localStorage.
+ */
+var loadStorage = function (key) {
+	var keyName = key || "storage_db";
+	if (localStorage[keyName]) {
+		return JSON.parse(localStorage[keyName]);
+	}
+	return {};
+};
+
+var saveStorage = function (val, key) {
+	var keyName = key || "storage_db";
+	localStorage[keyName] = JSON.stringify(val);
+};
+
+var removeStorage = function (key) {
+	var keyName = key || "storage_db";
+	localStorage.removeItem(keyName);
+};
+
+/*
+ * Helper function: arrayObjectIndexOf
+ * @Return index or -1 if not found
+ * var index = arrayObjectIndexOf(arrayObject, searchThis, "fromThisPropName");
+ */
+var arrayObjectIndexOf = function(arrayObject, searchTerm, property) {
+	for (var i = 0, len = arrayObject.length; i < len; i++) {
+		if (arrayObject[i][property] === searchTerm) return i;
+	}
+	return -1;
+};
+
+/*
+ * Object.extend() - Object merge/extend function
+ * Browser support(tested): IE9+, Mozilla/5.0 Gecko Firefox/38, Chrome/47
+ * 1. extend(obj1, obj2);
+ * 2. obj3 = extend(obj1, obj2);
+ */
+if (!Object.extend) {
+	Object.extend = function(destination, source) {
+		for (var property in source) {
+			if (source[property] && source[property].constructor && source[property].constructor === Object) {
+				destination[property] = destination[property] || {};
+				arguments.callee(destination[property], source[property]);
+			} else {
+				destination[property] = source[property];
+			}
+		}
+		return destination;
+	};
+}
+
+/*
+ * extend() - Merge Arrays & Objects function
+ * Browser support(tested): IE9+, Mozilla/5.0 Gecko Firefox/38, Chrome/47
+ * 1. extend(obj1, obj2);
+ * 2. obj3 = extend(obj1, obj2);
+ */
+var extend = function(target, src) {
+	var array = Array.isArray(src);
+	var dst = array && [] || {};
+	if (array) {
+		target = target || [];
+		dst = dst.concat(target);
+		src.forEach(function(e, i) {
+			if (typeof dst[i] === 'undefined') {
+				dst[i] = e;
+			} else if (typeof e === 'object') {
+				dst[i] = arguments.callee(target[i], e);
+			} else {
+				if (target.indexOf(e) === -1) {
+					dst.push(e);
+				}
+			}
+		});
+	} else {
+		if (target && typeof target === 'object') {
+			Object.keys(target).forEach(function (key) {
+				dst[key] = target[key];
+			})
+		}
+		Object.keys(src).forEach(function (key) {
+			if (typeof src[key] !== 'object' || !src[key]) {
+				dst[key] = src[key];
+			}
+			else {
+				if (!target[key]) {
+					dst[key] = src[key];
+				} else {
+					dst[key] = arguments.callee(target[key], src[key]);
+				}
+			}
+		});
+	}
+	return dst;
+};
+
+/*
+ * Object.extend() - Array/Object deep merge function
+ * Browser support(tested): IE9+, Mozilla/5.0 Gecko Firefox/38, Chrome/47
+ * 1. obj1.extend(obj2);
+ * 2. obj3 = obj1.extend(obj2);
+ */
+if (!Object.prototype.extend) {
+	Object.prototype.extend = function(src) {
+		var target = this;
+		return extend(target, src);
+	};
+}
+
+/*
+ * serialize() - HTML form serialize function
  * @form - target id
  * @return object
  * Browser support(tested): IE/9+, Mozilla/5.0 Gecko Firefox/38, Chrome/47
  */
-function serialize(form) {
+var serialize = function(form) {
 	if (!form || form.nodeName !== "FORM") {
 		return;
 	}
@@ -77,69 +333,75 @@ function serialize(form) {
 		}
 	}
 	return o;
-}
-
-/*
- *extend() - Object merge function
- * Browser support(tested): IE/9+, Mozilla/5.0 Gecko Firefox/38, Chrome/47
- */
-var extend = function(destination, source) {
-	for (var property in source) {
-		if (source[property] && source[property].constructor &&
-		 source[property].constructor === Object &&
-		 source[property] !== null) {
-			destination[property] = destination[property] || {};
-			arguments.callee(destination[property], source[property]);
-		} else {
-			destination[property] = source[property];
-		}
-	}
-	return destination;
 };
 
 /*
- * deepExtend() - Object deep extend function
- * Browser support(tested): IE9+, Mozilla/5.0 Gecko Firefox/38, Chrome/47
+ * Ajax() - XMLHttpRequest function
+ * url - file url to load
+ * success - function fired when loaded
+ * progress - function fired when loading
+ * error - function fired when error occurs
  */
-function deepExtend(target, src) {
-	var array = Array.isArray(src);
-	var dst = array && [] || {};
-
-	if (array) {
-		target = target || [];
-		dst = dst.concat(target);
-		src.forEach(function(e, i) {
-			if (typeof dst[i] === 'undefined') {
-				dst[i] = e;
-			} else if (typeof e === 'object') {
-				dst[i] = arguments.callee(target[i], e);
-			} else {
-				if (target.indexOf(e) === -1) {
-					dst.push(e);
-				}
-			}
-		});
-	} else {
-		if (target && typeof target === 'object') {
-			Object.keys(target).forEach(function (key) {
-				dst[key] = target[key];
-			})
+var Ajax = function(url, success, progress, error) {
+	this.request = new XMLHttpRequest();
+	
+	this.request.onreadystatechange = function() {
+		if (this.readyState == 4 && this.status == 200) {
+			if (success) success(this.response); //this.responseText
 		}
-		Object.keys(src).forEach(function (key) {
-			if (typeof src[key] !== 'object' || !src[key]) {
-				dst[key] = src[key];
-			}
-			else {
-				if (!target[key]) {
-					dst[key] = src[key];
-				} else {
-					dst[key] = arguments.callee(target[key], src[key]);
-				}
-			}
-		});
-	}
+	};
+	
+	this.request.onprogress = function(e) {
+		if (e.lengthComputable) {
+			var percentComplete = (e.loaded / e.total) * 100;
+			if (progress) progress(percentComplete);
+		}
+	};
+	
+	this.request.onerror = function() {
+		if (error) error("Network Error");
+	};
 
-	return dst;
+	this.request.open("GET", url, true);
+	this.request.send();
+};
+
+// get() - Short-hand for Ajax()
+var get = function(url, success, progress, error) {
+	return new Ajax(url, success, progress, error);
+};
+
+/*
+ * Element.remove() - Element remove function.
+ */
+if (!('remove' in Element.prototype)) {
+	Element.prototype.remove = function() {
+		if (this.parentNode) {
+			this.parentNode.removeChild(this);
+		}
+	};
+}
+
+/*
+ * String.linkify() - Make link function
+ */
+if(!String.linkify) {
+	String.prototype.linkify = function() {
+
+		// http://, https://, ftp://
+		var urlPattern = /\b(?:https?|ftp):\/\/[a-z0-9-+&@#\/%?=~_|!:,.;]*[a-z0-9-+&@#\/%=~_|]/gim;
+
+		// www. sans http:// or https://
+		var pseudoUrlPattern = /(^|[^\/])(www\.[\S]+(\b|$))/gim;
+
+		// Email addresses
+		var emailAddressPattern = /[\w.]+@[a-zA-Z_-]+?(?:\.[a-zA-Z]{2,6})+/gim;
+
+		return this
+			.replace(urlPattern, '<a href="$&" target="_blank">$&</a>')
+			.replace(pseudoUrlPattern, '$1<a href="http://$2" target="_blank">$2</a>')
+			.replace(emailAddressPattern, '<a href="mailto:$&" target="_blank">$&</a>');
+	};
 }
 
 /*
@@ -148,20 +410,20 @@ function deepExtend(target, src) {
  * @nconfirm( options )
  * @nalert( options )
  * Browser support(tested): IE9+, Mozilla/5.0 Gecko Firefox/38, Chrome/47
-  options = {
- 	title: string,					-optional
- 	message: string,				-optional
- 	input: array[object],			-optional(npromt required)
- 	background: true/false,			-optional
- 	onSubmit: callback,				-optional
- 	onCancel: callback				-optional
+	options = {
+	title: string,					-optional
+	message: string,				-optional
+	input: array[object],			-optional(npromt required)
+	background: true/false,			-optional
+	onSubmit: callback,				-optional
+	onCancel: callback				-optional
  }
  * input example:
  options.input = [{
- 	"type": "text",
- 	"name": "test1",
- 	"placeholder": "Test 1",
- 	"required": "true"
+	"type": "text",
+	"name": "test1",
+	"placeholder": "Test 1",
+	"required": "true"
  }]
  */
 var nprompt = function(options, pType) {
@@ -174,15 +436,15 @@ var nprompt = function(options, pType) {
 			name: "a",
 			value: "",
 			placeholder: "Write here...",
-			className: "nprompt_value"
+			className: "nprompt_value w3-input w3-margin-bottom w3-border w3-white"
 		}],
 		inputSubmit: [{
 			type: "submit",
-			className: "submit_ok",
+			className: "submit_ok w3-input w3-border w3-light-grey",
 			value: "Ok"
 		},{
 			type: "button",
-			className: "submit_cancel",
+			className: "submit_cancel w3-input w3-border w3-light-grey",
 			value: "Cancel"
 		}],
 		background: false,
@@ -192,11 +454,12 @@ var nprompt = function(options, pType) {
 	};
 
 	// Custom function extend(destination, source)
-	var settings = extend(defaults, options);
+	var settings = Object.extend(defaults, options);
 
 	// Append promptBody element settings
+	settings.promptBody.id = Math.random();
 	settings.promptBody.className = "nprompt_holder";
-	settings.promptBody.innerHTML = '<div class="nprompt_background"></div>' +
+	/*settings.promptBody.innerHTML = '<div class="nprompt_background"></div>' +
 		'<div class="nprompt_main">' +
 		'<div class="nprompt_inner">' +
 		'<div class="nprompt_message">' +
@@ -205,7 +468,22 @@ var nprompt = function(options, pType) {
 		'</div>' +
 		'<form class="nprompt_inputs"></form>' +
 		'</div>' +
-		'</div>';
+		'</div>';*/
+
+		//W3.CSS - Modal style
+		settings.promptBody.innerHTML = '<div class="nprompt_background w3-modal"> \
+			<div class="nprompt_message w3-modal-content w3-card-8"> \
+				<header class="w3-container w3-light-green"> \
+					<h2 class="title"></h2> \
+				</header> \
+				<div class="nprompt_message w3-container w3-padding"> \
+					<p class="message w3-margin"><p> \
+				</div> \
+				<footer class="w3-container w3-padding-bottom"> \
+					<form class="nprompt_inputs w3-container"></form> \
+				</footer> \
+			</div> \
+		</div>';
 
 	settings.remove = function(t) {
 		return t.parentNode.removeChild(t);
@@ -242,7 +520,7 @@ var nprompt = function(options, pType) {
 	var array = settings.inputSubmit;
 	while (array[i]) {
 		var elem = document.createElement('INPUT');
-		inputElem = extend(elem, array[i]);
+		inputElem = Object.extend(elem, array[i]);
 		settings.promptBody.querySelector(".nprompt_inputs").appendChild(inputElem);
 		i++;
 	}
@@ -257,17 +535,17 @@ var nprompt = function(options, pType) {
 			switch (type) {
 				case "textarea":
 					var elem = document.createElement('TEXTAREA');
-					inputElem = extend(elem, array[i]);
-					inputElem.className = array[i].className || "nprompt_value";
+					inputElem = Object.extend(elem, array[i]);
+					inputElem.className = array[i].className || "nprompt_value w3-input w3-margin-bottom w3-border w3-white";
 					// Insert before submit and cancel button
 					settings.promptBody.querySelector(".nprompt_inputs").insertBefore(inputElem, settings.promptBody.querySelector(".nprompt_inputs").childNodes[settings.promptBody.querySelector(".nprompt_inputs").childNodes.length-2]);
 				break;
 				case "radio":
 				case "checkbox":
 					var elem = document.createElement('INPUT');
-					inputElem = extend(elem, array[i]);
+					inputElem = Object.extend(elem, array[i]);
 					inputElem.id = array[i].id || Math.random();
-					inputElem.className = array[i].className || "nprompt_value";
+					inputElem.className = array[i].className || "nprompt_value w3-input w3-margin-bottom w3-border w3-white";
 					var newElement = document.createElement("P");
 					
 					var newItem = document.createElement("LABEL");
@@ -284,8 +562,8 @@ var nprompt = function(options, pType) {
 				break;
 				default:
 					var elem = document.createElement('INPUT');
-					inputElem = extend(elem, array[i]);
-					inputElem.className = array[i].className || "nprompt_value";
+					inputElem = Object.extend(elem, array[i]);
+					inputElem.className = array[i].className || "nprompt_value w3-input w3-margin-bottom w3-border w3-white";
 					// Insert before submit and cancel button
 					settings.promptBody.querySelector(".nprompt_inputs").insertBefore(inputElem, settings.promptBody.querySelector(".nprompt_inputs").childNodes[settings.promptBody.querySelector(".nprompt_inputs").childNodes.length-2]);
 				break;
@@ -309,16 +587,17 @@ var nprompt = function(options, pType) {
 	document.body.appendChild(settings.promptBody);
 
 	// Enable/Disable background
-	if (settings.background) {
+	/* if (settings.background) {
 		settings.promptBody.querySelector(".nprompt_background").className.replace(" disabled", "");
 		settings.promptBody.querySelector(".nprompt_background").className += " enabled";
 	} else {
 		settings.promptBody.querySelector(".nprompt_background").className.replace(" enabled", "");
 		settings.promptBody.querySelector(".nprompt_background").className += " disabled";
-	}
+	} */
 
 	// Display
-	settings.promptBody.querySelector(".nprompt_background").style.display = "block";
+	//settings.promptBody.querySelector(".nprompt_background").style.display = "block";
+	settings.promptBody.childNodes[0].style.display = "block";
 
 	// Focus
 	if (settings.type === false || settings.type === "prompt") {
@@ -340,170 +619,173 @@ var nalert = function(options) {
 };
 
 /*
-* plugins.js - jQuery plugins
-*/
-(function($) {
+ * plugins.js - jQuery plugins
+ * These are NOT in use right now, but I keep them safe.
+ */
+if ("jQuery" in window) {
+	(function($) {
 
-	// Define a method that allows fetching a cached script
-	$.fn.cachedScript = function( url, options ) {
-		// Allow user to set any option except for dataType, cache, and url
-		options = $.extend( options || {}, {
-			dataType: "script",
-			cache: true,
-			url: url
-		});
-		// Use $.ajax() since it is more flexible than $.getScript
-		// Return the jqXHR object so we can chain callbacks
-		return $.ajax( options );
-	};
+		// Define a method that allows fetching a cached script
+		$.fn.cachedScript = function( url, options ) {
+			// Allow user to set any option except for dataType, cache, and url
+			options = $.extend( options || {}, {
+				dataType: "script",
+				cache: true,
+				url: url
+			});
+			// Use $.ajax() since it is more flexible than $.getScript
+			// Return the jqXHR object so we can chain callbacks
+			return $.ajax( options );
+		};
 
-	/*
-	* Define linkify() plugin
-	* @jQuery('div.textbody').linkify();
-	*/
-	var linkifyThis = function () {
-		var childNodes = this.childNodes,
-				i = childNodes.length,
-				url1 = /(^|&lt;|\s)(www\..+?\..+?)(\s|&gt;|$)/g,
-				url2 = /(^|&lt;|\s)(((https?|ftp):\/\/|mailto:).+?)(\s|&gt;|$)/g;
-		while(i--) {
-			var n = childNodes[i];
-			if (n.nodeType == 3) {
-				var html = n.nodeValue; //$.trim(n.nodeValue);
-				if (html) {
-					// Load images
-					/* if (html.match(/\.(jpeg|jpg|gif|png)$/) != null) {
+		/*
+		* Define linkify() plugin
+		* @jQuery('div.textbody').linkify();
+		*/
+		var linkifyThis = function () {
+			var childNodes = this.childNodes,
+					i = childNodes.length,
+					url1 = /(^|&lt;|\s)(www\..+?\..+?)(\s|&gt;|$)/g,
+					url2 = /(^|&lt;|\s)(((https?|ftp):\/\/|mailto:).+?)(\s|&gt;|$)/g;
+			while(i--) {
+				var n = childNodes[i];
+				if (n.nodeType == 3) {
+					var html = n.nodeValue; //$.trim(n.nodeValue);
+					if (html) {
+						// Load images
+						/* if (html.match(/\.(jpeg|jpg|gif|png)$/) != null) {
+							html = html.replace(/&/g, '&amp;')
+							.replace(/</g, '&lt;')
+							.replace(/>/g, '&gt;')
+							.replace(url1, '$1<img src="http://$2">$3')
+							.replace(url2, '$1<img src="$2">$5');
+							$(n).after(html).remove();
+						} else { */
 						html = html.replace(/&/g, '&amp;')
 						.replace(/</g, '&lt;')
 						.replace(/>/g, '&gt;')
-						.replace(url1, '$1<img src="http://$2">$3')
-						.replace(url2, '$1<img src="$2">$5');
+						.replace(url1, '$1<a href="http://$2" target="_blank">$2</a>$3')
+						.replace(url2, '$1<a href="$2" target="_blank">$2</a>$5');
 						$(n).after(html).remove();
-					} else { */
-					html = html.replace(/&/g, '&amp;')
-					.replace(/</g, '&lt;')
-					.replace(/>/g, '&gt;')
-					.replace(url1, '$1<a href="http://$2" target="_blank">$2</a>$3')
-					.replace(url2, '$1<a href="$2" target="_blank">$2</a>$5');
-					$(n).after(html).remove();
-				}
-			}
-			else if (n.nodeType == 1	&&	!/^(a|button|textarea)$/i.test(n.tagName)) {
-				linkifyThis.call(n);
-			}
-		}
-	};
-	$.fn.linkify = function () {
-		return this.each(linkifyThis);
-	};
-	
-	/*
-	 * jQuery plugin: dropdown menu
-	 *
-	 * jQuery('.class #id').dropdown(options);
-	 * JSON options = { menu: [{ name:'', link:'' }, { name:'', link:'' }] };
-	 */
-	$.fn.dropdown = function(event, options) {
-		var defaults = {
-			timer: null,
-			timeout: 800,
-			active: false,
-			animation: false,
-			speed: 200
-		};
-		// Extend objects
-		var settings = $.extend({}, defaults, options);
-
-		return this.each(function() {
-			$(this).css({
-				'cursor': 'pointer'
-			});
-			// Create new element
-			var dropBody = $('<div class="custom-dropdown" style="display:none;"><ul></ul></div>');
-			// Extend objects
-			var opt = $.extend({}, settings, {
-				dropMenuShow: function($this) {
-					var self = this;
-
-					clearTimeout(self.timer);
-
-					// Check if animation is in progress
-					if (self.animation) return;
-					self.animation = true;
-
-					// Append menu to the html body
-					$('body').append(dropBody);
-
-					var dropMenu = '',
-							dropObject = $($this),
-							dropPosition = dropObject.offset();
-
-					// Add menu content
-					if (typeof options === "object") {
-						$.each(options.menu, function (key, value) {
-                            dropMenu += '<li onclick="'+ value.link +'"><span>'+ value.name +'</span></li>';
-						});
 					}
-					dropBody.find("ul").html(dropMenu);
-
-					// Position & Styles.
-					dropBody.css({
-						'top': dropPosition.top + dropObject.outerHeight() + 'px',
-						'left': dropPosition.left + 'px',
-						'min-width': dropObject.outerWidth() + 'px'
-					}).slideDown(self.speed, function(){
-						self.animation = false;
-						self.active = true;
-					});
-				},
-				dropMenuHide: function() {
-					//Start timer for hiding element
-					opt.timer = setTimeout(function() {
-						dropBody.slideUp(opt.speed, function(){
-							opt.animation = false;
-							opt.active = false;
-							clearTimeout(opt.timer);
-						});
-					}, opt.timeout);
 				}
-			});
-
-			switch (event) {
-				case "mouseenter":
-					$(this).mouseenter(function() {
-						opt.dropMenuShow(this);
-					})
-					.mouseleave(function() {
-						opt.dropMenuHide();
-					});
-				break;
-
-				default: //click
-					$(this).click(function() {
-						opt.dropMenuShow(this);
-					});
-				break;
+				else if (n.nodeType == 1	&&	!/^(a|button|textarea)$/i.test(n.tagName)) {
+					linkifyThis.call(n);
+				}
 			}
+		};
+		$.fn.linkify = function () {
+			return this.each(linkifyThis);
+		};
+		
+		/*
+		 * jQuery plugin: dropdown menu
+		 *
+		 * jQuery('.class #id').dropdown(options);
+		 * JSON options = { menu: [{ name:'', link:'' }, { name:'', link:'' }] };
+		 */
+		$.fn.dropdown = function(event, options) {
+			var defaults = {
+				timer: null,
+				timeout: 800,
+				active: false,
+				animation: false,
+				speed: 200
+			};
+			// Extend objects
+			var settings = $.extend({}, defaults, options);
 
-			// Mouse leave menu event
-			dropBody.mouseenter(function(){
-				clearTimeout(opt.timer);
-			})
-			.mouseleave(function () {
-				opt.dropMenuHide();
-			});
+			return this.each(function() {
+				$(this).css({
+					'cursor': 'pointer'
+				});
+				// Create new element
+				var dropBody = $('<div class="custom-dropdown" style="display:none;"><ul></ul></div>');
+				// Extend objects
+				var opt = $.extend({}, settings, {
+					dropMenuShow: function($this) {
+						var self = this;
 
-			// Window resize
-			$(window).resize(function() {
-				if (opt.active) {
-					clearTimeout(opt.timer);
-					opt.animation = false;
-					opt.active = false;
-					dropBody.hide();
+						clearTimeout(self.timer);
+
+						// Check if animation is in progress
+						if (self.animation) return;
+						self.animation = true;
+
+						// Append menu to the html body
+						$('body').append(dropBody);
+
+						var dropMenu = '',
+								dropObject = $($this),
+								dropPosition = dropObject.offset();
+
+						// Add menu content
+						if (typeof options === "object") {
+							$.each(options.menu, function (key, value) {
+								dropMenu += '<li onclick="'+ value.link +'"><span>'+ value.name +'</span></li>';
+							});
+						}
+						dropBody.find("ul").html(dropMenu);
+
+						// Position & Styles.
+						dropBody.css({
+							'top': dropPosition.top + dropObject.outerHeight() + 'px',
+							'left': dropPosition.left + 'px',
+							'min-width': dropObject.outerWidth() + 'px'
+						}).slideDown(self.speed, function(){
+							self.animation = false;
+							self.active = true;
+						});
+					},
+					dropMenuHide: function() {
+						//Start timer for hiding element
+						opt.timer = setTimeout(function() {
+							dropBody.slideUp(opt.speed, function(){
+								opt.animation = false;
+								opt.active = false;
+								clearTimeout(opt.timer);
+							});
+						}, opt.timeout);
+					}
+				});
+
+				switch (event) {
+					case "mouseenter":
+						$(this).mouseenter(function() {
+							opt.dropMenuShow(this);
+						})
+						.mouseleave(function() {
+							opt.dropMenuHide();
+						});
+					break;
+
+					default: //click
+						$(this).click(function() {
+							opt.dropMenuShow(this);
+						});
+					break;
 				}
+
+				// Mouse leave menu event
+				dropBody.mouseenter(function(){
+					clearTimeout(opt.timer);
+				})
+				.mouseleave(function () {
+					opt.dropMenuHide();
+				});
+
+				// Window resize
+				$(window).resize(function() {
+					if (opt.active) {
+						clearTimeout(opt.timer);
+						opt.animation = false;
+						opt.active = false;
+						dropBody.hide();
+					}
+				});
+
 			});
+		};
 
-		});
-	};
-
-})(jQuery);
+	})(jQuery);
+}
