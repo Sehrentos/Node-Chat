@@ -216,7 +216,12 @@ chat.init = function(url) {
 			var msg = "["+ chat.twoDigits(hours) + ":" + chat.twoDigits(minutes) + ":" + chat.twoDigits(seconds) +"] ";
 				msg += "<a href=\"javascript:void(0)\" class=\"nickname\" onclick=\"chat.setWhisper('"+ name +"')\">&lt;"+ name +"&gt;</a> ";
 				msg += message;
-			
+
+			// Todo check for #code
+			// #code colors
+			//var elemCode = message.querySelector("jsHigh");
+			//jscodecolors(elemCode);
+
 			chat.mes(msg);
 		});
 
@@ -254,7 +259,7 @@ chat.submitMessage = function(message) {
 					case "/h":
 					case "/help":
 					case "/commands":
-						chat.mes("Commands:\n /h, /help, /commands - Display help.\n /log, /messages - Display logged channel messages.\n /c, /channel &lt;name&gt; - Change channel.\n /n, /name, /nick &lt;name&gt; - Change name.");
+						chat.mes("Commands:\n /h, /help, /commands - Display help.\n /log, /messages - Display logged channel messages.\n /c, /channel &lt;name&gt; - Change channel.\n /n, /name, /nick &lt;name&gt; - Change name.\n #code &lt;Your code&gt; - Send code samples.");
 					break;
 
 					// Log/Get messages
@@ -299,8 +304,12 @@ chat.submitMessage = function(message) {
 			if (messageStr.search("#code") !== -1) {
 				var code = messageStr.replace("#code\n", "").replace("#code ", "").replace("#code", "");
 				var encodedCode = code; //encodeURIComponent(code);
-				console.log("send-code", encodedCode);
-				chat.socket.emit('send-code', { message: encodedCode });
+				if (chat.debugMode) console.log("fn.submitMessage #code", encodedCode, encodedCode.length);
+				if (encodedCode.length > 0) {
+					chat.socket.emit('send-code', { message: encodedCode });
+				} else {
+					chat.mes('#code &lt;Your text/paste&gt;');
+				}
 			} else
 			// Message was not a command. Send normal data
 			if (!isCommand) {
@@ -654,24 +663,21 @@ chat.mes = function(message, whisper) {
 
 // For JS code colors
 chat.mesCode = function(userInfo, message) {
-	console.time("jscode");
+
 	var target = document.querySelector("#messages");
 	var elem = document.createElement("LI");
-	elem.innerHTML = userInfo; // + '<p class="w3-code jsHigh notranslate">' + message + '</p>';
+	elem.innerHTML = userInfo;
 	
 	var elemCode = document.createElement("DIV");
-	elemCode.className = "w3-code jsHigh notranslate";
+	elemCode.className = "w3-code w3-small jsHigh notranslate";
 	elemCode.textContent = message;
 	elem.appendChild(elemCode);
 	
 	target.appendChild(elem);
-	
-	var cTar = elemCode; //elem.querySelector(".jsHigh");
-	console.log(cTar);
-	jscodecolors(cTar);
+
+	jscodecolors(elemCode);
 	
 	chat.scrollDown();
-	console.timeEnd("jscode");
 
 	return this;
 };
