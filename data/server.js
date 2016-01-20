@@ -12,7 +12,7 @@ var app = express();
 var server = require('http').createServer(app);
 var io = require('socket.io')(server);
 var port = process.env.PORT || 3000;
-var debugMode = true;
+var debugMode = false;
 var chatData = { //Users array object { id, name, channel, whisper, joined, timestamp }
 	users: []
 };
