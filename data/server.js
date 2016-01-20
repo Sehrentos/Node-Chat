@@ -12,7 +12,7 @@ var app = express();
 var server = require('http').createServer(app);
 var io = require('socket.io')(server);
 var port = process.env.PORT || 3000;
-var debugMode = false;
+var debugMode = true;
 var chatData = { //Users array object { id, name, channel, whisper, joined, timestamp }
 	users: []
 };
@@ -271,7 +271,7 @@ io.on('connection', function(socket) {
 	// Console log new connection.
 	//var client = socket.handshake.address;
 	//var client = socket.request.connection;
-	if (debugMode) if (debugMode) console.log('Connection '+ socket.id +' '+ user.name +' '+ socket.request.connection.remoteAddress);
+	if (debugMode) console.log('Connection '+ socket.id +' '+ user.name +' '+ socket.request.connection.remoteAddress);
 	//if (debugMode) console.log( socket.adapter.rooms ); //{ R5czp2k6xwFBEKK8AAAA: { R5czp2k6xwFBEKK8AAAA: true } }
 
 	// Add new user to the channel
@@ -354,6 +354,34 @@ io.on('connection', function(socket) {
 						//break; //Stop loop
 					}
 				}
+			}
+		}
+	});
+
+	// Message event
+	// @event: message
+	socket.on('send-code', function (data) {
+		if (cooldown(user, 800)) {
+			if (debugMode) console.log(data);
+			var _date = new Date();
+
+			// Message max chars
+			// decodeURIComponent(data.message).length
+			if (data.message.length <= chatData.messages.maxLength) {
+				// Send to client
+				io.to(user.channel).emit('message-code', {
+					date: _date,
+					name: user.name,
+					message: data.message
+				});
+				// Save message data
+				//chatData.messages.push({
+				chatData.messages.add({
+					channel: user.channel,
+					date: _date,
+					name: user.name,
+					message: data.message
+				});
 			}
 		}
 	});
@@ -445,7 +473,7 @@ io.on('connection', function(socket) {
 						channelSwitch(socket, user, from_channel, to_channel);
 
 						socket.emit('notice', { message: 'You moved to <strong>'+ user.channel +'</strong> channel' });
-						socket.emit('set-topic', { message: 'You are in '+ user.channel +' channel.' });
+						socket.emit('set-topic', { message: user.channel }); /* 'You are in '+ user.channel +' channel.' */
 
 						// Get list of users in channel
 						channelListUsers(socket, user.channel);

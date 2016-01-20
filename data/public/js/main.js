@@ -84,7 +84,8 @@ chat.init = function(url) {
 	chat.socket.on('set-topic', function (data) {
 		if (chat.debugMode) console.log('io.set-topic', data);
 		chat.mes("Set topic: " + data.message);
-		document.querySelector("#topic").text(data.message);
+		document.querySelector("#topic").textContent = data.message;
+		//document.querySelector("#topic").text(data.message);
 	});
 
 	// Notice
@@ -168,9 +169,30 @@ chat.init = function(url) {
 
 		var msg = "["+ chat.twoDigits(hours) + ":" + chat.twoDigits(minutes) + ":" + chat.twoDigits(seconds) +"] ";
 			msg += "<a href=\"javascript:void(0)\" class=\"nickname\" onclick=\"chat.setWhisper('"+ name +"')\">&lt;"+ name +"&gt;</a> ";
-			msg += message;
+			msg += '<span>' +  message + '</span>';
+			chat.mes(msg);
+		
+		// Play audio
+		if (name !== chat.user.name) {
+			chat.playAudio();
+		}
+	});
 
-		chat.mes(msg);
+	// message / chat
+	chat.socket.on('message-code', function(data) {
+		if (chat.debugMode) console.log('io.message-code', data);
+
+		var d = new Date(data.date),
+			hours = d.getHours(),
+			minutes = d.getMinutes(),
+			seconds = d.getSeconds(),
+			name = data.name.toString(),
+			message = data.message.toString(); //decodeURIComponent(data.message);
+
+		var msg = "["+ chat.twoDigits(hours) + ":" + chat.twoDigits(minutes) + ":" + chat.twoDigits(seconds) +"] ";
+			msg += "<a href=\"javascript:void(0)\" class=\"nickname\" onclick=\"chat.setWhisper('"+ name +"')\">&lt;"+ name +"&gt;</a> ";
+			chat.mesCode(msg, message);
+		
 		// Play audio
 		if (name !== chat.user.name) {
 			chat.playAudio();
@@ -238,13 +260,13 @@ chat.submitMessage = function(message) {
 					// Log/Get messages
 					case "/log":
 					case "/messages":
-						//var channel = command[2] === undefined ? null : command[2].trim();
-						chat.socket.emit('get-messages', { message: true });
+							chat.socket.emit('get-messages', { message: true });
 					break;
 
 					// Command depth: 2
 					default:
-						var regex = /^(\/.*)\s(.*)$/g;
+						//var regex = /^(\/.*)\s(.*)$/g;
+						var regex = /^(\/.*)\s(.*)/im;
 						var command = regex.exec(messageStr);
 						if (command) {
 							switch (command[1]) {
@@ -273,6 +295,13 @@ chat.submitMessage = function(message) {
 					break;
 				}
 			}
+			// JS code colors
+			if (messageStr.search("#code") !== -1) {
+				var code = messageStr.replace("#code\n", "").replace("#code ", "").replace("#code", "");
+				var encodedCode = code; //encodeURIComponent(code);
+				console.log("send-code", encodedCode);
+				chat.socket.emit('send-code', { message: encodedCode });
+			} else
 			// Message was not a command. Send normal data
 			if (!isCommand) {
 				chat.socket.emit('message', { message: messageStr.toString() });
@@ -308,8 +337,9 @@ chat.menuAddUser = function(id, name, channel) {
 			user += '<a href="javascript:void(0)" onclick="chat.setWhisper(\'' + name + '\')">Whisper</a>';
 		}
 		user += '</span>';
-	
-	elem.html(user);
+
+	elem.innerHTML = user;
+	//elem.html(user);
 	
 	// Display new menu
 	document.querySelectorAll(".users-list").each(function(target) {
@@ -618,6 +648,30 @@ chat.mes = function(message, whisper) {
 	target.appendChild(elem);
 	
 	chat.scrollDown();
+
+	return this;
+};
+
+// For JS code colors
+chat.mesCode = function(userInfo, message) {
+	console.time("jscode");
+	var target = document.querySelector("#messages");
+	var elem = document.createElement("LI");
+	elem.innerHTML = userInfo; // + '<p class="w3-code jsHigh notranslate">' + message + '</p>';
+	
+	var elemCode = document.createElement("DIV");
+	elemCode.className = "w3-code jsHigh notranslate";
+	elemCode.textContent = message;
+	elem.appendChild(elemCode);
+	
+	target.appendChild(elem);
+	
+	var cTar = elemCode; //elem.querySelector(".jsHigh");
+	console.log(cTar);
+	jscodecolors(cTar);
+	
+	chat.scrollDown();
+	console.timeEnd("jscode");
 
 	return this;
 };

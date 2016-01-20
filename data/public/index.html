@@ -1,27 +1,23 @@
 <!DOCTYPE html>
-<html lang="en">
-<!-- On production: <html manifest="cache.manifest" lang="en"> -->
+<html lang="en"><!-- On production add manifest="cache.manifest" -->
 <head>
 	<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-	
 	<meta name="description" content="A node chat project." />
 	<meta name="keywords" content="Chat" />
 	<meta name="author" content="Niko H. (Sehrentos)" />
 	<meta name="robots" content="noindex, nofollow" />
-	<link rel="shortcut icon" href="images/icon32.ico" sizes="32x32" type="image/x-icon" />
-	<link rel="icon" href="images/favicon64.ico" sizes="64x64" type="image/x-icon" />
+	<link rel="shortcut icon" href="/images/icon32.ico" sizes="32x32" type="image/x-icon" />
+	<link rel="icon" href="/images/favicon64.ico" sizes="64x64" type="image/x-icon" />
 	<title>Chat</title>
 	<!-- Stylesheet -->
-	<link rel="stylesheet" href="http://www.w3schools.com/lib/w3.css">
-	<link rel="stylesheet" href="css/main.css" />
-	<!-- <link rel="stylesheet" href="css/plugins.css" /> -->
+	<link rel="stylesheet" href="/css/w3.css" />
+	<link rel="stylesheet" href="/css/main.css" />
 	<!-- Javascript libraries -->
-	<!-- <script src="js/lib/jquery.js"></script> -->
-	<script src="js/lib/socket.io.js"></script>
+	<script src="/socket.io/socket.io.js"></script>
 	<!-- Javascripts -->
-	<script src="js/plugins.js"></script>
-	<script src="js/main.js"></script>
+	<script src="/js/plugins.js"></script>
+	<script src="/js/main.js"></script>
 	<script type="text/javascript">
 	// UI W3 Sidenav show/hide
 	function sidenav_left_open() {
@@ -71,7 +67,6 @@
 	// Initialize chat
 	function init_chat(server, port) {
 		// Over-write default chat settings before init
-		//$.extend(chat || {}, {
 		extend(chat || {}, {
 			method: 'http', //https/http/ws
 			address: server,
@@ -333,11 +328,12 @@
 		</form>
 	</footer>
 
+	<!-- Sounds -->
 	<div id="sounds" class="hidden">
 		<audio id="audio" controls hidden>
-			<source src="sound/anvil.ogg" type="audio/ogg">
-			<source src="sound/anvil.mp3" type="audio/mpeg">
-			<embed src="sound/anvil.mp3">
+			<source src="/sound/anvil.ogg" type="audio/ogg">
+			<source src="/sound/anvil.mp3" type="audio/mpeg">
+			<embed src="/sound/anvil.mp3">
 			Your browser does not support HTML5 audio.
 		</audio>
 	</div>
@@ -361,7 +357,7 @@ function resizeThrottler() {
 // Set content messages height (ui)
 function actualResizeHandler() {
 	// handle the resize event
-	var wrap = document.getElementById("wrap");
+	var wrap = document.querySelector("body");
 	var header = document.getElementById("header");
 	var footer = document.getElementById("footer");
 	var messages = document.getElementById("messages");

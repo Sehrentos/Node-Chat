@@ -1,13 +1,7 @@
-/**
- * Sehrentos.js - Just my simple lib
- * Author Niko H.
- */
-var Sehrentos = {
-	version: '0.1.0',
-	repository: 'https://github.com/Sehrentos'
-};
-
 /*
+ * plugins.js - Just my simple lib
+ * Author Niko H.
+ *
  * DOM is loaded event
  */
 var ready = function(callback) {
@@ -39,17 +33,12 @@ var selector = function(s, callback) {
 	return target;
 };
 
-// Short-hand selector like in jQuery
-var $ = function(s) {
-	return selector(s);
-};
-
 /*
- * find(target, callback(target, index) ) - querySelector
+ * Object.find(target, callback(target, index) ) - querySelector
  * Works for HTML, XUL, and plain XML
  */
-if (!Element.prototype.find) {
-	Element.prototype.find = function(s, callback) {
+if (!Object.prototype.find) {
+	Object.prototype.find = function(s, callback) {
 		var target;
 		if (s.indexOf("#") !== -1) {
 			target = this.querySelector(s);
@@ -71,42 +60,70 @@ if (!Element.prototype.find) {
 }
 
 /*
- * Element.text() - append a string function.
- * Element.text("String", append) - append (true/false) optional
+ * Object.text() - append a string function.
+ * Object.text("String", append) - append (true/false) optional
  */
-if (!Element.prototype.text) {
-	Element.prototype.text = function(src, append) {
+if (!Object.prototype.text) {
+	Object.prototype.text = function(src, append) {
 		append = append || false;
-		if (append === false) this.innerHTML = '';
-		return this.appendChild( document.createTextNode(src) );
+		var self = this;
+		
+		if (self.tabIndex === -1 || self.tabIndex === 0) {
+			if (append === false) {
+				self.innerHTML = '';
+			}
+			self.appendChild( document.createTextNode(src) );
+		}
+		else {
+			Object.keys(self).forEach(function (key) {
+				if (append === false) {
+					self[key].innerHTML = '';
+				}
+				self[key].appendChild( document.createTextNode(src) );
+			});
+		}
+		
+		return this;
 	}
 }
 
 /*
- * Element.html() - append a html function.
- * Element.html("String", append) - append (true/false) optional
+ * Object.html() - append a html function.
+ * Object.html("String", append) - append (true/false) optional
  */
-if (!Element.prototype.html) {
-	Element.prototype.html = function(src, append) {
+if (!Object.prototype.html) {
+	Object.prototype.html = function(src, append) {
 		append = append || false;
-		if (append === false) {
-			this.innerHTML = src;
-		} else {
-			this.innerHTML += src;
+		var self = this;
+		
+		if (self.tabIndex === -1 || self.tabIndex === 0) {
+			if (append === false) {
+				self.innerHTML = src;
+			} else {
+				self.innerHTML += src;
+			}
 		}
+		else {
+			Object.keys(self).forEach(function (key) {
+				if (append === false) {
+					self[key].innerHTML = src;
+				} else {
+					self[key].innerHTML += src;
+				}
+			});
+		}
+		
 		return this;
 	}
 }
 
 /*
  * on() - Event binding function.
- * Element.on("click", Function, false)
+ * Object.on("click", Function, false)
  */
-if (!Element.prototype.on) {
-	Element.prototype.on = function(src, callback, extra) {
-		if (typeof(callback) === "function") {
-			return this.addEventListener(src, callback, extra || false);
-		}
+if (!Object.prototype.on) {
+	Object.prototype.on = function(src, callback, extra) {
+		return this.addEventListener(src, callback, extra || false);
 	}
 }
 
@@ -126,8 +143,8 @@ var each = function(obj, callback) {
 };
 
 /*
- * Element.each() - For each loop (Array/Object)
- * Element.each(function(value, index) { console.log(index + " -> " + value); });
+ * Object.each() - For each loop (Array/Object)
+ * Object.each(function(value, index) { console.log(index + " -> " + value); });
  */
 if (!Object.prototype.each) {
 	Object.prototype.each = function(callback) {
@@ -619,173 +636,148 @@ var nalert = function(options) {
 };
 
 /*
- * plugins.js - jQuery plugins
- * These are NOT in use right now, but I keep them safe.
+ * JS color codes
  */
-if ("jQuery" in window) {
-	(function($) {
+var jscodecolors = function(qAll) {
 
-		// Define a method that allows fetching a cached script
-		$.fn.cachedScript = function( url, options ) {
-			// Allow user to set any option except for dataType, cache, and url
-			options = $.extend( options || {}, {
-				dataType: "script",
-				cache: true,
-				url: url
-			});
-			// Use $.ajax() since it is more flexible than $.getScript
-			// Return the jqXHR object so we can chain callbacks
-			return $.ajax( options );
-		};
-
-		/*
-		* Define linkify() plugin
-		* @jQuery('div.textbody').linkify();
-		*/
-		var linkifyThis = function () {
-			var childNodes = this.childNodes,
-					i = childNodes.length,
-					url1 = /(^|&lt;|\s)(www\..+?\..+?)(\s|&gt;|$)/g,
-					url2 = /(^|&lt;|\s)(((https?|ftp):\/\/|mailto:).+?)(\s|&gt;|$)/g;
-			while(i--) {
-				var n = childNodes[i];
-				if (n.nodeType == 3) {
-					var html = n.nodeValue; //$.trim(n.nodeValue);
-					if (html) {
-						// Load images
-						/* if (html.match(/\.(jpeg|jpg|gif|png)$/) != null) {
-							html = html.replace(/&/g, '&amp;')
-							.replace(/</g, '&lt;')
-							.replace(/>/g, '&gt;')
-							.replace(url1, '$1<img src="http://$2">$3')
-							.replace(url2, '$1<img src="$2">$5');
-							$(n).after(html).remove();
-						} else { */
-						html = html.replace(/&/g, '&amp;')
-						.replace(/</g, '&lt;')
-						.replace(/>/g, '&gt;')
-						.replace(url1, '$1<a href="http://$2" target="_blank">$2</a>$3')
-						.replace(url2, '$1<a href="$2" target="_blank">$2</a>$5');
-						$(n).after(html).remove();
-					}
-				}
-				else if (n.nodeType == 1	&&	!/^(a|button|textarea)$/i.test(n.tagName)) {
-					linkifyThis.call(n);
+	function lookAhead(x, ipos, n) {
+		var i, c, ch, text;
+		text = "";
+		for (i = ipos; i < ipos + n; i++) {
+			if (i < x.length) {
+				c = x.charAt(i);
+				ch = c.charCodeAt(0);	
+				if (ch == 32 || ch == 10 || ch == 13 || ch == 9 ) {
+					text += " ";				
+				} else {
+					text += c;
 				}
 			}
-		};
-		$.fn.linkify = function () {
-			return this.each(linkifyThis);
-		};
-		
-		/*
-		 * jQuery plugin: dropdown menu
-		 *
-		 * jQuery('.class #id').dropdown(options);
-		 * JSON options = { menu: [{ name:'', link:'' }, { name:'', link:'' }] };
-		 */
-		$.fn.dropdown = function(event, options) {
-			var defaults = {
-				timer: null,
-				timeout: 800,
-				active: false,
-				animation: false,
-				speed: 200
-			};
-			// Extend objects
-			var settings = $.extend({}, defaults, options);
+		}
+		return text;
+	}
+	
+	function lookWord(x, ipos) {
+		var i, c, ch, text;
+		text = "";
+		for (i = ipos; i < x.length; i++) {
+			c = x.charAt(i);
+			ch = c.charCodeAt(0);	
+			if (ch == 10 || ch == 13 || ch == 9 || ch == 32 || ch == 38 || ch == 40 || ch == 41 || ch == 42 || ch == 43 ||
+			ch == 44 || ch == 58 || ch == 47 || ch == 58 || ch == 59 || ch == 60 || ch == 61 || ch == 91 || ch == 93) {
+				return text;				
+			} else {
+				text += c;
+			}
+		}
+		return text;
+	}
+	
+	var x, y, z, i, j, k, c, ch, text, status, ele, comp, pos;
+	var jsArr = ["var","boolean","break","case","catch","continue","debugger","default","do","else","finally","for","function","if","in","new","return","switch","throw","try","typeof","while","with"];
+	
+	if (!document.getElementsByClassName) {
+		return;
+	}
+	
+	y = qAll || document.getElementsByClassName("jsHigh");
+	//for (j = 0; j < y.length; j++) {
+		z = y; //y[j];
+		ele = "";
+		text = "";
+		status = "";
+		x = z.innerHTML;
 
-			return this.each(function() {
-				$(this).css({
-					'cursor': 'pointer'
-				});
-				// Create new element
-				var dropBody = $('<div class="custom-dropdown" style="display:none;"><ul></ul></div>');
-				// Extend objects
-				var opt = $.extend({}, settings, {
-					dropMenuShow: function($this) {
-						var self = this;
-
-						clearTimeout(self.timer);
-
-						// Check if animation is in progress
-						if (self.animation) return;
-						self.animation = true;
-
-						// Append menu to the html body
-						$('body').append(dropBody);
-
-						var dropMenu = '',
-								dropObject = $($this),
-								dropPosition = dropObject.offset();
-
-						// Add menu content
-						if (typeof options === "object") {
-							$.each(options.menu, function (key, value) {
-								dropMenu += '<li onclick="'+ value.link +'"><span>'+ value.name +'</span></li>';
-							});
-						}
-						dropBody.find("ul").html(dropMenu);
-
-						// Position & Styles.
-						dropBody.css({
-							'top': dropPosition.top + dropObject.outerHeight() + 'px',
-							'left': dropPosition.left + 'px',
-							'min-width': dropObject.outerWidth() + 'px'
-						}).slideDown(self.speed, function(){
-							self.animation = false;
-							self.active = true;
-						});
-					},
-					dropMenuHide: function() {
-						//Start timer for hiding element
-						opt.timer = setTimeout(function() {
-							dropBody.slideUp(opt.speed, function(){
-								opt.animation = false;
-								opt.active = false;
-								clearTimeout(opt.timer);
-							});
-						}, opt.timeout);
-					}
-				});
-
-				switch (event) {
-					case "mouseenter":
-						$(this).mouseenter(function() {
-							opt.dropMenuShow(this);
-						})
-						.mouseleave(function() {
-							opt.dropMenuHide();
-						});
-					break;
-
-					default: //click
-						$(this).click(function() {
-							opt.dropMenuShow(this);
-						});
-					break;
+		for (i = 0; i < x.length; i++) {
+			c = x.charAt(i);
+			ch = c.charCodeAt(0);
+			if (ch == 32 || ch == 10 || ch == 13 || ch == 9 ) {
+				text += c;
+				continue;
+			}
+			if (lookAhead(x, i, 2) == "//") {
+				text += "<span style='color:green'>";	
+				pos = x.substr(i).indexOf("<br>");
+				if (pos == -1) {
+					text += x.substr(i); 
+					i = x.length;
+				} else {
+					text += x.substr(i,pos + 4);
+					i += pos + 3;
+				}	
+				text += "</span>"
+				continue;
+			}
+			if (lookAhead(x, i, 2) == "/*") {
+				text += "<span style='color:green'>";	
+				pos = x.substr(i).indexOf("*/");
+				if (pos == -1) {
+					text += x.substr(i); 
+					i = x.length;
+				} else {
+					text += x.substr(i,pos + 2);
+					i += pos + 1;
+				}	
+				text += "</span>"
+				continue;
+			}
+			if (c == "&") {
+				pos = x.substr(i).indexOf(";");
+				if (pos == -1) {
+					text += x.substr(i); 
+					i = x.length;
+				} else {
+					text += x.substr(i,pos + 1);
+					i += pos;
+				}	
+				continue;
+			}
+			if (c == "'" || c == '"') {
+				text += "<span style='color:mediumblue'>";	
+				pos = x.substr(i+1).indexOf(c);
+				if (pos == -1) {
+					text += x.substr(i); 
+					i = x.length;
+				} else {
+					text += x.substr(i, pos + 2);
+					i += pos + 1;
+				}	
+				text += "</span>"
+				continue;
+			}
+			if (lookAhead(x, i, 4) == "<br>") {
+				i += 3;
+				text += "<br>";
+				continue
+			}
+			ele = lookWord(x, i);
+			if (ele) {
+				if (ele =="true" || ele == "false" || ele == "null" || isNaN(ele) == false) {	
+					text += "<span style='color:mediumblue'>" + x.substr(i,ele.length) + "</span>";
+					i += ele.length - 1;
+					status = "";
+					continue;
 				}
+				for (k = 0; k < jsArr.length; k++) {
+					if (ele == jsArr[k]) {
+						text += "<span style='color:brown'>" + x.substr(i,ele.length) + "</span>";
+						i += ele.length - 1;
+						status = "SPW";
+						break;
+					}	
+				}
+				if (status == "SPW") {
+					status = "";
+					continue;	 
+				} else {
+					text += x.substr(i, ele.length);
+					i += ele.length - 1;
+					continue;
+				}
+			}
+			text += c;
+		}
+		z.innerHTML = text;
+	//}
 
-				// Mouse leave menu event
-				dropBody.mouseenter(function(){
-					clearTimeout(opt.timer);
-				})
-				.mouseleave(function () {
-					opt.dropMenuHide();
-				});
-
-				// Window resize
-				$(window).resize(function() {
-					if (opt.active) {
-						clearTimeout(opt.timer);
-						opt.animation = false;
-						opt.active = false;
-						dropBody.hide();
-					}
-				});
-
-			});
-		};
-
-	})(jQuery);
-}
+}; // End-jscodecolors
