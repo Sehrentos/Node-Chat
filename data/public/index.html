@@ -7,17 +7,17 @@
 	<meta name="keywords" content="Chat" />
 	<meta name="author" content="Niko H. (Sehrentos)" />
 	<meta name="robots" content="noindex, nofollow" />
-	<link rel="shortcut icon" href="/images/icon32.ico" sizes="32x32" type="image/x-icon" />
-	<link rel="icon" href="/images/favicon64.ico" sizes="64x64" type="image/x-icon" />
+	<link rel="shortcut icon" href="images/icon32.ico" sizes="32x32" type="image/x-icon" />
+	<link rel="icon" href="images/favicon64.ico" sizes="64x64" type="image/x-icon" />
 	<title>Chat</title>
 	<!-- Stylesheet -->
-	<link rel="stylesheet" href="/css/w3.css" />
-	<link rel="stylesheet" href="/css/main.css" />
+	<link rel="stylesheet" href="css/w3.css" />
+	<link rel="stylesheet" href="css/main.css" />
 	<!-- Javascript libraries -->
-	<script src="/socket.io/socket.io.js"></script>
+	<script src="js/socket.io.js"></script>
 	<!-- Javascripts -->
-	<script src="/js/plugins.js"></script>
-	<script src="/js/main.js"></script>
+	<script src="js/plugins.js"></script>
+	<script src="js/main.js"></script>
 	<script type="text/javascript">
 	// UI W3 Sidenav show/hide
 	function sidenav_left_open() {
@@ -245,15 +245,12 @@
 
 	}, false); // window ready
 
-	// Before leaving page
-	window.addEventListener("beforeunload", function(e) {
-
+	// Before leaving page (good for mobiles)
+	/* window.addEventListener("beforeunload", function(e) {
 		var confirmationMessage = "Do you wan't to leave the page?"; // "\o/"
 		e.returnValue = confirmationMessage; // Gecko, Trident, Chrome 34+
-		
 		return confirmationMessage; // Gecko, WebKit, Chrome <34
-
-	}, false); // before unload
+	}, false); */
 	</script>
 </head>
 <body>
@@ -331,9 +328,9 @@
 	<!-- Sounds -->
 	<div id="sounds" class="hidden">
 		<audio id="audio" controls hidden>
-			<source src="/sound/anvil.ogg" type="audio/ogg">
-			<source src="/sound/anvil.mp3" type="audio/mpeg">
-			<embed src="/sound/anvil.mp3">
+			<source src="sound/anvil.ogg" type="audio/ogg">
+			<source src="sound/anvil.mp3" type="audio/mpeg">
+			<embed src="sound/anvil.mp3">
 			Your browser does not support HTML5 audio.
 		</audio>
 	</div>

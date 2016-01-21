@@ -1,5 +1,5 @@
 CACHE MANIFEST
-# 2016-01-21:v1
+# 2016-01-21:v1.1
 
 # Explicitly cached 'master entries'.
 CACHE:
@@ -11,6 +11,7 @@ CACHE:
 /images/favicon64.ico
 /js/main.js
 /js/plugins.js
+/js/socket.io.js
 
 # Resources that require the user to be online.
 NETWORK:
