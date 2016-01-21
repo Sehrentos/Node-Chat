@@ -638,7 +638,7 @@ var nalert = function(options) {
 /*
  * JS color codes
  */
-var jscodecolors = function(qAll) {
+var jscodecolors = function() {
 
 	function lookAhead(x, ipos, n) {
 		var i, c, ch, text;
@@ -680,104 +680,107 @@ var jscodecolors = function(qAll) {
 		return;
 	}
 	
-	y = qAll || document.getElementsByClassName("jsHigh");
-	//for (j = 0; j < y.length; j++) {
-		z = y; //y[j];
+	y = document.getElementsByClassName("jsHigh");
+	for (j = 0; j < y.length; j++) {
+		z = y[j];
 		ele = "";
 		text = "";
 		status = "";
 		x = z.innerHTML;
-
-		for (i = 0; i < x.length; i++) {
-			c = x.charAt(i);
-			ch = c.charCodeAt(0);
-			if (ch == 32 || ch == 10 || ch == 13 || ch == 9 ) {
-				text += c;
-				continue;
-			}
-			if (lookAhead(x, i, 2) == "//") {
-				text += "<span style='color:green'>";	
-				pos = x.substr(i).indexOf("<br>");
-				if (pos == -1) {
-					text += x.substr(i); 
-					i = x.length;
-				} else {
-					text += x.substr(i,pos + 4);
-					i += pos + 3;
-				}	
-				text += "</span>"
-				continue;
-			}
-			if (lookAhead(x, i, 2) == "/*") {
-				text += "<span style='color:green'>";	
-				pos = x.substr(i).indexOf("*/");
-				if (pos == -1) {
-					text += x.substr(i); 
-					i = x.length;
-				} else {
-					text += x.substr(i,pos + 2);
-					i += pos + 1;
-				}	
-				text += "</span>"
-				continue;
-			}
-			if (c == "&") {
-				pos = x.substr(i).indexOf(";");
-				if (pos == -1) {
-					text += x.substr(i); 
-					i = x.length;
-				} else {
-					text += x.substr(i,pos + 1);
-					i += pos;
-				}	
-				continue;
-			}
-			if (c == "'" || c == '"') {
-				text += "<span style='color:mediumblue'>";	
-				pos = x.substr(i+1).indexOf(c);
-				if (pos == -1) {
-					text += x.substr(i); 
-					i = x.length;
-				} else {
-					text += x.substr(i, pos + 2);
-					i += pos + 1;
-				}	
-				text += "</span>"
-				continue;
-			}
-			if (lookAhead(x, i, 4) == "<br>") {
-				i += 3;
-				text += "<br>";
-				continue
-			}
-			ele = lookWord(x, i);
-			if (ele) {
-				if (ele =="true" || ele == "false" || ele == "null" || isNaN(ele) == false) {	
-					text += "<span style='color:mediumblue'>" + x.substr(i,ele.length) + "</span>";
-					i += ele.length - 1;
-					status = "";
+		
+		if (z.getAttribute("data-jscode") !== "done") {
+			for (i = 0; i < x.length; i++) {
+				c = x.charAt(i);
+				ch = c.charCodeAt(0);
+				if (ch == 32 || ch == 10 || ch == 13 || ch == 9 ) {
+					text += c;
 					continue;
 				}
-				for (k = 0; k < jsArr.length; k++) {
-					if (ele == jsArr[k]) {
-						text += "<span style='color:brown'>" + x.substr(i,ele.length) + "</span>";
-						i += ele.length - 1;
-						status = "SPW";
-						break;
+				if (lookAhead(x, i, 2) == "//") {
+					text += "<span style='color:green'>";	
+					pos = x.substr(i).indexOf("<br>");
+					if (pos == -1) {
+						text += x.substr(i); 
+						i = x.length;
+					} else {
+						text += x.substr(i,pos + 4);
+						i += pos + 3;
 					}	
-				}
-				if (status == "SPW") {
-					status = "";
-					continue;	 
-				} else {
-					text += x.substr(i, ele.length);
-					i += ele.length - 1;
+					text += "</span>"
 					continue;
 				}
+				if (lookAhead(x, i, 2) == "/*") {
+					text += "<span style='color:green'>";	
+					pos = x.substr(i).indexOf("*/");
+					if (pos == -1) {
+						text += x.substr(i); 
+						i = x.length;
+					} else {
+						text += x.substr(i,pos + 2);
+						i += pos + 1;
+					}	
+					text += "</span>"
+					continue;
+				}
+				if (c == "&") {
+					pos = x.substr(i).indexOf(";");
+					if (pos == -1) {
+						text += x.substr(i); 
+						i = x.length;
+					} else {
+						text += x.substr(i,pos + 1);
+						i += pos;
+					}	
+					continue;
+				}
+				if (c == "'" || c == '"') {
+					text += "<span style='color:mediumblue'>";	
+					pos = x.substr(i+1).indexOf(c);
+					if (pos == -1) {
+						text += x.substr(i); 
+						i = x.length;
+					} else {
+						text += x.substr(i, pos + 2);
+						i += pos + 1;
+					}	
+					text += "</span>"
+					continue;
+				}
+				if (lookAhead(x, i, 4) == "<br>") {
+					i += 3;
+					text += "<br>";
+					continue
+				}
+				ele = lookWord(x, i);
+				if (ele) {
+					if (ele =="true" || ele == "false" || ele == "null" || isNaN(ele) == false) {	
+						text += "<span style='color:mediumblue'>" + x.substr(i,ele.length) + "</span>";
+						i += ele.length - 1;
+						status = "";
+						continue;
+					}
+					for (k = 0; k < jsArr.length; k++) {
+						if (ele == jsArr[k]) {
+							text += "<span style='color:brown'>" + x.substr(i,ele.length) + "</span>";
+							i += ele.length - 1;
+							status = "SPW";
+							break;
+						}	
+					}
+					if (status == "SPW") {
+						status = "";
+						continue;	 
+					} else {
+						text += x.substr(i, ele.length);
+						i += ele.length - 1;
+						continue;
+					}
+				}
+				text += c;
 			}
-			text += c;
+			z.innerHTML = text;
+			z.setAttribute("data-jscode", "done");
 		}
-		z.innerHTML = text;
-	//}
+	}
 
 }; // End-jscodecolors

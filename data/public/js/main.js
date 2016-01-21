@@ -131,70 +131,26 @@ chat.init = function(url) {
 	chat.socket.on('whisper', function (data) {
 		if (chat.debugMode) console.log('io.whisper', data);
 
-		var d = new Date(data.date),
-			hours = d.getHours(),
-			minutes = d.getMinutes(),
-			seconds = d.getSeconds(),
-			_to = data.to.toString(),
-			_from = data.from.toString(),
-			message = data.message.toString();
-
-		var msg = "["+ chat.twoDigits(hours) + ":" + chat.twoDigits(minutes) + ":" + chat.twoDigits(seconds) +"] ";
-		if (_from === _to || _from === chat.user.name) {
-			msg += "Whisper to <a href=\"javascript:void(0)\" class=\"nickname\" onclick=\"chat.setWhisper('"+ _to +"')\">&lt;"+ _to +"&gt;</a> ";
-		} else {
-			msg += "<a href=\"javascript:void(0)\" class=\"nickname\" onclick=\"chat.setWhisper('"+ _from +"')\">&lt;"+ _from +"&gt;</a> Whispers: ";
-		}
-		msg += message;
+		chat.addMessage(data);
 		
-		chat.mes(msg,true);
+		chat.scrollDown();
+		
 		// Play audio
-		if (_to !== chat.user.name) {
+		if (data.to !== chat.user.name) {
 			chat.playAudio();
 		}
-		// Scroll down the chat and set focus to input.
-		chat.setFocus();
 	});
 
 	// message / chat
 	chat.socket.on('message', function(data) {
 		if (chat.debugMode) console.log('io.message', data);
 
-		var d = new Date(data.date),
-			hours = d.getHours(),
-			minutes = d.getMinutes(),
-			seconds = d.getSeconds(),
-			name = data.name.toString(),
-			message = data.message.toString();
-
-		var msg = "["+ chat.twoDigits(hours) + ":" + chat.twoDigits(minutes) + ":" + chat.twoDigits(seconds) +"] ";
-			msg += "<a href=\"javascript:void(0)\" class=\"nickname\" onclick=\"chat.setWhisper('"+ name +"')\">&lt;"+ name +"&gt;</a> ";
-			msg += '<span>' +  message + '</span>';
-			chat.mes(msg);
+		chat.addMessage(data);
+		
+		chat.scrollDown();
 		
 		// Play audio
-		if (name !== chat.user.name) {
-			chat.playAudio();
-		}
-	});
-
-	// message / chat
-	chat.socket.on('message-code', function(data) {
-		if (chat.debugMode) console.log('io.message-code', data);
-
-		var d = new Date(data.date),
-			hours = d.getHours(),
-			minutes = d.getMinutes(),
-			seconds = d.getSeconds(),
-			name = data.name.toString(),
-			message = data.message.toString(); //decodeURIComponent(data.message);
-
-		var msg = "["+ chat.twoDigits(hours) + ":" + chat.twoDigits(minutes) + ":" + chat.twoDigits(seconds) +"] ";
-			msg += "<a href=\"javascript:void(0)\" class=\"nickname\" onclick=\"chat.setWhisper('"+ name +"')\">&lt;"+ name +"&gt;</a> ";
-			chat.mesCode(msg, message);
-		
-		// Play audio
-		if (name !== chat.user.name) {
+		if (data.name !== chat.user.name) {
 			chat.playAudio();
 		}
 	});
@@ -206,28 +162,97 @@ chat.init = function(url) {
 		chat.mes("Start of messages:");
 
 		each(data.messages, function(data) {
-			var d = new Date( data.date ),
-				hours = d.getHours(),
-				minutes = d.getMinutes(),
-				seconds = d.getSeconds(),
-				name = data.name.toString(),
-				message = data.message.toString();
-
-			var msg = "["+ chat.twoDigits(hours) + ":" + chat.twoDigits(minutes) + ":" + chat.twoDigits(seconds) +"] ";
-				msg += "<a href=\"javascript:void(0)\" class=\"nickname\" onclick=\"chat.setWhisper('"+ name +"')\">&lt;"+ name +"&gt;</a> ";
-				msg += message;
-
-			// Todo check for #code
-			// #code colors
-			//var elemCode = message.querySelector("jsHigh");
-			//jscodecolors(elemCode);
-
-			chat.mes(msg);
+			chat.addMessage(data);
 		});
-
+		
 		chat.mes("End of messages.");
 	});
 
+	return this;
+};
+
+/*
+ * addMessage(data)
+ * build & append a new message
+ */
+chat.addMessage = function(data) {
+	var d = new Date(data.date),
+		hours = d.getHours(),
+		minutes = d.getMinutes(),
+		seconds = d.getSeconds(),
+		name = data.name || "",
+		_to = data.to || "",
+		_from = data.from || "",
+		message = data.message || ""; //decodeURIComponent(data.message);
+	
+	var target = document.querySelector("#messages");
+	var items = document.createElement("LI");
+	if (_to.length > 0 && _from.length > 0) {
+		items.className = "w3-pink";
+	}
+	
+	// Date
+	var item = document.createElement("SPAN");
+	item.className = "date";
+	item.textContent = "["+ chat.twoDigits(hours) + ":" + chat.twoDigits(minutes) + ":" + chat.twoDigits(seconds) +"]";
+	if (_to.length > 0 && _from.length > 0) {
+		if (_from === _to || _from === chat.user.name) {
+			item.textContent += " Whisper to";
+		}
+	}
+	items.appendChild(item);
+	
+	// Nickname
+	var item = document.createElement("A");
+	item.className = "nickname";
+	item.href = "javascript:void(0)";
+	if (_to.length > 0 && _from.length > 0) {
+		if (_from === _to || _from === chat.user.name) {
+			item.setAttribute("onclick", "chat.setWhisper('" + _to + "')");
+			item.textContent = "<"+ _to +">";
+		} else {
+			item.setAttribute("onclick", "chat.setWhisper('" + _from + "')");
+			item.textContent = "<"+ _from +">";
+		}
+	} else {
+		item.setAttribute("onclick", "chat.setWhisper('" + name + "')");
+		item.textContent = "<"+ name +">";
+	}
+	items.appendChild(item);
+
+	// Message / JS code colors
+	var code = false;
+	if (message.search("#code") !== -1) {
+		var msg = message.replace("#code\n", "").replace("#code ", "").replace("#code", "");
+		var item = document.createElement("DIV");
+		item.className = "message w3-white w3-code w3-small jsHigh notranslate";
+		item.textContent = msg;
+		items.appendChild(item);
+		code = true;
+	} else {
+		var item = document.createElement("SPAN");
+		item.className = "message";
+		if (_to.length > 0 && _from.length > 0) {
+			if (_from === _to || _from === chat.user.name) {
+				item.textContent = message;
+			}
+			else {
+				item.textContent = "whispers: " + message;
+			}
+		} else {
+			item.textContent = message;
+		}
+		items.appendChild(item);
+	}
+	
+	// Append
+	target.appendChild(items);
+
+	// JS code colors
+	if (code) {
+		jscodecolors();
+	}
+	
 	return this;
 };
 
@@ -300,17 +325,6 @@ chat.submitMessage = function(message) {
 					break;
 				}
 			}
-			// JS code colors
-			if (messageStr.search("#code") !== -1) {
-				var code = messageStr.replace("#code\n", "").replace("#code ", "").replace("#code", "");
-				var encodedCode = code; //encodeURIComponent(code);
-				if (chat.debugMode) console.log("fn.submitMessage #code", encodedCode, encodedCode.length);
-				if (encodedCode.length > 0) {
-					chat.socket.emit('send-code', { message: encodedCode });
-				} else {
-					chat.mes('#code &lt;Your text/paste&gt;');
-				}
-			} else
 			// Message was not a command. Send normal data
 			if (!isCommand) {
 				chat.socket.emit('message', { message: messageStr.toString() });
@@ -642,40 +656,13 @@ chat.isCommand = function(str, reg) {
 
 /*
 * Append message to the chat window
-* @require: message, whisper(true/false)
+* @require: message
 */
-chat.mes = function(message, whisper) {
+chat.mes = function(message) {
 	var target = document.querySelector("#messages");
 	var elem = document.createElement("LI");
-	
-	if (whisper !== undefined || whisper === true) {
-		elem.innerHTML = "<span class=\"whisper\">" + message.linkify() + "</span>";
-	} else {
-		elem.innerHTML = "<span class=\"message\">" + message.linkify() + "</span>";
-	}
-	
+	elem.innerHTML = "<span class=\"message\">" + message.linkify() + "</span>";
 	target.appendChild(elem);
-	
-	chat.scrollDown();
-
-	return this;
-};
-
-// For JS code colors
-chat.mesCode = function(userInfo, message) {
-
-	var target = document.querySelector("#messages");
-	var elem = document.createElement("LI");
-	elem.innerHTML = userInfo;
-	
-	var elemCode = document.createElement("DIV");
-	elemCode.className = "w3-code w3-small jsHigh notranslate";
-	elemCode.textContent = message;
-	elem.appendChild(elemCode);
-	
-	target.appendChild(elem);
-
-	jscodecolors(elemCode);
 	
 	chat.scrollDown();
 

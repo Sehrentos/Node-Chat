@@ -78,6 +78,10 @@ textarea {
 	word-break: break-all;
 }
 /*#content ul li:nth-child(odd) { background: #eee; }*/
+#content ul li a {
+	margin-left: 2px;
+	margin-right: 2px;
+}
 
 #footer {
 	-webkit-app-region: drag; /* nw.js */
@@ -105,19 +109,6 @@ textarea {
 	border-color: #CCCCCC;
 	border-style: solid;
 	border-radius: 4px;
-}
-
-.message {
-	color: #000000;
-}
-
-.whisper {
-	color: #F453A8;
-}
-
-.nickname {
-	text-decoration: none;
-	color: #1C94C4;
 }
 
 .visible {

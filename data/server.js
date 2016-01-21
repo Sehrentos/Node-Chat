@@ -358,34 +358,6 @@ io.on('connection', function(socket) {
 		}
 	});
 
-	// Message event
-	// @event: message
-	socket.on('send-code', function (data) {
-		if (cooldown(user, 800)) {
-			if (debugMode) console.log(data);
-			var _date = new Date();
-
-			// Message max chars
-			// decodeURIComponent(data.message).length
-			if (data.message.length <= chatData.messages.maxLength) {
-				// Send to client
-				io.to(user.channel).emit('message-code', {
-					date: _date,
-					name: user.name,
-					message: data.message
-				});
-				// Save message data
-				//chatData.messages.push({
-				chatData.messages.add({
-					channel: user.channel,
-					date: _date,
-					name: user.name,
-					message: data.message
-				});
-			}
-		}
-	});
-
 	// Name change
 	// @event: set-nick
 	socket.on('set-nick', function (data) {
