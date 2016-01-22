@@ -1,19 +1,20 @@
 /*
-* NodeJS & socket.io chat server
-* @http://socket.io/docs/server-api/
-*
-* Install socket.io module:
-* cd <my_directory>
-* npm install socket.io
-*/
-// Setup basic express server
+ * NodeJS & socket.io chat server
+ * @http://socket.io/docs/server-api/
+ *
+ * Install socket.io module:
+ * cd <my_directory>
+ * npm install socket.io
+ *
+ * Setup basic express server
+ */
 var express = require('express');
 var app = express();
 var server = require('http').createServer(app);
 var io = require('socket.io')(server);
 var port = process.env.PORT || 3000;
 var debugMode = false;
-var chatData = { //Users array object { id, nickname, channel, whisper, joined, timestamp }
+var chatData = {
 	users: []
 };
 
@@ -29,63 +30,19 @@ app.get('*', function(req, res) {
 	res.send('Route not found.');
 });
 
-// Start socket.io standalone server:
+/*
+ * Start socket.io standalone server:
+ */
 //var io = require('socket.io')(3000);
 
 /*
-* deepmerge function - merge/extend object or array.
-* @target
-* @source
-* @return combined object/array
-* var object = deepmerge(obj1, obj2);
-*/
-var deepmerge = function(target, src) {
-	var array = Array.isArray(src);
-	var dst = array && [] || {};
-	if (array) {
-		target = target || [];
-		dst = dst.concat(target);
-		src.forEach(function(e, i) {
-			if (typeof dst[i] === 'undefined') {
-				dst[i] = e;
-			} else if (typeof e === 'object') {
-				dst[i] = deepmerge(target[i], e);
-			} else {
-				if (target.indexOf(e) === -1) {
-					dst.push(e);
-				}
-			}
-		});
-	} else {
-		if (target && typeof target === 'object') {
-			Object.keys(target).forEach(function (key) {
-				dst[key] = target[key];
-			})
-		}
-		Object.keys(src).forEach(function (key) {
-			if (typeof src[key] !== 'object' || !src[key]) {
-				dst[key] = src[key];
-			}
-			else {
-				if (!target[key]) {
-					dst[key] = src[key];
-				} else {
-					dst[key] = deepmerge(target[key], src[key]);
-				}
-			}
-		});
-	}
-	return dst;
-};
-
-/*
-* Messages data array
-* @Messages.max - Max messages to start removing the first
-* @Messages.get()
-* @Messages.set( object ) - ignore max setting
-* @Messages.add( object )
-* @Messages.remove( object, all(true) ) 
-*/
+ * Messages data array
+ * @Messages.max - Max messages to start removing the first
+ * @Messages.get()
+ * @Messages.set( object ) - ignore max setting
+ * @Messages.add( object )
+ * @Messages.remove( object, all(true) ) 
+ */
 var Messages = function() {
 	this.max = 25; //zero count aswell
 	this.maxLength = 3000;
@@ -125,9 +82,8 @@ var Messages = function() {
 };
 
 /*
-* Define encodeHTML function
-* @myVar.encodeHTML()
-*/
+ * String.encodeHTML function
+ */
 if (!String.prototype.encodeHTML) {
 	String.prototype.encodeHTML = function() {
 		return this.replace(/&/g, '&amp;')
@@ -139,27 +95,8 @@ if (!String.prototype.encodeHTML) {
 }
 
 /*
-* Define contains function
-socket.contains(client.id, function(found) {
-	if (found)
-});
-*/
-if (!Array.prototype.contains) {
-	Array.prototype.contains = function(k, callback) {
-		var self = this;
-		return (function check(i) {
-			if (i >= self.length) {
-				return callback(false);
-			}
-			if (self[i] === k) {
-				return callback(true);
-			}
-			return process.nextTick(check.bind(null, i+1));
-		}(0));
-	};
-}
-
-// User data & settings
+ * User data & settings
+ */
 function addUser(socket) {
 	var time = new Date().getTime();
 	
@@ -177,7 +114,9 @@ function addUser(socket) {
 	return user;
 }
 
-// Remove user
+/*
+ * Remove user
+ */
 function removeUser(socket) {
 	for (var i=0; i<chatData.users.length; i++) {
 		if (socket.user.nickname === chatData.users[i].nickname) {
@@ -188,33 +127,43 @@ function removeUser(socket) {
 	}
 }
 
-// Send updated user data
+/*
+ * Send updated user data
+ */
 function updateUser(socket) {
 	socket.user.timestamp = new Date().getTime();
 	socket.emit('update-user', socket.user);
 }
 
-// Updates user data to every one in same channel
-// @channelAddUser(socket.user.channel, { id: socket.user.id, nickname: socket.user.nickname, message: '' })
+/*
+ * Updates user data to every one in same channel
+ * @channelAddUser(socket.user.channel, { id: socket.user.id, nickname: socket.user.nickname, message: '' })
+ */
 function channelAddUser(socket, channel, data) {
 	socket.join(channel);
 	io.sockets.in(channel).emit('channel-user-add', data);
 }
 
-// Send remove user data to every connected client in channel
-// @channelRemoveUser(socket.user.channel, { id: socket.user.id, nickname: socket.user.nickname, message: '' })
+/*
+ * Send remove user data to every connected client in channel
+ * @channelRemoveUser(socket.user.channel, { id: socket.user.id, nickname: socket.user.nickname, message: '' })
+ */
 function channelRemoveUser(socket, channel, data) {
 	socket.leave(channel);
 	io.sockets.in(channel).emit('channel-user-remove', data);
 }
 
-// Send updated user data to every connected client in channel
-// @channelUpdateUser(socket.user.channel, { id: socket.user.id, nickname: socket.user.nickname, message: '' })
+/*
+ * Send updated user data to every connected client in channel
+ * @channelUpdateUser(socket.user.channel, { id: socket.user.id, nickname: socket.user.nickname, message: '' })
+ */
 function channelUpdateUser(socket, channel, data) {
 	io.sockets.in(channel).emit('channel-user-update', data);
 }
 
-// Channel user switch channel updateUsers
+/*
+ * Channel user switch channel updateUsers
+ */
 function channelSwitch(socket, from_channel, to_channel) {
 	if (from_channel !== undefined) {
 		channelRemoveUser(socket, from_channel, { id: socket.user.id, nickname: socket.user.nickname, message: 'Leaved channel' });
@@ -224,8 +173,10 @@ function channelSwitch(socket, from_channel, to_channel) {
 	}
 }
 
-// Get user list of the channel
-// @channelListUsers(socket.user.channel)
+/*
+ * Get user list of the channel
+ * @channelListUsers(socket.user.channel)
+ */
 function channelListUsers(socket, channel) {
 	var arr = { users:[] };
 
@@ -243,10 +194,13 @@ function channelListUsers(socket, channel) {
 	socket.emit('channel-user-list', arr);
 }
 
+/*
+ * setName - Set user name
+ */
 function setName(socket, data) {
 	var exist = false,
-		data_name = data.nickname || "",
-		data_lastName = socket.user.nickname || "";
+		data_name = data.nickname.encodeHTML() || "",
+		data_lastName = socket.user.nickname.encodeHTML() || "";
 
 	if (data_name.length <= 1) {
 		socket.emit('notice', {
@@ -289,7 +243,9 @@ function setName(socket, data) {
 	return data_lastName;
 }
 
-// Cooldown
+/*
+ * Cooldown
+ */
 function cooldown(socket, time) {
 	var cd = time ? time : 1000;
 	var date = new Date();
@@ -303,14 +259,18 @@ function cooldown(socket, time) {
 	return false;
 }
 
-// Messages object
-// - Store all messages
-// TODO: extend memory for each channels
+/*
+ * Messages object
+ * - Store all messages
+ * TODO: extend memory for each channels
+ */
 chatData.messages = new Messages();
-//chatData.messages.max = 25; // max messages to store
+//chatData.messages.max = 50; // max messages to store
 //chatData.messages.maxLength = 3000; // max message length
 
-// Event listener's on socket
+/*
+ * Event listener's on socket
+ */
 io.on('connection', function(socket) {
 
 	// Set new user data
@@ -412,7 +372,7 @@ io.on('connection', function(socket) {
 							date: _date,
 							to: _to,
 							from: _from,
-							message: _msg
+							message: _msg.encodeHTML()
 						});
 						//break; //Stop loop
 					}
@@ -497,7 +457,7 @@ io.on('connection', function(socket) {
 							channel: messages[i].channel,
 							date: messages[i].date,
 							nickname: messages[i].nickname,
-							message: messages[i].message
+							message: messages[i].message.encodeHTML()
 						});
 					}
 				}

@@ -25,7 +25,7 @@ var chat = {
 chat.init = function(arg) {
 	// Open socket
 	var fullURL = chat.method +'://'+ chat.address +':'+ chat.port + '/' + chat.channel.replace('/','');
-	console.log(fullURL);
+	if (chat.debugMode) console.log("io.init", fullURL);
 
 	if (typeof arg !== "undefined" && arg !== null) {
 		chat.socket = io(fullURL, arg);
@@ -241,13 +241,13 @@ chat.addMessage = function(data) {
 		item.className = "message";
 		if (_to.length > 0 && _from.length > 0) {
 			if (_from === _to || _from === chat.user.nickname) {
-				item.textContent = message;
+				item.innerHTML = message.linkify();
 			}
 			else {
-				item.textContent = "whispers: " + message;
+				item.innerHTML = "whispers: " + message.linkify();
 			}
 		} else {
-			item.textContent = message;
+			item.innerHTML = message.linkify();
 		}
 		items.appendChild(item);
 	}

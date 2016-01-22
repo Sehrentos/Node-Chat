@@ -232,7 +232,6 @@
 				background: false,
 				onSubmit: function(data) {
 					if (typeof data.nickname !== "undefined" && data.nickname !== null) {
-					console.log(data);
 						// Name min length
 						if (data.nickname.length < 2) {
 							return nalert({
@@ -248,6 +247,7 @@
 							});
 						}
 						// OK - Initialize socket
+						localStorage.nickname = data.nickname;
 						chat.init({ query: "nickname=" + data.nickname });
 					}
 				},
