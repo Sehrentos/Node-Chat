@@ -199,8 +199,8 @@ function channelListUsers(socket, channel) {
  */
 function setName(socket, data) {
 	var exist = false,
-		data_name = data.nickname.encodeHTML() || "",
-		data_lastName = socket.user.nickname.encodeHTML() || "";
+		data_name = data.nickname || "", /* encodeURIComponent() ? */
+		data_lastName = socket.user.nickname || "";
 
 	if (data_name.length <= 1) {
 		socket.emit('notice', {
@@ -308,7 +308,7 @@ io.on('connection', function(socket) {
 	// Welcome new user to the server.
 	// @event: set-topic
 	socket.emit('set-topic', {
-		message: socket.user.channel.toString() /* 'Welcome to general channel.' */
+		message: socket.user.channel /* 'Welcome to general channel.' */
 	});
 
 	// Send updated user settings
@@ -334,7 +334,7 @@ io.on('connection', function(socket) {
 				io.to(socket.user.channel).emit('message', {
 					date: _date,
 					nickname: socket.user.nickname,
-					message: data.message.encodeHTML()
+					message: data.message /* encodeURIComponent() ? */
 				});
 				// Save message data
 				//chatData.messages.push({
@@ -342,7 +342,7 @@ io.on('connection', function(socket) {
 					channel: socket.user.channel,
 					date: _date,
 					nickname: socket.user.nickname,
-					message: data.message.encodeHTML()
+					message: data.message /* encodeURIComponent() ? */
 				});
 			}
 		}
@@ -372,7 +372,7 @@ io.on('connection', function(socket) {
 							date: _date,
 							to: _to,
 							from: _from,
-							message: _msg.encodeHTML()
+							message: _msg /* encodeURIComponent() ? */
 						});
 						//break; //Stop loop
 					}
@@ -407,8 +407,8 @@ io.on('connection', function(socket) {
 	socket.on('set-channel', function (data) {
 		if (cooldown(socket, 800)) {
 			if (debugMode) console.log(data);
-			var from_channel = socket.user.channel.encodeHTML() || 0,
-				to_channel = data.channel.encodeHTML() || 0;
+			var from_channel = socket.user.channel || 0, 
+				to_channel = data.channel || 0; /* encodeURIComponent() ? */
 
 			if (to_channel.length <= 1) {
 				socket.emit('notice', { message: 'Channel name is too short (2-50)' });
@@ -457,7 +457,7 @@ io.on('connection', function(socket) {
 							channel: messages[i].channel,
 							date: messages[i].date,
 							nickname: messages[i].nickname,
-							message: messages[i].message.encodeHTML()
+							message: messages[i].message /* encodeURIComponent() ? */
 						});
 					}
 				}

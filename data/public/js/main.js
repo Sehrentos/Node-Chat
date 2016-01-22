@@ -241,14 +241,16 @@ chat.addMessage = function(data) {
 		item.className = "message";
 		if (_to.length > 0 && _from.length > 0) {
 			if (_from === _to || _from === chat.user.nickname) {
-				item.innerHTML = message.linkify();
+				item.textContent = message.encodeHTML();
 			}
 			else {
-				item.innerHTML = "whispers: " + message.linkify();
+				item.textContent = "whispers: " + message.encodeHTML();
 			}
 		} else {
-			item.innerHTML = message.linkify();
+			item.textContent = message.encodeHTML();
+			
 		}
+		item.linkify();
 		items.appendChild(item);
 	}
 	

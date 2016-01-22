@@ -422,6 +422,49 @@ if(!String.linkify) {
 }
 
 /*
+ * Object.linkify() - Make link function
+ */
+if (!Object.linkify) {
+	Object.prototype.linkify = function(type) {
+
+		// http://, https://, ftp://
+		var urlPattern = /\b(?:https?|ftp):\/\/[a-z0-9-+&@#\/%?=~_|!:,.;]*[a-z0-9-+&@#\/%=~_|]/gim;
+
+		// www. sans http:// or https://
+		var pseudoUrlPattern = /(^|[^\/])(www\.[\S]+(\b|$))/gim;
+
+		// Email addresses
+		var emailAddressPattern = /[\w.]+@[a-zA-Z_-]+?(?:\.[a-zA-Z]{2,6})+/gim;
+
+		// innerHTML or textContent
+		if (!type) {
+			return this.innerHTML = this.textContent
+				.replace(urlPattern, '<a href="$&" target="_blank">$&</a>')
+				.replace(pseudoUrlPattern, '$1<a href="http://$2" target="_blank">$2</a>')
+				.replace(emailAddressPattern, '<a href="mailto:$&" target="_blank">$&</a>');
+		} else {
+			return this.innerHTML = this.innerHTML
+				.replace(urlPattern, '<a href="$&" target="_blank">$&</a>')
+				.replace(pseudoUrlPattern, '$1<a href="http://$2" target="_blank">$2</a>')
+				.replace(emailAddressPattern, '<a href="mailto:$&" target="_blank">$&</a>');
+		}
+	}
+}
+
+/*
+ * String.encodeHTML function
+ */
+if (!String.prototype.encodeHTML) {
+	String.prototype.encodeHTML = function() {
+		return this.replace(/&/g, '&amp;')
+			.replace(/</g, '&lt;')
+			.replace(/>/g, '&gt;')
+			.replace(/"/g, '&quot;')
+			.replace(/'/g, '&apos;').toString();
+	};
+}
+
+/*
  * Pure JS: Custom prompt, confirm, alert
  * @nprompt( options )
  * @nconfirm( options )
@@ -698,13 +741,13 @@ var jscodecolors = function() {
 				}
 				if (lookAhead(x, i, 2) == "//") {
 					text += "<span style='color:green'>";	
-					pos = x.substr(i).indexOf("<br>");
+					pos = x.substr(i).indexOf("\n");
 					if (pos == -1) {
 						text += x.substr(i); 
 						i = x.length;
 					} else {
-						text += x.substr(i,pos + 4);
-						i += pos + 3;
+						text += x.substr(i,pos + 2);
+						i += pos + 1;
 					}	
 					text += "</span>"
 					continue;
