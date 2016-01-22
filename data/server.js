@@ -13,7 +13,7 @@ var server = require('http').createServer(app);
 var io = require('socket.io')(server);
 var port = process.env.PORT || 3000;
 var debugMode = false;
-var chatData = { //Users array object { id, name, channel, whisper, joined, timestamp }
+var chatData = { //Users array object { id, nickname, channel, whisper, joined, timestamp }
 	users: []
 };
 
@@ -160,70 +160,72 @@ if (!Array.prototype.contains) {
 }
 
 // User data & settings
-function addUser(socketId) {
+function addUser(socket) {
 	var time = new Date().getTime();
+	
 	var user = {
-		id: socketId,
-		name: "Anon" + time,
+		id: socket.id,
+		nickname: "Anon" + time,
 		channel: 'general',
 		whisper: '',
 		joined: time,
 		timestamp: time
 	}
+	
 	chatData.users.push(user);
 
 	return user;
 }
 
 // Remove user
-function removeUser(user) {
+function removeUser(socket) {
 	for (var i=0; i<chatData.users.length; i++) {
-		if (user.name === chatData.users[i].name) {
+		if (socket.user.nickname === chatData.users[i].nickname) {
 			chatData.users.splice(i, 1);
 
-			return user;
+			return socket.user.nickname;
 		}
 	}
 }
 
 // Send updated user data
-function updateUser(socket, user) {
-	user.timestamp = new Date().getTime();
-	socket.emit('update-user', user);
+function updateUser(socket) {
+	socket.user.timestamp = new Date().getTime();
+	socket.emit('update-user', socket.user);
 }
 
 // Updates user data to every one in same channel
-// @channelAddUser(user.channel, { id: user.id, name: user.name, message: '' })
+// @channelAddUser(socket.user.channel, { id: socket.user.id, nickname: socket.user.nickname, message: '' })
 function channelAddUser(socket, channel, data) {
 	socket.join(channel);
 	io.sockets.in(channel).emit('channel-user-add', data);
 }
 
 // Send remove user data to every connected client in channel
-// @channelRemoveUser(user.channel, { id: user.id, name: user.name, message: '' })
+// @channelRemoveUser(socket.user.channel, { id: socket.user.id, nickname: socket.user.nickname, message: '' })
 function channelRemoveUser(socket, channel, data) {
 	socket.leave(channel);
 	io.sockets.in(channel).emit('channel-user-remove', data);
 }
 
 // Send updated user data to every connected client in channel
-// @channelUpdateUser(user.channel, { id: user.id, name: user.name, message: '' })
+// @channelUpdateUser(socket.user.channel, { id: socket.user.id, nickname: socket.user.nickname, message: '' })
 function channelUpdateUser(socket, channel, data) {
 	io.sockets.in(channel).emit('channel-user-update', data);
 }
 
 // Channel user switch channel updateUsers
-function channelSwitch(socket, user, from_channel, to_channel) {
+function channelSwitch(socket, from_channel, to_channel) {
 	if (from_channel !== undefined) {
-		channelRemoveUser(socket, from_channel, { id: user.id, name: user.name, message: 'Leaved channel' });
-		channelAddUser(socket, to_channel, { id: user.id, name: user.name, message: 'Joined channel' });
+		channelRemoveUser(socket, from_channel, { id: socket.user.id, nickname: socket.user.nickname, message: 'Leaved channel' });
+		channelAddUser(socket, to_channel, { id: socket.user.id, nickname: socket.user.nickname, message: 'Joined channel' });
 	} else {
-		channelUpdateUser(socket, user.channel, { id: user.id, name: user.name, message: 'Switched channel' });
+		channelUpdateUser(socket, socket.user.channel, { id: socket.user.id, nickname: socket.user.nickname, message: 'Switched channel' });
 	}
 }
 
 // Get user list of the channel
-// @channelListUsers(user.channel)
+// @channelListUsers(socket.user.channel)
 function channelListUsers(socket, channel) {
 	var arr = { users:[] };
 
@@ -231,7 +233,7 @@ function channelListUsers(socket, channel) {
 		if (channel === chatData.users[i].channel) {
 			arr.users.push({
 				id: chatData.users[i].id,
-				name: chatData.users[i].name,
+				nickname: chatData.users[i].nickname,
 				channel: chatData.users[i].channel,
 				message: "Channel list all users"
 			});
@@ -241,14 +243,60 @@ function channelListUsers(socket, channel) {
 	socket.emit('channel-user-list', arr);
 }
 
+function setName(socket, data) {
+	var exist = false,
+		data_name = data.nickname || "",
+		data_lastName = socket.user.nickname || "";
+
+	if (data_name.length <= 1) {
+		socket.emit('notice', {
+			message: 'Name is too short (2-50)'
+		});
+	}
+	else if (data_name.length > 50) {
+		socket.emit('notice', {
+			message: 'Name is too long (2-50)'
+		});
+	}
+	else {
+		// Check if name exists
+		for (var i=0; i<chatData.users.length; i++) {
+			if (data_name === chatData.users[i].nickname) {
+				exist = true;
+				socket.emit('notice', {
+					message: 'This name already exists <strong>'+ data_name +'</strong>'
+				});
+
+				break; //Stop loop
+			}
+		}
+		// Update user and send data to other clients
+		if (exist === false) {
+			for (var i=0; i<chatData.users.length; i++) {
+				if (socket.user.nickname === chatData.users[i].nickname) {
+					socket.user.nickname = data_name;
+					chatData.users[i].nickname = data_name;
+
+					socket.emit('notice', {
+						message: 'Your name is now <strong>'+ socket.user.nickname +'</strong>'
+					});
+
+					break; //Stop loop
+				}
+			}
+		}
+	}
+	return data_lastName;
+}
+
 // Cooldown
-function cooldown(user, time) {
+function cooldown(socket, time) {
 	var cd = time ? time : 1000;
 	var date = new Date();
 	var timestamp = date.getTime();
 
-	if (timestamp > (user.timestamp + cd)) {
-		user.timestamp = timestamp;
+	if (timestamp > (socket.user.timestamp + cd)) {
+		socket.user.timestamp = timestamp;
 		return timestamp;
 	}
 
@@ -266,59 +314,74 @@ chatData.messages = new Messages();
 io.on('connection', function(socket) {
 
 	// Set new user data
-	var user = addUser(socket.id);
+	socket.user = addUser(socket);
+	
+	// Change nickname from query
+	if (typeof socket.handshake.query.nickname !== "undefined") {
+		setName(socket, { nickname: socket.handshake.query.nickname });
+	}
+	
+	/*var rooms = socket.adapter.rooms;
+	for (var room in rooms) {
+		if (rooms.hasOwnProperty(room)) {
+			console.log("Room found:", room);
+			if (room === socket.id) {
+				console.log("Room select:", room); // Selected my own room!
+			}
+		}
+	} */
 
 	// Console log new connection.
 	//var client = socket.handshake.address;
 	//var client = socket.request.connection;
-	if (debugMode) console.log('Connection '+ socket.id +' '+ user.name +' '+ socket.request.connection.remoteAddress);
+	if (debugMode) console.log('Connection '+ socket.id +' '+ socket.user.nickname +' '+ socket.request.connection.remoteAddress);
 	//if (debugMode) console.log( socket.adapter.rooms ); //{ R5czp2k6xwFBEKK8AAAA: { R5czp2k6xwFBEKK8AAAA: true } }
 
 	// Add new user to the channel
 	// @event: channel-user-add
-	channelAddUser(socket, user.channel, {
-		id: user.id,
-		name: user.name,
+	channelAddUser(socket, socket.user.channel, {
+		id: socket.user.id,
+		nickname: socket.user.nickname,
 		message: 'Joined channel'
 	});
 
 	// Welcome new user to the server.
 	// @event: set-topic
 	socket.emit('set-topic', {
-		message: user.channel.toString() /* 'Welcome to general channel.' */
+		message: socket.user.channel.toString() /* 'Welcome to general channel.' */
 	});
 
 	// Send updated user settings
 	// @event: update-user
-	updateUser(socket, user);
+	updateUser(socket);
 
 	// Send list of users in this channel to the current user
 	// @event: channel-user-list
-	channelListUsers(socket, user.channel);
+	channelListUsers(socket, socket.user.channel);
 	
-	if (debugMode) console.log( socket.adapter.rooms.general );
+	if (debugMode) console.log( socket.adapter.rooms );
 	
 	// Message event
 	// @event: message
 	socket.on('message', function (data) {
-		if (cooldown(user, 800)) {
+		if (cooldown(socket, 800)) {
 			if (debugMode) console.log(data);
 			var _date = new Date();
 
 			// Message max chars
 			if (data.message.length <= chatData.messages.maxLength) {
 				// Send to client
-				io.to(user.channel).emit('message', {
+				io.to(socket.user.channel).emit('message', {
 					date: _date,
-					name: user.name,
+					nickname: socket.user.nickname,
 					message: data.message.encodeHTML()
 				});
 				// Save message data
 				//chatData.messages.push({
 				chatData.messages.add({
-					channel: user.channel,
+					channel: socket.user.channel,
 					date: _date,
-					name: user.name,
+					nickname: socket.user.nickname,
 					message: data.message.encodeHTML()
 				});
 			}
@@ -328,20 +391,20 @@ io.on('connection', function(socket) {
 	// whisper to
 	// @event: whisper
 	socket.on('whisper', function (data) {
-		if (cooldown(user, 800)) {
+		if (cooldown(socket, 800)) {
 			if (debugMode) console.log(data);
 			var _date = new Date(),
-				_from = data.from.encodeHTML(),
-				_to = data.to.encodeHTML(),
-				_msg = data.message.encodeHTML();
+				_from = data.from || "",
+				_to = data.to || "",
+				_msg = data.message || "";
 
 			// Message max chars
 			if (_msg.length <= chatData.messages.maxLength) {
 				for (var i=0; i<chatData.users.length; i++) {
-					if (chatData.users[i].name.length && (chatData.users[i].name === _to || chatData.users[i].name === _from) ) {
-						if (user.whisper !== _to) {
-							user.whisper = _to;
-							updateUser(socket, user);
+					if (chatData.users[i].nickname.length && (chatData.users[i].nickname === _to || chatData.users[i].nickname === _from) ) {
+						if (socket.user.whisper !== _to) {
+							socket.user.whisper = _to;
+							updateUser(socket);
 						}
 						//if (debugMode) console.log(chatData.users[i].id);
 						//socket.broadcast.to(chatData.users[i].id).emit('whisper', {
@@ -361,58 +424,20 @@ io.on('connection', function(socket) {
 	// Name change
 	// @event: set-nick
 	socket.on('set-nick', function (data) {
-		if (cooldown(user, 1000)) {
+		if (cooldown(socket, 800)) {
 			if (debugMode) console.log(data);
-			//updateName(socket, user, data);
-			var exist = false,
-				data_name = data.name.encodeHTML() || 0,
-				data_lastName = user.name;
 
-			if (data_name.length <= 1) {
-				socket.emit('notice', {
-					message: 'Name is too short (2-50)'
+			// Set Name
+			if (typeof data.nickname !== "undefined") {
+				var lastName = setName(socket, { nickname: data.nickname });
+				
+				updateUser(socket);
+
+				channelUpdateUser(socket, socket.user.channel, {
+					id: socket.user.id,
+					nickname: socket.user.nickname,
+					message: 'has changed name from ' + lastName
 				});
-			}
-			else if (data_name.length > 50) {
-				socket.emit('notice', {
-					message: 'Name is too long (2-50)'
-				});
-			}
-			else {
-				// Check if name exists
-				for (var i=0; i<chatData.users.length; i++) {
-					if (data_name === chatData.users[i].name) {
-						exist = true;
-						socket.emit('notice', {
-							message: 'This name already exists <strong>'+ data_name +'</strong>'
-						});
-
-						break; //Stop loop
-					}
-				}
-				// Update user and send data to other clients
-				if (exist === false) {
-					for (var i=0; i<chatData.users.length; i++) {
-						if (user.name === chatData.users[i].name) {
-							user.name = data_name;
-							chatData.users[i].name = data_name;
-
-							updateUser(socket, user);
-
-							channelUpdateUser(socket, user.channel, {
-								id: user.id,
-								name: user.name,
-								message: 'has changed name from ' + data_lastName
-							});
-
-							socket.emit('notice', {
-								message: 'Your name is now <strong>'+ user.name +'</strong>'
-							});
-
-							break; //Stop loop
-						}
-					}
-				}
 			}
 		}
 	});
@@ -420,12 +445,11 @@ io.on('connection', function(socket) {
 	// Channel switch
 	// @event: set-channel
 	socket.on('set-channel', function (data) {
-		if (cooldown(user, 1000)) {
+		if (cooldown(socket, 800)) {
 			if (debugMode) console.log(data);
-			var from_channel = user.channel.encodeHTML() || 0,
+			var from_channel = socket.user.channel.encodeHTML() || 0,
 				to_channel = data.channel.encodeHTML() || 0;
 
-			//updateChannel(socket, user, data);
 			if (to_channel.length <= 1) {
 				socket.emit('notice', { message: 'Channel name is too short (2-50)' });
 			}
@@ -437,18 +461,18 @@ io.on('connection', function(socket) {
 			}
 			else {
 				for (var i=0; i<chatData.users.length; i++) {
-					if (user.name === chatData.users[i].name) {
-						user.channel = to_channel;
+					if (socket.user.nickname === chatData.users[i].nickname) {
+						socket.user.channel = to_channel;
 						chatData.users[i].channel = to_channel;
-						updateUser(socket, user);
+						updateUser(socket);
 
-						channelSwitch(socket, user, from_channel, to_channel);
+						channelSwitch(socket, from_channel, to_channel);
 
-						socket.emit('notice', { message: 'You moved to <strong>'+ user.channel +'</strong> channel' });
-						socket.emit('set-topic', { message: user.channel }); /* 'You are in '+ user.channel +' channel.' */
+						socket.emit('notice', { message: 'You moved to <strong>'+ socket.user.channel +'</strong> channel' });
+						socket.emit('set-topic', { message: socket.user.channel }); /* 'You are in '+ socket.user.channel +' channel.' */
 
 						// Get list of users in channel
-						channelListUsers(socket, user.channel);
+						channelListUsers(socket, socket.user.channel);
 
 						break; //Stop loop
 					}
@@ -461,18 +485,18 @@ io.on('connection', function(socket) {
 	// @event: get-messages
 	socket.on('get-messages', function (data) {
 		if (data) {
-			if (cooldown(user, 3000)) {
+			if (cooldown(socket, 1600)) {
 				if (debugMode) console.log(data);
-				//getMessages(socket, user);
+
 				var arr = { messages:[] };
 				var messages = chatData.messages.get();
 
 				for (var i=0; i<messages.length; i++) {
-					if (messages[i].channel === user.channel) {
+					if (messages[i].channel === socket.user.channel) {
 						arr.messages.push({
 							channel: messages[i].channel,
 							date: messages[i].date,
-							name: messages[i].name,
+							nickname: messages[i].nickname,
 							message: messages[i].message
 						});
 					}
@@ -489,16 +513,16 @@ io.on('connection', function(socket) {
 		if (debugMode) console.log('disconnect '+ socket.id);
 
 		// Remove user from global users array
-		removeUser(user);
+		removeUser(socket);
 
 		// Update to other clients
-		channelRemoveUser(socket, user.channel, {
-			id: user.id,
-			name: user.name,
+		channelRemoveUser(socket, socket.user.channel, {
+			id: socket.user.id,
+			nickname: socket.user.nickname,
 			message: 'User disconnected'
 		});
 
-		delete user;
+		//delete user;
 	});
 
 }); //End io sockets

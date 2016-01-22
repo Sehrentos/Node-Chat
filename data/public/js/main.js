@@ -6,7 +6,7 @@
 var chat = {
 	user: {},
 	method: 'http', // https, http, ws
-	address: window.location.host || 'localhost',
+	address: window.location.hostname || 'localhost',
 	port: 3000,
 	channel: '/',
 	soundOn: false,
@@ -18,19 +18,26 @@ var chat = {
 
 /*
 * Socket.IO init
-* @require: url - optional
+* @arguments: url(String), query(Object) 
 *
 * @urlSource: @http://socket.io/docs/client-api/
 */
-chat.init = function(url) {
+chat.init = function(arg) {
 	// Open socket
-	chat.socket = io(url); //url || chat.method +'://'+ chat.address +':'+ chat.port + chat.channel
+	var fullURL = chat.method +'://'+ chat.address +':'+ chat.port + '/' + chat.channel.replace('/','');
+	console.log(fullURL);
+
+	if (typeof arg !== "undefined" && arg !== null) {
+		chat.socket = io(fullURL, arg);
+	} else {
+		chat.socket = io(fullURL);
+	}
 
 	// Successful connection
 	chat.socket.on('connect', function (data) {
 		if (chat.debugMode && data) console.log('io.connect', data);
 		chat.mes("Connected.");
-		chat.setNick();
+		//chat.setNick();
 	});
 
 	// Error
@@ -103,8 +110,8 @@ chat.init = function(url) {
 	// New updater: add user
 	chat.socket.on('channel-user-add', function (data) {
 		if (chat.debugMode) console.log('io.channel-user-add', data);
-		chat.mes(data.name + " - " + data.message);
-		chat.menuAddUser(data.id, data.name, data.channel);
+		chat.mes(data.nickname + " - " + data.message);
+		chat.menuAddUser(data.id, data.nickname, data.channel);
 	});
 
 	// New updater: add user
@@ -116,15 +123,15 @@ chat.init = function(url) {
 	//New updater: remove user
 	chat.socket.on('channel-user-remove', function (data) {
 		if (chat.debugMode) console.log('io.channel-user-remove', data);
-		chat.mes(data.name + " - " + data.message);
+		chat.mes(data.nickname + " - " + data.message);
 		chat.menuRemoveUser(data.id); //userid
 	});
 
 	// New updater: user update
 	chat.socket.on('channel-user-update', function (data) {
 		if (chat.debugMode) console.log('io.channel-user-update', data);
-		chat.mes(data.name + " - " + data.message);
-		chat.menuUpdateUser(data.id, data.name, data.channel);
+		chat.mes(data.nickname + " - " + data.message);
+		chat.menuUpdateUser(data.id, data.nickname, data.channel);
 	});
 
 	// Whisper
@@ -136,7 +143,7 @@ chat.init = function(url) {
 		chat.scrollDown();
 		
 		// Play audio
-		if (data.to !== chat.user.name) {
+		if (data.to !== chat.user.nickname) {
 			chat.playAudio();
 		}
 	});
@@ -150,7 +157,7 @@ chat.init = function(url) {
 		chat.scrollDown();
 		
 		// Play audio
-		if (data.name !== chat.user.name) {
+		if (data.nickname !== chat.user.nickname) {
 			chat.playAudio();
 		}
 	});
@@ -180,7 +187,7 @@ chat.addMessage = function(data) {
 		hours = d.getHours(),
 		minutes = d.getMinutes(),
 		seconds = d.getSeconds(),
-		name = data.name || "",
+		name = data.nickname || "",
 		_to = data.to || "",
 		_from = data.from || "",
 		message = data.message || ""; //decodeURIComponent(data.message);
@@ -196,7 +203,7 @@ chat.addMessage = function(data) {
 	item.className = "date";
 	item.textContent = "["+ chat.twoDigits(hours) + ":" + chat.twoDigits(minutes) + ":" + chat.twoDigits(seconds) +"]";
 	if (_to.length > 0 && _from.length > 0) {
-		if (_from === _to || _from === chat.user.name) {
+		if (_from === _to || _from === chat.user.nickname) {
 			item.textContent += " Whisper to";
 		}
 	}
@@ -207,7 +214,7 @@ chat.addMessage = function(data) {
 	item.className = "nickname";
 	item.href = "javascript:void(0)";
 	if (_to.length > 0 && _from.length > 0) {
-		if (_from === _to || _from === chat.user.name) {
+		if (_from === _to || _from === chat.user.nickname) {
 			item.setAttribute("onclick", "chat.setWhisper('" + _to + "')");
 			item.textContent = "<"+ _to +">";
 		} else {
@@ -233,7 +240,7 @@ chat.addMessage = function(data) {
 		var item = document.createElement("SPAN");
 		item.className = "message";
 		if (_to.length > 0 && _from.length > 0) {
-			if (_from === _to || _from === chat.user.name) {
+			if (_from === _to || _from === chat.user.nickname) {
 				item.textContent = message;
 			}
 			else {
@@ -352,7 +359,7 @@ chat.menuAddUser = function(id, name, channel) {
 	
 	var user = '<span>' + name + '</span>';
 		user += '<span class="w3-dropdown-content w3-border">';
-		if (chat.user.name === name) {
+		if (chat.user.nickname === name) {
 			user += '<a href="javascript:void(0)" onclick="chat.setWhisper()">New whisper</a>';
 			user += '<a href="javascript:void(0)" onclick="chat.setNick()">Change name</a>';
 			user += '<a href="javascript:void(0)" onclick="chat.setChannel()">Change channel</a>';
@@ -430,7 +437,7 @@ chat.updateUsers = function(data) {
 	// Add all users in array
 	each(data.users, function(data) {
 		var id = data.id,
-			name = data.name,
+			name = data.nickname,
 			channel = data.channel,
 			active = 0;
 
@@ -474,18 +481,31 @@ chat.setNick = function(nameStr) {
 			message: "Please enter your <b>name</b> at the field below.",
 			input: [{
 				"type": "text",
-				"name": "name",
+				"name": "nickname",
 				"placeholder": "Your name",
-				"value": (localStorage.name ? localStorage.name : chat.user.name),
+				"value": (localStorage.nickname ? localStorage.nickname : ""),
 				"required": "true"
 			}],
 			background: false,
 			onSubmit: function(data) {
-				if (data.name !== null) {
-					chat.user.name = data.name;
-					localStorage.name = data.name;
-					chat.socket.emit('set-nick', { name: data.name });
+				if (typeof data.nickname !== "undefined" && data.nickname !== null) {
+					if (data.nickname.length < 2) {
+						return nalert({
+							message: "Name is too short! 2 min.",
+							background: true
+						});
+					}
+					if (data.nickname.length > 25) {
+						return nalert({
+							message: "Name is too long! 25 max.",
+							background: true
+						});
+					}
+					chat.user.nickname = data.nickname;
+					localStorage.nickname = data.nickname;
+					chat.socket.emit('set-nick', { nickname: data.nickname });
 					chat.setFocus();
+					return;
 				}
 			}
 		});
@@ -502,9 +522,9 @@ chat.setNick = function(nameStr) {
 				background: true
 			});
 		} else {
-			chat.user.name = nameStr;
-			localStorage.name = nameStr;
-			chat.socket.emit('set-nick', { name: nameStr });
+			chat.user.nickname = nameStr;
+			localStorage.nickname = nameStr;
+			chat.socket.emit('set-nick', { nickname: nameStr });
 			chat.setFocus();
 		}
 	}
@@ -561,7 +581,7 @@ chat.setChannel = function(channelName) {
 * @require: nickname, messageStr
 */
 chat.setWhisper = function(nickname, messageStr) {
-	if (nickname === undefined || nickname === chat.user.name) {
+	if (nickname === undefined || nickname === chat.user.nickname) {
 		nprompt({
 			title: "Send whisper",
 			message: "Please enter a whisper <b>name</b>.",
@@ -580,14 +600,14 @@ chat.setWhisper = function(nickname, messageStr) {
 			}],
 			onSubmit: function(data) {
 				// Don't send to your self
-				if (data.whisper !== chat.user.name) {
+				if (data.whisper !== chat.user.nickname) {
 					chat.sendWhisper(data.whisper, data.message);
 				}
 			}
 		});
 	}
 	// Dont send to your self
-	else if (nickname.length && nickname !== chat.user.name) {
+	else if (nickname.length && nickname !== chat.user.nickname) {
 		if (nickname.length && messageStr === undefined) {
 			document.querySelector("#chatwhisper").value = nickname;
 			chat.setFocus();
@@ -631,7 +651,7 @@ chat.sendWhisper = function(nickname, messageStr) {
 		else {
 			chat.socket.emit('whisper', {
 				to: nickname,
-				from: chat.user.name,
+				from: chat.user.nickname,
 				message: messageStr
 			});
 			document.querySelector("#chatwhisper").value = nickname;
@@ -661,7 +681,8 @@ chat.isCommand = function(str, reg) {
 chat.mes = function(message) {
 	var target = document.querySelector("#messages");
 	var elem = document.createElement("LI");
-	elem.innerHTML = "<span class=\"message\">" + message.linkify() + "</span>";
+	var str = message || "";
+	elem.innerHTML = "<span class=\"message\">" + str.linkify() + "</span>";
 	target.appendChild(elem);
 	
 	chat.scrollDown();

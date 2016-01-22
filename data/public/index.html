@@ -218,8 +218,44 @@
 
 		// socket.io initialized
 		if ("io" in window) {
-			// Initialize socket
-			chat.init();
+
+			nprompt({
+				title: "Set nickname",
+				message: "Please enter your <b>name</b> at the field below.",
+				input: [{
+					"type": "text",
+					"name": "nickname",
+					"placeholder": "Your name",
+					"value": localStorage.nickname || "",
+					"required": "true"
+				}],
+				background: false,
+				onSubmit: function(data) {
+					if (typeof data.nickname !== "undefined" && data.nickname !== null) {
+					console.log(data);
+						// Name min length
+						if (data.nickname.length < 2) {
+							return nalert({
+								message: "Name is too short! 2 min.",
+								background: true
+							});
+						}
+						// Name max length
+						if (data.nickname.length > 25) {
+							return nalert({
+								message: "Name is too long! 25 max.",
+								background: true
+							});
+						}
+						// OK - Initialize socket
+						chat.init({ query: "nickname=" + data.nickname });
+					}
+				},
+				onCancel: function() {
+					// Init as Anonymous
+					chat.init();
+				}
+			});
 
 			// Set default volume level: 0.1 - 1.0
 			var vol = localStorage.volume || 0.5;
