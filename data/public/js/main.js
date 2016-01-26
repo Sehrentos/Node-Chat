@@ -355,7 +355,6 @@ chat.menuAddUser = function(id, name, channel) {
 	// New user object
 	var elem = document.createElement("A");
 	elem.className = 'user w3-dropdown-hover';
-	//elem.id = id;
 	elem.setAttribute("data-id", id);
 	
 	var user = '<span>' + name + '</span>';
@@ -369,8 +368,8 @@ chat.menuAddUser = function(id, name, channel) {
 		}
 		user += '</span>';
 
-	elem.innerHTML = user;
-	//elem.html(user);
+	//elem.innerHTML = user;
+	elem.html(user);
 	
 	// Display new menu
 	var list = document.getElementsByClassName("users-list");

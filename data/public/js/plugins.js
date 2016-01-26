@@ -66,22 +66,33 @@ if (!Object.prototype.find) {
 if (!Object.prototype.text) {
 	Object.prototype.text = function(src, ap) {
 		var self = this,
-			source = src || "",
+			source = document.createTextNode(src || ""),
 			append = ap || false;
 		
 		if (self.tabIndex === -1 || self.tabIndex === 0) {
 			if (append === false) {
 				self.innerHTML = '';
 			}
-			self.appendChild( document.createTextNode(source) );
+			self.appendChild( source );
 		}
 		else {
-			Object.keys(self).forEach(function (key) {
-				if (append === false) {
-					self[key].innerHTML = '';
+			if (self.constructor === Object) {
+				for (i in self) {
+					if (self.hasOwnProperty(i)) {
+						if (append === false) {
+							self[i].innerHTML = '';
+						}
+						self[i].appendChild( source );
+					}
 				}
-				self[key].appendChild( document.createTextNode(source) );
-			});
+			} else {
+				for (i = 0; i < self.length; i++) {
+					if (append === false) {
+						self[i].innerHTML = '';
+					}
+					self[i].appendChild( source );
+				}
+			}
 		}
 		
 		return this;
@@ -94,7 +105,7 @@ if (!Object.prototype.text) {
  */
 if (!Object.prototype.html) {
 	Object.prototype.html = function(src, ap) {
-		var self = this,
+		var i, self = this,
 			source = src || "",
 			append = ap || false;
 		
@@ -106,13 +117,25 @@ if (!Object.prototype.html) {
 			}
 		}
 		else {
-			Object.keys(self).forEach(function (key) {
-				if (append === false) {
-					self[key].innerHTML = source;
-				} else {
-					self[key].innerHTML += source;
+			if (self.constructor === Object) {
+				for (i in self) {
+					if (self.hasOwnProperty(i)) {
+						if (append === false) {
+							self[i].innerHTML = source;
+						} else {
+							self[i].innerHTML += source;
+						}
+					}
 				}
-			});
+			} else {
+				for (i = 0; i < self.length; i++) {
+					if (append === false) {
+						self[i].innerHTML = source;
+					} else {
+						self[i].innerHTML += source;
+					}
+				}
+			}
 		}
 		
 		return this;
