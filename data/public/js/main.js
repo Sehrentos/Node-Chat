@@ -91,8 +91,7 @@ chat.init = function(arg) {
 	chat.socket.on('set-topic', function (data) {
 		if (chat.debugMode) console.log('io.set-topic', data);
 		chat.mes("Set topic: " + data.message);
-		document.querySelector("#topic").textContent = data.message;
-		//document.querySelector("#topic").text(data.message);
+		document.getElementById("topic").textContent = data.message;
 	});
 
 	// Notice
@@ -192,7 +191,7 @@ chat.addMessage = function(data) {
 		_from = data.from || "",
 		message = data.message || ""; //decodeURIComponent(data.message);
 	
-	var target = document.querySelector("#messages");
+	var target = document.getElementById("messages");
 	var items = document.createElement("LI");
 	if (_to.length > 0 && _from.length > 0) {
 		items.className = "w3-pink";
@@ -374,9 +373,11 @@ chat.menuAddUser = function(id, name, channel) {
 	//elem.html(user);
 	
 	// Display new menu
-	document.querySelectorAll(".users-list").each(function(target) {
+	var list = document.getElementsByClassName("users-list");
+	
+	each(list, function(target) {
 		target.appendChild(elem);
-	})
+	});
 	
 	return this;
 };
@@ -386,18 +387,18 @@ chat.menuAddUser = function(id, name, channel) {
 * @require userId
 */
 chat.menuRemoveUser = function(id) {
-	// User menu array
 	if (chat.debugMode) console.log('fn.menuRemoveUser', arguments);
-	var menuArray = document.querySelectorAll(".user");
-
-	each(menuArray, function(target, key) {
+	
+	var list = document.getElementsByClassName("user");
+	
+	each(list, function(target, key) {
 		if (target.getAttribute("data-id") === id) {
 			if (target) {
 				target.remove();
 			}
 		}
 	});
-
+	
 	return this;
 };
 
@@ -407,7 +408,8 @@ chat.menuRemoveUser = function(id) {
 */
 chat.menuClear = function() {
 	if (chat.debugMode) console.log('fn.menuClear');
-	document.querySelector(".users-list").innerHTML = '';
+
+	document.getElementsByClassName("users-list").html("");
 
 	return this;
 };
@@ -440,12 +442,11 @@ chat.updateUsers = function(data) {
 	each(data.users, function(data) {
 		var id = data.id,
 			name = data.nickname,
-			channel = data.channel,
+			channel = data.channel || "",
 			active = 0;
 
 		// Add new user
 		chat.menuAddUser(id, name, channel);
-
 	});
 
 	return this;
@@ -611,7 +612,7 @@ chat.setWhisper = function(nickname, messageStr) {
 	// Dont send to your self
 	else if (nickname.length && nickname !== chat.user.nickname) {
 		if (nickname.length && messageStr === undefined) {
-			document.querySelector("#chatwhisper").value = nickname;
+			document.getElementById("chatwhisper").value = nickname;
 			chat.setFocus();
 		}
 		else if (messageStr === '') {
@@ -656,7 +657,7 @@ chat.sendWhisper = function(nickname, messageStr) {
 				from: chat.user.nickname,
 				message: messageStr
 			});
-			document.querySelector("#chatwhisper").value = nickname;
+			document.getElementById("chatwhisper").value = nickname;
 			chat.setFocus();
 		}
 	}
@@ -681,7 +682,7 @@ chat.isCommand = function(str, reg) {
 * @require: message
 */
 chat.mes = function(message) {
-	var target = document.querySelector("#messages");
+	var target = document.getElementById("messages");
 	var elem = document.createElement("LI");
 	var str = message || "";
 	elem.innerHTML = "<span class=\"message\">" + str.linkify() + "</span>";
@@ -694,10 +695,9 @@ chat.mes = function(message) {
 
 /*
 * Focus on chat input
-* @require: element id
 */
-chat.setFocus = function(id) {
-	document.querySelector(id || "#chatmessage").focus();
+chat.setFocus = function() {
+	document.getElementById("chatmessage").focus();
 
 	return this;
 };
@@ -706,8 +706,8 @@ chat.setFocus = function(id) {
 * Scroll down the chat window
 */
 chat.scrollDown = function() {
-	//var elem1 = document.querySelector("#content");
-	var elem2 = document.querySelector("#messages");
+	//var elem1 = document.getElementById("content");
+	var elem2 = document.getElementById("messages");
 
 	//elem1.scrollTop = elem1.scrollHeight;
 	elem2.scrollTop = elem2.scrollHeight;
@@ -749,7 +749,7 @@ chat.playSettings = function(active) {
 * @require: level
 */
 chat.playVolume = function(level) {
-	document.querySelector("#audio").volume = level;
+	document.getElementById("audio").volume = level;
 
 	return this;
 };

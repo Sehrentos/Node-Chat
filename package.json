@@ -16,8 +16,8 @@
 		"width": 600,
 		"height": 350,
 		"position": "center",
-		"min_width": 400,
-		"min_height": 200
+		"min_width": 360,
+		"min_height": 400
 	},
 	"nodejs": true,
 	"node-main": "data/nw.js",

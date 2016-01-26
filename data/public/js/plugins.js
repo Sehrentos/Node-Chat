@@ -7,7 +7,7 @@
 var ready = function(callback) {
 	if (typeof(callback) === "function") {
 		return document.addEventListener("DOMContentLoaded", callback, false);
-	} throw "ready() callback is not defined or is not a function.";
+	} throw "ready() callback is not is not function.";
 };
 
 /*
@@ -64,22 +64,23 @@ if (!Object.prototype.find) {
  * Object.text("String", append) - append (true/false) optional
  */
 if (!Object.prototype.text) {
-	Object.prototype.text = function(src, append) {
-		append = append || false;
-		var self = this;
+	Object.prototype.text = function(src, ap) {
+		var self = this,
+			source = src || "",
+			append = ap || false;
 		
 		if (self.tabIndex === -1 || self.tabIndex === 0) {
 			if (append === false) {
 				self.innerHTML = '';
 			}
-			self.appendChild( document.createTextNode(src) );
+			self.appendChild( document.createTextNode(source) );
 		}
 		else {
 			Object.keys(self).forEach(function (key) {
 				if (append === false) {
 					self[key].innerHTML = '';
 				}
-				self[key].appendChild( document.createTextNode(src) );
+				self[key].appendChild( document.createTextNode(source) );
 			});
 		}
 		
@@ -92,23 +93,24 @@ if (!Object.prototype.text) {
  * Object.html("String", append) - append (true/false) optional
  */
 if (!Object.prototype.html) {
-	Object.prototype.html = function(src, append) {
-		append = append || false;
-		var self = this;
+	Object.prototype.html = function(src, ap) {
+		var self = this,
+			source = src || "",
+			append = ap || false;
 		
 		if (self.tabIndex === -1 || self.tabIndex === 0) {
 			if (append === false) {
-				self.innerHTML = src;
+				self.innerHTML = source;
 			} else {
-				self.innerHTML += src;
+				self.innerHTML += source;
 			}
 		}
 		else {
 			Object.keys(self).forEach(function (key) {
 				if (append === false) {
-					self[key].innerHTML = src;
+					self[key].innerHTML = source;
 				} else {
-					self[key].innerHTML += src;
+					self[key].innerHTML += source;
 				}
 			});
 		}
@@ -131,11 +133,18 @@ if (!Object.prototype.on) {
  * each() - For each loop (Array/Object)
  * each(elem, function(value, index) { console.log(index + " -> " + value); });
  */
-var each = function(obj, callback) {
+var each = function(src, callback) {
 	if (typeof(callback) === "function") {
-		for (var key in obj) {
-			if (obj.hasOwnProperty(key)) {
-				callback(obj[key], key);
+		var i;
+		if (src.constructor === Object) {
+			for (i in src) {
+				if (src.hasOwnProperty(i)) {
+					callback(src[i], i);
+				}
+			}
+		} else {
+			for (i = 0; i < src.length; i++) {
+				callback(src[i], i);
 			}
 		}
 	}
@@ -149,9 +158,16 @@ var each = function(obj, callback) {
 if (!Object.prototype.each) {
 	Object.prototype.each = function(callback) {
 		if (typeof(callback) === "function") {
-			for (var key in this) {
-				if (this.hasOwnProperty(key)) {
-					callback(this[key], key);
+			var i, src = this;
+			if (src.constructor === Object) {
+				for (i in src) {
+					if (src.hasOwnProperty(i)) {
+						callback(src[i], i);
+					}
+				}
+			} else { /* Array, HTMLCollection... */
+				for (i = 0; i < src.length; i++) {
+					callback(src[i], i);
 				}
 			}
 		}

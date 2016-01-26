@@ -22,19 +22,19 @@
 	// UI W3 Sidenav show/hide
 	function sidenav_left_open() {
 		//document.getElementsByClassName("w3-sidenav")[0].style.display = "block";
-		document.querySelector("#menu-left").style.display = "block";
+		document.getElementById("menu-left").style.display = "block";
 	}
 	
 	function sidenav_left_close() {
-		document.querySelector("#menu-left").style.display = "none";
+		document.getElementById("menu-left").style.display = "none";
 	}
 	
 	function sidenav_right_open() {
-		document.querySelector("#menu-right").style.display = "block";
+		document.getElementById("menu-right").style.display = "block";
 	}
 	
 	function sidenav_right_close() {
-		document.querySelector("#menu-right").style.display = "none";
+		document.getElementById("menu-right").style.display = "none";
 	}
 
 	// Ask user for server address
@@ -180,7 +180,7 @@
 	}
 
 	function formDataHandler() {
-		var elem = document.querySelector("#chatform");
+		var elem = document.getElementById("chatform");
 		var myObj = serialize(elem);
 		
 		if (myObj.whisper.length) {
@@ -189,7 +189,7 @@
 			chat.submitMessage(myObj.message);
 		}
 		
-		elem.querySelector("#chatmessage").value = "";
+		document.getElementById("chatmessage").value = "";
 	}
 
 	function formSubmit(event) {
@@ -200,7 +200,7 @@
 	function formKeydown(event) {
 		if (event.keyCode == 13 && !event.shiftKey) {
 			event.preventDefault();
-			document.querySelector("#chatsubmit").click();
+			document.getElementById("chatsubmit").click();
 		}
 	}
 
@@ -211,10 +211,10 @@
 		var doc = e.target || event.target || this;
 
 		// On form submit event
-		doc.querySelector("#chatform").addEventListener("submit", formSubmit, false);
+		doc.getElementById("chatform").addEventListener("submit", formSubmit, false);
 
 		// Listen keypush events
-		doc.querySelector("#chatform").addEventListener("keydown", formKeydown, false);
+		doc.getElementById("chatform").addEventListener("keydown", formKeydown, false);
 
 		// socket.io initialized
 		if ("io" in window) {
@@ -262,8 +262,8 @@
 			chat.playVolume(vol);
 
 			// Set canvas menus
-			canvasMenu( doc.querySelector("#canvasMenu") );
-			canvasTeam( doc.querySelector("#canvasTeam") );
+			canvasMenu( doc.getElementById("canvasMenu") );
+			canvasTeam( doc.getElementById("canvasTeam") );
 		}
 
 	}, false); // document ready
@@ -390,7 +390,7 @@ function resizeThrottler() {
 // Set content messages height (ui)
 function actualResizeHandler() {
 	// handle the resize event
-	var wrap = document.querySelector("body");
+	var wrap = document.getElementsByTagName("body")[0];
 	var header = document.getElementById("header");
 	var footer = document.getElementById("footer");
 	var messages = document.getElementById("messages");

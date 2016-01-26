@@ -12,6 +12,7 @@ var express = require('express');
 var app = express();
 var server = require('http').createServer(app);
 var io = require('socket.io')(server);
+//var io = require('socket.io')(3000); // socket.io standalone
 var port = process.env.PORT || 3000;
 var debugMode = false;
 var chatData = {
@@ -29,11 +30,6 @@ app.use(express.static(__dirname + '/public'));
 app.get('*', function(req, res) {
 	res.send('Route not found.');
 });
-
-/*
- * Start socket.io standalone server:
- */
-//var io = require('socket.io')(3000);
 
 /*
  * Messages data array
@@ -137,28 +133,28 @@ function updateUser(socket) {
 
 /*
  * Updates user data to every one in same channel
- * @channelAddUser(socket.user.channel, { id: socket.user.id, nickname: socket.user.nickname, message: '' })
+ * @channelAddUser(socket, { id, channel, nickname, message })
  */
-function channelAddUser(socket, channel, data) {
-	socket.join(channel);
-	io.sockets.in(channel).emit('channel-user-add', data);
+function channelAddUser(socket, data) {
+	socket.join(data.channel);
+	io.sockets.in(data.channel).emit('channel-user-add', data);
 }
 
 /*
  * Send remove user data to every connected client in channel
- * @channelRemoveUser(socket.user.channel, { id: socket.user.id, nickname: socket.user.nickname, message: '' })
+ * @channelRemoveUser(socket, { id, channel, nickname, message })
  */
-function channelRemoveUser(socket, channel, data) {
-	socket.leave(channel);
-	io.sockets.in(channel).emit('channel-user-remove', data);
+function channelRemoveUser(socket, data) {
+	socket.leave(data.channel);
+	io.sockets.in(data.channel).emit('channel-user-remove', data);
 }
 
 /*
  * Send updated user data to every connected client in channel
- * @channelUpdateUser(socket.user.channel, { id: socket.user.id, nickname: socket.user.nickname, message: '' })
+ * @channelUpdateUser(socket, { id, channel, nickname, message })
  */
-function channelUpdateUser(socket, channel, data) {
-	io.sockets.in(channel).emit('channel-user-update', data);
+function channelUpdateUser(socket, data) {
+	io.sockets.in(data.channel).emit('channel-user-update', data);
 }
 
 /*
@@ -166,10 +162,25 @@ function channelUpdateUser(socket, channel, data) {
  */
 function channelSwitch(socket, from_channel, to_channel) {
 	if (from_channel !== undefined) {
-		channelRemoveUser(socket, from_channel, { id: socket.user.id, nickname: socket.user.nickname, message: 'Leaved channel' });
-		channelAddUser(socket, to_channel, { id: socket.user.id, nickname: socket.user.nickname, message: 'Joined channel' });
+		channelRemoveUser(socket, {
+			id: socket.user.id,
+			channel: from_channel,
+			nickname: socket.user.nickname,
+			message: 'Leaved channel'
+		});
+		channelAddUser(socket, {
+			id: socket.user.id,
+			channel: to_channel,
+			nickname: socket.user.nickname,
+			message: 'Joined channel'
+		});
 	} else {
-		channelUpdateUser(socket, socket.user.channel, { id: socket.user.id, nickname: socket.user.nickname, message: 'Switched channel' });
+		channelUpdateUser(socket, {
+			id: socket.user.id,
+			channel: socket.user.channel,
+			nickname: socket.user.nickname,
+			message: 'Switched channel'
+		});
 	}
 }
 
@@ -299,8 +310,9 @@ io.on('connection', function(socket) {
 
 	// Add new user to the channel
 	// @event: channel-user-add
-	channelAddUser(socket, socket.user.channel, {
+	channelAddUser(socket, {
 		id: socket.user.id,
+		channel: socket.user.channel,
 		nickname: socket.user.nickname,
 		message: 'Joined channel'
 	});
@@ -393,8 +405,9 @@ io.on('connection', function(socket) {
 				
 				updateUser(socket);
 
-				channelUpdateUser(socket, socket.user.channel, {
+				channelUpdateUser(socket, {
 					id: socket.user.id,
+					channel: socket.user.channel,
 					nickname: socket.user.nickname,
 					message: 'has changed name from ' + lastName
 				});
@@ -476,8 +489,9 @@ io.on('connection', function(socket) {
 		removeUser(socket);
 
 		// Update to other clients
-		channelRemoveUser(socket, socket.user.channel, {
+		channelRemoveUser(socket, {
 			id: socket.user.id,
+			channel: socket.user.channel,
 			nickname: socket.user.nickname,
 			message: 'User disconnected'
 		});
