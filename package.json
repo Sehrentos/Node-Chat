@@ -1,10 +1,15 @@
 {
   "name": "chat-app",
-  "description": "My node chat application",
   "version": "0.1.2",
+  "author": "Niko H. (Sehrentos)",
+  "description": "My node chat application",
+  "keywords": [
+    "node chat",
+    "express socket"
+  ],
   "repository": {
     "type": "git",
-    "url": ""
+    "url": "https://github.com/Sehrentos/Node-Chat"
   },
   "scripts": {
     "start": "node server.js"
