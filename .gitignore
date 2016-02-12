@@ -42,15 +42,5 @@ Network Trash Folder
 Temporary Items
 .apdisk
 
-# /node_modules/ -Node JS socket.io stuff
+# /node_modules/ -Node JS stuff
 /node_modules
-credits.html
-d3dcompiler_47.dll
-ffmpegsumo.dll
-icudtl.dat
-libEGL.dll
-libGLESv2.dll
-nw.exe
-*.pak
-nwjc.exe
-pdf.dll

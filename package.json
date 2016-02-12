@@ -1,29 +1,16 @@
 {
-	"name": "chat-app",
-	"main": "data/public/index.html",
-	"description": "My nw chat application",
-	"version": "0.1.1",
-	"keywords": [ "Chat App", "node-webkit" ],
-	"readme": "README.md",
-	"window": {
-		"title": "Chat",
-		"icon": "data/public/images/favicon.png",
-		"toolbar": false,
-		"frame": true,
-		"resizable": true,
-		"fullscreen": false,
-		"transparent": false,
-		"width": 600,
-		"height": 350,
-		"position": "center",
-		"min_width": 360,
-		"min_height": 400
-	},
-	"nodejs": true,
-	"node-main": "data/nw.js",
-	"webkit": {
-		"plugin": true
-	},
-	"repository": {},
-	"dependencies": {}
+  "name": "chat-app",
+  "description": "My node chat application",
+  "version": "0.1.2",
+  "repository": {
+    "type": "git",
+    "url": ""
+  },
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.13.4",
+    "socket.io": "^1.4.5"
+  }
 }

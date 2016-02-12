@@ -4,58 +4,87 @@
  *
  * DOM is loaded event
  */
-var ready = function(callback) {
+var DOMReady = function(callback) {
 	if (typeof(callback) === "function") {
-		return document.addEventListener("DOMContentLoaded", callback, false);
-	} throw "ready() callback is not is not function.";
-};
-
-/*
- * Element query selector
- */
-var selector = function(s, callback) {
-	var target;
-	if (s.indexOf("#") !== -1) {
-		target = document.querySelector(s);
-		if (typeof(callback) === "function") {
-			callback(target, 0);
+		if (document.readyState) {
+			document.onreadystatechange = function () {
+				if (document.readyState == "loaded" || document.readyState == "complete") {
+					document.onreadystatechange = null;
+					callback(event);
+				}
+			};
+		} else {
+			document.addEventListener("DOMContentLoaded", callback, false);
 		}
 	} else {
-		target = document.querySelectorAll(s);
-		if (typeof(callback) === "function") {
-			for (var p in target) {
-				if (target.hasOwnProperty(p)) {
-					callback(target[p], p);
-				}
-			}
-		}
+		console.log("DOMReady() callback is not is not function.");
 	}
-	return target;
 };
 
 /*
- * Object.find(target, callback(target, index) ) - querySelector
- * Works for HTML, XUL, and plain XML
+ * selector() - Select single element
+ * Short-hand for querySelector
+ */
+var selector = function(s) {
+	return document.querySelector(s);
+};
+
+/*
+ * selectorAll() - Select all elements
+ * Short-hand for querySelectorAll
+ */
+var selectorAll = function(s) {
+	return document.querySelectorAll(s);
+};
+
+/*
+ * Object.find(target) - Find single element
+ * Short-hand for querySelector
  */
 if (!Object.prototype.find) {
-	Object.prototype.find = function(s, callback) {
-		var target;
-		if (s.indexOf("#") !== -1) {
-			target = this.querySelector(s);
-			if (typeof(callback) === "function") {
-				callback(target, 0);
-			}
-		} else {
-			target = this.querySelectorAll(s);
-			if (typeof(callback) === "function") {
-				for (var p in target) {
-					if (target.hasOwnProperty(p)) {
-						callback(target[p], p);
-					}
-				}
-			}
+	Object.prototype.find = function(s) {
+		return this.querySelector(s);
+	}
+}
+
+/*
+ * Object.findAll(target) - Find all elements
+ * Short-hand for querySelectorAll
+ */
+if (!Object.prototype.findAll) {
+	Object.prototype.findAll = function(s) {
+		return this.querySelectorAll(s);
+	}
+}
+
+/*
+ * Object.set() - Adds a new attribute or changes the value of an existing attribute on the specified element.
+ * Object.set(name, value, callback)
+ * Short-hand for setAttribute
+ */
+if (!Object.prototype.set) {
+	Object.prototype.set = function(name, value, callback) {
+		var e = this.setAttribute(name, value);
+		if (typeof(callback) === "function") {
+			callback(e);
 		}
-		return target;
+		return e;
+	}
+}
+
+/*
+ * Object.get() - returns the value of a specified attribute on the element.
+ * If the given attribute does not exist, the value returned will either be null or "" (the empty string)
+ * Object.get(name, callback) - returns value
+ * Short-hand for getAttribute
+ */
+if (!Object.prototype.get) {
+	Object.prototype.get = function(name, callback) {
+		var e = this.getAttribute(name);
+		if (typeof(callback) === "function") {
+			callback(e);
+		}
+		return e;
 	}
 }
 
@@ -64,37 +93,24 @@ if (!Object.prototype.find) {
  * Object.text("String", append) - append (true/false) optional
  */
 if (!Object.prototype.text) {
-	Object.prototype.text = function(src, ap) {
-		var self = this,
-			source = document.createTextNode(src || ""),
-			append = ap || false;
-		
-		if (self.tabIndex === -1 || self.tabIndex === 0) {
-			if (append === false) {
-				self.innerHTML = '';
+	Object.prototype.text = function(src, append) {
+		var i, t = this, a = append || false;
+		if (t.tabIndex === -1 || t.tabIndex === 0) {
+			if (a === false) {
+				t.innerHTML = '';
 			}
-			self.appendChild( source );
+			t.appendChild( document.createTextNode(src || "") );
 		}
 		else {
-			if (self.constructor === Object) {
-				for (i in self) {
-					if (self.hasOwnProperty(i)) {
-						if (append === false) {
-							self[i].innerHTML = '';
-						}
-						self[i].appendChild( source );
+			if (t.constructor !== Object) {
+				for (i = 0; i < t.length; i++) {
+					if (a === false) {
+						t[i].innerHTML = '';
 					}
-				}
-			} else {
-				for (i = 0; i < self.length; i++) {
-					if (append === false) {
-						self[i].innerHTML = '';
-					}
-					self[i].appendChild( source );
+					t[i].appendChild( document.createTextNode(src || "") );
 				}
 			}
 		}
-		
 		return this;
 	}
 }
@@ -104,51 +120,66 @@ if (!Object.prototype.text) {
  * Object.html("String", append) - append (true/false) optional
  */
 if (!Object.prototype.html) {
-	Object.prototype.html = function(src, ap) {
-		var i, self = this,
-			source = src || "",
-			append = ap || false;
-		
-		if (self.tabIndex === -1 || self.tabIndex === 0) {
-			if (append === false) {
-				self.innerHTML = source;
+	Object.prototype.html = function(src, append) {
+		var i, t = this, a = append || false;
+		if (t.tabIndex === -1 || t.tabIndex === 0) {
+			if (a === false) {
+				t.innerHTML = src || "";
 			} else {
-				self.innerHTML += source;
+				t.innerHTML += src || "";
 			}
 		}
 		else {
-			if (self.constructor === Object) {
-				for (i in self) {
-					if (self.hasOwnProperty(i)) {
-						if (append === false) {
-							self[i].innerHTML = source;
-						} else {
-							self[i].innerHTML += source;
-						}
-					}
-				}
-			} else {
-				for (i = 0; i < self.length; i++) {
-					if (append === false) {
-						self[i].innerHTML = source;
+			if (t.constructor !== Object) {
+				for (i = 0; i < t.length; i++) {
+					if (a === false) {
+						t[i].innerHTML = src || "";
 					} else {
-						self[i].innerHTML += source;
+						t[i].innerHTML += src || "";
 					}
 				}
 			}
 		}
-		
 		return this;
 	}
 }
 
 /*
- * on() - Event binding function.
+ * Element.remove() - Element remove function.
+ */
+if (!Element.prototype.remove) {
+	Element.prototype.remove = function() {
+		if (this.parentNode) {
+			this.parentNode.removeChild(this);
+		}
+	};
+}
+
+/*
+ * addEvent() - Event binding function.
+ * addEvent(Element, "click", Function, false)
+ */
+var addEvent = function(elem, src, callback, extra) {
+	if (!elem) {
+		return false;
+	} else if (elem.addEventListener) { /* W3C DOM */
+		return elem.addEventListener(src, callback, extra || false);
+	} else if (elem.attachEvent) { /* IE DOM */
+		return elem.attachEvent("on"+src, callback);
+	} else {
+		elem[src] = callback;
+	}
+	return elem;
+};
+
+/*
+ * Object.on() - Event binding function.
  * Object.on("click", Function, false)
+ * Short-hand for addEventListener
  */
 if (!Object.prototype.on) {
 	Object.prototype.on = function(src, callback, extra) {
-		return this.addEventListener(src, callback, extra || false);
+		return addEvent(this, src, callback, extra);
 	}
 }
 
@@ -199,37 +230,50 @@ if (!Object.prototype.each) {
 }
 
 /*
- * Storage - localStorage JSON
- * Methods to load, save, remove data from localStorage.
+ * Object.append()
  */
-var loadStorage = function (key) {
-	var keyName = key || "storage_db";
-	if (localStorage[keyName]) {
-		return JSON.parse(localStorage[keyName]);
+if (!Object.prototype.append) {
+	Object.prototype.append = function(t) {
+		return this.appendChild(t);
 	}
-	return {};
-};
-
-var saveStorage = function (val, key) {
-	var keyName = key || "storage_db";
-	localStorage[keyName] = JSON.stringify(val);
-};
-
-var removeStorage = function (key) {
-	var keyName = key || "storage_db";
-	localStorage.removeItem(keyName);
-};
+}
 
 /*
- * Helper function: arrayObjectIndexOf
- * @Return index or -1 if not found
- * var index = arrayObjectIndexOf(arrayObject, searchThis, "fromThisPropName");
+ * Object.appendTo()
  */
-var arrayObjectIndexOf = function(arrayObject, searchTerm, property) {
-	for (var i = 0, len = arrayObject.length; i < len; i++) {
-		if (arrayObject[i][property] === searchTerm) return i;
+if (!Object.prototype.appendTo) {
+	Object.prototype.appendTo = function(t) {
+		return t.appendChild(this);
 	}
-	return -1;
+}
+
+/*
+ * build() - Build HTML element (createElement)
+ * arg1 - Tag Name (String)
+ * arg2 - Attributes (Object)
+ * arg3 - Append To (Object/HTMLElement)
+ * return created element object
+ */
+var build = function(tagName, attributes, appendTo) {
+	var elem = document.createElement(tagName);
+	
+	if (typeof attributes === 'object') {
+		for (var p in attributes) {
+			/* hasOwnProperty check that work on ie */
+			if (Object.prototype.hasOwnProperty.call(attributes,p)) {
+				elem[p] = attributes[p];
+				if (Object.prototype.hasOwnProperty.call(elem,p)) {
+					elem.setAttribute(p, attributes[p]);
+				}
+			}
+		}
+	}
+
+	if (appendTo) {
+		appendTo.appendChild(elem);
+	}
+
+	return elem;
 };
 
 /*
@@ -309,6 +353,105 @@ if (!Object.prototype.extend) {
 		return extend(target, src);
 	};
 }
+
+/*
+ * String.linkify() - Make link function
+ */
+if(!String.prototype.linkify) {
+	String.prototype.linkify = function() {
+
+		// http://, https://, ftp://
+		var urlPattern = /\b(?:https?|ftp):\/\/[a-z0-9-+&@#\/%?=~_|!:,.;]*[a-z0-9-+&@#\/%=~_|]/gim;
+
+		// www. sans http:// or https://
+		var pseudoUrlPattern = /(^|[^\/])(www\.[\S]+(\b|$))/gim;
+
+		// Email addresses
+		var emailAddressPattern = /[\w.]+@[a-zA-Z_-]+?(?:\.[a-zA-Z]{2,6})+/gim;
+
+		return this
+			.replace(urlPattern, '<a href="$&" target="_blank">$&</a>')
+			.replace(pseudoUrlPattern, '$1<a href="http://$2" target="_blank">$2</a>')
+			.replace(emailAddressPattern, '<a href="mailto:$&" target="_blank">$&</a>');
+	};
+}
+
+/*
+ * Object.linkify() - Make link function
+ */
+if (!Object.prototype.linkify) {
+	Object.prototype.linkify = function(type) {
+
+		// http://, https://, ftp://
+		var urlPattern = /\b(?:https?|ftp):\/\/[a-z0-9-+&@#\/%?=~_|!:,.;]*[a-z0-9-+&@#\/%=~_|]/gim;
+
+		// www. sans http:// or https://
+		var pseudoUrlPattern = /(^|[^\/])(www\.[\S]+(\b|$))/gim;
+
+		// Email addresses
+		var emailAddressPattern = /[\w.]+@[a-zA-Z_-]+?(?:\.[a-zA-Z]{2,6})+/gim;
+
+		// innerHTML or textContent
+		if (!type) {
+			return this.innerHTML = this.textContent
+				.replace(urlPattern, '<a href="$&" target="_blank">$&</a>')
+				.replace(pseudoUrlPattern, '$1<a href="http://$2" target="_blank">$2</a>')
+				.replace(emailAddressPattern, '<a href="mailto:$&" target="_blank">$&</a>');
+		} else {
+			return this.innerHTML = this.innerHTML
+				.replace(urlPattern, '<a href="$&" target="_blank">$&</a>')
+				.replace(pseudoUrlPattern, '$1<a href="http://$2" target="_blank">$2</a>')
+				.replace(emailAddressPattern, '<a href="mailto:$&" target="_blank">$&</a>');
+		}
+	}
+}
+
+/*
+ * String.encodeHTML function
+ */
+if (!String.prototype.encodeHTML) {
+	String.prototype.encodeHTML = function() {
+		return this.replace(/&/g, '&amp;')
+			.replace(/</g, '&lt;')
+			.replace(/>/g, '&gt;')
+			.replace(/"/g, '&quot;')
+			.replace(/'/g, '&apos;').toString();
+	};
+}
+
+/*
+ * Storage - localStorage JSON
+ * Methods to load, save, remove data from localStorage.
+ */
+var loadStorage = function (key) {
+	var keyName = key || "storage_db";
+	if (localStorage[keyName]) {
+		return JSON.parse(localStorage[keyName]);
+	}
+	return {};
+};
+
+var saveStorage = function (val, key) {
+	var keyName = key || "storage_db";
+	localStorage[keyName] = JSON.stringify(val);
+};
+
+var removeStorage = function (key) {
+	var keyName = key || "storage_db";
+	localStorage.removeItem(keyName);
+};
+
+/*
+ * Helper function: arrayObjectIndexOf
+ * @Return index or -1 if not found
+ * var index = arrayObjectIndexOf(arrayObject, searchThis, "fromThisPropName");
+ */
+var arrayObjectIndexOf = function(arrayObject, searchTerm, property) {
+	for (var i = 0, len = arrayObject.length; i < len; i++) {
+		if (arrayObject[i][property] === searchTerm) return i;
+	}
+	return -1;
+};
 
 /*
  * serialize() - HTML form serialize function
@@ -392,6 +535,15 @@ var serialize = function(form) {
 };
 
 /*
+ * Element.serialize() - HTML form serialize function
+ */
+if (!Element.prototype.serialize) {
+	Element.prototype.serialize = function() {
+		return serialize(this);
+	};
+}
+
+/*
  * Ajax() - XMLHttpRequest function
  * url - file url to load
  * success - function fired when loaded
@@ -403,7 +555,7 @@ var Ajax = function(url, success, progress, error) {
 	
 	this.request.onreadystatechange = function() {
 		if (this.readyState == 4 && this.status == 200) {
-			if (success) success(this.response); //this.responseText
+			if (success) success(this.responseText); //this.response
 		}
 	};
 	
@@ -426,82 +578,6 @@ var Ajax = function(url, success, progress, error) {
 var get = function(url, success, progress, error) {
 	return new Ajax(url, success, progress, error);
 };
-
-/*
- * Element.remove() - Element remove function.
- */
-if (!('remove' in Element.prototype)) {
-	Element.prototype.remove = function() {
-		if (this.parentNode) {
-			this.parentNode.removeChild(this);
-		}
-	};
-}
-
-/*
- * String.linkify() - Make link function
- */
-if(!String.linkify) {
-	String.prototype.linkify = function() {
-
-		// http://, https://, ftp://
-		var urlPattern = /\b(?:https?|ftp):\/\/[a-z0-9-+&@#\/%?=~_|!:,.;]*[a-z0-9-+&@#\/%=~_|]/gim;
-
-		// www. sans http:// or https://
-		var pseudoUrlPattern = /(^|[^\/])(www\.[\S]+(\b|$))/gim;
-
-		// Email addresses
-		var emailAddressPattern = /[\w.]+@[a-zA-Z_-]+?(?:\.[a-zA-Z]{2,6})+/gim;
-
-		return this
-			.replace(urlPattern, '<a href="$&" target="_blank">$&</a>')
-			.replace(pseudoUrlPattern, '$1<a href="http://$2" target="_blank">$2</a>')
-			.replace(emailAddressPattern, '<a href="mailto:$&" target="_blank">$&</a>');
-	};
-}
-
-/*
- * Object.linkify() - Make link function
- */
-if (!Object.linkify) {
-	Object.prototype.linkify = function(type) {
-
-		// http://, https://, ftp://
-		var urlPattern = /\b(?:https?|ftp):\/\/[a-z0-9-+&@#\/%?=~_|!:,.;]*[a-z0-9-+&@#\/%=~_|]/gim;
-
-		// www. sans http:// or https://
-		var pseudoUrlPattern = /(^|[^\/])(www\.[\S]+(\b|$))/gim;
-
-		// Email addresses
-		var emailAddressPattern = /[\w.]+@[a-zA-Z_-]+?(?:\.[a-zA-Z]{2,6})+/gim;
-
-		// innerHTML or textContent
-		if (!type) {
-			return this.innerHTML = this.textContent
-				.replace(urlPattern, '<a href="$&" target="_blank">$&</a>')
-				.replace(pseudoUrlPattern, '$1<a href="http://$2" target="_blank">$2</a>')
-				.replace(emailAddressPattern, '<a href="mailto:$&" target="_blank">$&</a>');
-		} else {
-			return this.innerHTML = this.innerHTML
-				.replace(urlPattern, '<a href="$&" target="_blank">$&</a>')
-				.replace(pseudoUrlPattern, '$1<a href="http://$2" target="_blank">$2</a>')
-				.replace(emailAddressPattern, '<a href="mailto:$&" target="_blank">$&</a>');
-		}
-	}
-}
-
-/*
- * String.encodeHTML function
- */
-if (!String.prototype.encodeHTML) {
-	String.prototype.encodeHTML = function() {
-		return this.replace(/&/g, '&amp;')
-			.replace(/</g, '&lt;')
-			.replace(/>/g, '&gt;')
-			.replace(/"/g, '&quot;')
-			.replace(/'/g, '&apos;').toString();
-	};
-}
 
 /*
  * Pure JS: Custom prompt, confirm, alert
@@ -531,23 +607,24 @@ var nprompt = function(options, pType) {
 		type: pType || "prompt",
 		title: "",
 		message: "",
+		animate: false, /* zoom|top|bottom|right|left */
 		input: [{
 			name: "a",
 			value: "",
 			placeholder: "Write here...",
-			className: "nprompt_value w3-input w3-margin-bottom w3-border w3-white"
+			className: "nprompt-input"
 		}],
 		inputSubmit: [{
 			type: "submit",
-			className: "submit_ok w3-input w3-border w3-light-grey",
+			className: "nprompt-submit",
 			value: "Ok"
 		},{
 			type: "button",
-			className: "submit_cancel w3-input w3-border w3-light-grey",
+			className: "nprompt-cancel",
 			value: "Cancel"
 		}],
-		background: false,
-		promptBody: document.createElement("DIV"),
+		body: false,
+		promptBody: false,
 		onSubmit: function() {},
 		onCancel: function() {}
 	};
@@ -556,33 +633,28 @@ var nprompt = function(options, pType) {
 	var settings = Object.extend(defaults, options);
 
 	// Append promptBody element settings
-	settings.promptBody.id = Math.random();
-	settings.promptBody.className = "nprompt_holder";
-	/*settings.promptBody.innerHTML = '<div class="nprompt_background"></div>' +
-		'<div class="nprompt_main">' +
-		'<div class="nprompt_inner">' +
-		'<div class="nprompt_message">' +
-		'<p class="title"></p>' +
-		'<p class="message"><p>' +
-		'</div>' +
-		'<form class="nprompt_inputs"></form>' +
-		'</div>' +
-		'</div>';*/
+	settings.promptBody = document.createElement("DIV");
+	settings.promptBody.className = "nprompt-holder";
+	settings.promptBody.setAttribute("data-id", Math.random());
 
-		//W3.CSS - Modal style
-		settings.promptBody.innerHTML = '<div class="nprompt_background w3-modal"> \
-			<div class="nprompt_message w3-modal-content w3-card-8"> \
+	// W3.CSS - Modal style
+	if (!settings.body) {
+		settings.promptBody.innerHTML = '<div class="w3-modal"> \
+			<div class="w3-modal-content w3-card-8"> \
 				<header class="w3-container w3-light-green"> \
-					<h2 class="title"></h2> \
+					<h2 class="nprompt-title"></h2> \
 				</header> \
-				<div class="nprompt_message w3-container w3-padding"> \
-					<p class="message w3-margin"><p> \
+				<div class="w3-container w3-padding"> \
+					<p class="nprompt-message w3-margin"><p> \
 				</div> \
 				<footer class="w3-container w3-padding-bottom"> \
-					<form class="nprompt_inputs w3-container"></form> \
+					<form class="w3-container"></form> \
 				</footer> \
 			</div> \
 		</div>';
+	} else {
+		settings.promptBody.innerHTML = settings.body.outerHTML || settings.body;
+	}
 
 	settings.remove = function(t) {
 		return t.parentNode.removeChild(t);
@@ -590,7 +662,7 @@ var nprompt = function(options, pType) {
 
 	settings.promptSubmit = function(event) {
 		event.preventDefault();
-		var inputObject = serialize(settings.promptBody.querySelector(".nprompt_inputs"));
+		var inputObject = serialize(settings.promptBody.getElementsByTagName("form")[0]);
 		settings.onSubmit(inputObject);
 		settings.remove(settings.promptBody);
 		return this;
@@ -599,35 +671,44 @@ var nprompt = function(options, pType) {
 	settings.promptCancel = function(event) {
 		settings.onCancel(null);
 		settings.remove(settings.promptBody);
-		settings.promptBody.querySelector(".nprompt_inputs").removeEventListener("submit", settings.promptSubmit, false);
-		settings.promptBody.querySelector(".submit_cancel").removeEventListener("click", settings.promptCancel, false);
+		settings.promptBody.getElementsByTagName("form")[0].removeEventListener("submit", settings.promptSubmit, false);
+		settings.promptBody.getElementsByTagName("form")[0].querySelector(".nprompt-cancel").removeEventListener("click", settings.promptCancel, false);
 		return this;
 	};
 
 	// Add title
 	if (settings.title.length > 0) {
-		settings.promptBody.querySelector(".nprompt_message").querySelector(".title").innerHTML = settings.title;
+		settings.promptBody.querySelector(".nprompt-title").innerHTML = settings.title;
 	} else {
-		settings.remove( settings.promptBody.querySelector(".nprompt_message").querySelector(".title") );
+		settings.remove( settings.promptBody.querySelector(".nprompt-title") );
 	}
 
 	// Add message
-	settings.promptBody.querySelector(".nprompt_message").querySelector(".message").innerHTML = settings.message;
+	if (settings.message.length > 0) {
+		settings.promptBody.querySelector(".nprompt-message").innerHTML = settings.message;
+	}
 
 	// Add Submit/Cancel buttons
-	var i = 0;
-	var array = settings.inputSubmit;
+	var i = 0,
+		array = settings.inputSubmit,
+		inputs = settings.promptBody.getElementsByTagName("form")[0];
+
 	while (array[i]) {
 		var elem = document.createElement('INPUT');
 		inputElem = Object.extend(elem, array[i]);
-		settings.promptBody.querySelector(".nprompt_inputs").appendChild(inputElem);
+		inputElem.className = "w3-input w3-border w3-light-grey";
+		if (array[i].className) {
+			inputElem.className += " " + array[i].className;
+		}
+		inputs.appendChild(inputElem);
 		i++;
 	}
 
 	// Add inputs
 	if (!settings.type || settings.type === "prompt") {
-		var i = 0;
-		var array = settings.input;
+		var i = 0,
+			array = settings.input;
+
 		while (array[i]) {
 			var value = array[i];
 			var type = array[i].type || "text";
@@ -635,16 +716,24 @@ var nprompt = function(options, pType) {
 				case "textarea":
 					var elem = document.createElement('TEXTAREA');
 					inputElem = Object.extend(elem, array[i]);
-					inputElem.className = array[i].className || "nprompt_value w3-input w3-margin-bottom w3-border w3-white";
+					inputElem.className = "nprompt-input w3-input w3-margin-bottom w3-border w3-white";
+					if (array[i].className) {
+						inputElem.className += " " + array[i].className;
+					}
+					
 					// Insert before submit and cancel button
-					settings.promptBody.querySelector(".nprompt_inputs").insertBefore(inputElem, settings.promptBody.querySelector(".nprompt_inputs").childNodes[settings.promptBody.querySelector(".nprompt_inputs").childNodes.length-2]);
-				break;
+					inputs.insertBefore(inputElem, inputs.childNodes[inputs.childNodes.length-2]);
+					break;
+				
 				case "radio":
 				case "checkbox":
 					var elem = document.createElement('INPUT');
 					inputElem = Object.extend(elem, array[i]);
 					inputElem.id = array[i].id || Math.random();
-					inputElem.className = array[i].className || "nprompt_value w3-input w3-margin-bottom w3-border w3-white";
+					inputElem.className = "nprompt-input w3-input w3-margin-bottom w3-border w3-white";
+					if (array[i].className) {
+						inputElem.className += " " + array[i].className;
+					}
 					var newElement = document.createElement("P");
 					
 					var newItem = document.createElement("LABEL");
@@ -656,16 +745,22 @@ var nprompt = function(options, pType) {
 					
 					var newItem = document.createElement("BR");
 					newElement.appendChild(newItem);
+					
 					// Insert before submit and cancel button
-					settings.promptBody.querySelector(".nprompt_inputs").insertBefore(newElement, settings.promptBody.querySelector(".nprompt_inputs").childNodes[settings.promptBody.querySelector(".nprompt_inputs").childNodes.length-2]);
-				break;
+					inputs.insertBefore(newElement, inputs.childNodes[inputs.childNodes.length-2]);
+					break;
+				
 				default:
 					var elem = document.createElement('INPUT');
 					inputElem = Object.extend(elem, array[i]);
-					inputElem.className = array[i].className || "nprompt_value w3-input w3-margin-bottom w3-border w3-white";
+					inputElem.className = "nprompt-input w3-input w3-margin-bottom w3-border w3-white";
+					if (array[i].className) {
+						inputElem.className += " " + array[i].className;
+					}
+					
 					// Insert before submit and cancel button
-					settings.promptBody.querySelector(".nprompt_inputs").insertBefore(inputElem, settings.promptBody.querySelector(".nprompt_inputs").childNodes[settings.promptBody.querySelector(".nprompt_inputs").childNodes.length-2]);
-				break;
+					inputs.insertBefore(inputElem, inputs.childNodes[inputs.childNodes.length-2]);
+					break;
 			}
 			i++;
 		}
@@ -673,37 +768,32 @@ var nprompt = function(options, pType) {
 
 	// Hide cancel button
 	if (settings.type !== "prompt" && settings.type !== "confirm") {
-		settings.promptBody.querySelector(".submit_cancel").style.display = "none";
+		settings.promptBody.querySelector(".nprompt-cancel").style.display = "none";
 	}
 
-	// Bind event click submit
-	settings.promptBody.querySelector(".nprompt_inputs").addEventListener("submit", settings.promptSubmit, false);
+	// Bind event submit
+	inputs.addEventListener("submit", settings.promptSubmit, false);
 
 	// Bind event click cancel
-	settings.promptBody.querySelector(".submit_cancel").addEventListener("click", settings.promptCancel, false);
+	settings.promptBody.querySelector(".nprompt-cancel").addEventListener("click", settings.promptCancel, false);
+
+	// Set animation
+	if (settings.animate) {
+		settings.promptBody.childNodes[0].firstChild.nextSibling.className += " w3-animate-" + settings.animate.toString();
+	}
 
 	// Append to the body
 	document.body.appendChild(settings.promptBody);
 
-	// Enable/Disable background
-	/* if (settings.background) {
-		settings.promptBody.querySelector(".nprompt_background").className.replace(" disabled", "");
-		settings.promptBody.querySelector(".nprompt_background").className += " enabled";
-	} else {
-		settings.promptBody.querySelector(".nprompt_background").className.replace(" enabled", "");
-		settings.promptBody.querySelector(".nprompt_background").className += " disabled";
-	} */
-
 	// Display
-	//settings.promptBody.querySelector(".nprompt_background").style.display = "block";
 	settings.promptBody.childNodes[0].style.display = "block";
 
 	// Focus
 	if (settings.type === false || settings.type === "prompt") {
-		settings.promptBody.querySelector(".nprompt_value").focus();
-		settings.promptBody.querySelector(".nprompt_value").select();
+		settings.promptBody.querySelector(".nprompt-input").focus();
+		settings.promptBody.querySelector(".nprompt-input").select();
 	} else {
-		settings.promptBody.querySelector(".submit_ok").focus();
+		settings.promptBody.querySelector(".nprompt-submit").focus();
 	}
 
 	return this;

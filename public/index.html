@@ -20,72 +20,27 @@
 	<script src="js/main.js"></script>
 	<script type="text/javascript">
 	// UI W3 Sidenav show/hide
-	function sidenav_left_open() {
+	function sidenav_left_open () {
 		//document.getElementsByClassName("w3-sidenav")[0].style.display = "block";
 		document.getElementById("menu-left").style.display = "block";
 	}
 	
-	function sidenav_left_close() {
+	function sidenav_left_close () {
 		document.getElementById("menu-left").style.display = "none";
 	}
 	
-	function sidenav_right_open() {
+	function sidenav_right_open () {
 		document.getElementById("menu-right").style.display = "block";
 	}
 	
-	function sidenav_right_close() {
+	function sidenav_right_close () {
 		document.getElementById("menu-right").style.display = "none";
-	}
-
-	// Ask user for server address
-	function ask_server() {
-		nprompt({
-			title: "Set Server Address",
-			message: "Please enter server <b>address</b> at the field below.",
-			input: [{
-				"type": "text",
-				"name": "server",
-				"placeholder": "Server address",
-				"value": (localStorage.server ? localStorage.server : window.location.host || 'localhost')
-			},{
-				"type": "text",
-				"name": "port",
-				"placeholder": "Server port",
-				"value": (localStorage.port ? localStorage.port : 3000)
-			}],
-			background: true,
-			onSubmit: function (data) {
-				if (data.server === null && data.port === null) return;
-				localStorage.server = data.server;
-				localStorage.port = data.port;
-				
-				init_chat(data.server, data.port);
-			}
-		})
-	}
-
-	// Initialize chat
-	function init_chat(server, port) {
-		// Over-write default chat settings before init
-		extend(chat || {}, {
-			method: 'http', //https/http/ws
-			address: server,
-			port: port,
-			channel: '/',
-			debugMode: true
-		});
-		// Initialize socket
-		chat.init();
-		// Set default volume level: 0.1 - 1.0
-		chat.playVolume(0.5);
-		// Focus input/textarea.
-		//chat.setFocus();
 	}
 
 	/*
 	* Draw canvas - Menu
 	*/
-	function canvasMenu(elem) {
+	function canvasMenu (elem) {
 		try {
 			var canvas = document.createElement("CANVAS");
 			canvas.width = 35;
@@ -114,15 +69,15 @@
 
 			// display
 			elem.appendChild(canvas);
-
-		} catch(error) {
-			console.log(error);
+		}
+		catch(error) {
+			console.error(error);
 		}
 	}
 	/*
 	* Draw canvas - Team
 	*/
-	function canvasTeam(elem) {
+	function canvasTeam (elem) {
 		try {
 			var canvas = document.createElement("CANVAS");
 			canvas.width = 35;
@@ -173,13 +128,14 @@
 
 			// display
 			elem.appendChild(canvas);
-
-		} catch(error) {
-			console.log(error);
+		}
+		catch(error) {
+			console.error(error);
 		}
 	}
 
-	function formDataHandler() {
+	// Data handler for submit and keydown
+	function formDataHandler (e) {
 		var elem = document.getElementById("chatform");
 		var myObj = serialize(elem);
 		
@@ -192,101 +148,99 @@
 		document.getElementById("chatmessage").value = "";
 	}
 
-	function formSubmit(event) {
+	// Event - on submit
+	function formSubmit (event) {
 		event.preventDefault();
-		formDataHandler();
+		formDataHandler(event);
 	}
 
-	function formKeydown(event) {
+	// Event - on keydown
+	function formKeydown (event) {
 		if (event.keyCode == 13 && !event.shiftKey) {
 			event.preventDefault();
+			// Fire-up formDataHandler
 			document.getElementById("chatsubmit").click();
 		}
 	}
 
-	// Document is loaded.
-	document.addEventListener("DOMContentLoaded", function(e) {
-		// event.target = document
-		// this = document
-		var doc = e.target || event.target || this;
+	// Init
+	function init(e) {
+		// Form submit event
+		document.getElementById("chatform").on("submit", formSubmit, false);
 
-		// On form submit event
-		doc.getElementById("chatform").addEventListener("submit", formSubmit, false);
+		// Form keypush event
+		document.getElementById("chatform").on("keydown", formKeydown, false);
 
-		// Listen keypush events
-		doc.getElementById("chatform").addEventListener("keydown", formKeydown, false);
+		// Set default volume level: 0.1 - 1.0
+		var vol = localStorage.volume || 0.5;
+		chat.playVolume(vol);
 
-		// socket.io initialized
-		if ("io" in window) {
-
-			nprompt({
-				title: "Set nickname",
-				message: "Please enter your <b>name</b> at the field below.",
-				input: [{
-					"type": "text",
-					"name": "nickname",
-					"placeholder": "Your name",
-					"value": localStorage.nickname || "",
-					"required": "true"
-				}],
-				background: false,
-				onSubmit: function(data) {
-					if (typeof data.nickname !== "undefined" && data.nickname !== null) {
-						// Name min length
-						if (data.nickname.length < 2) {
-							return nalert({
-								message: "Name is too short! 2 min.",
-								background: true
-							});
-						}
-						// Name max length
-						if (data.nickname.length > 25) {
-							return nalert({
-								message: "Name is too long! 25 max.",
-								background: true
-							});
-						}
-						// OK - Initialize socket
-						localStorage.nickname = data.nickname;
-						chat.init({ query: "nickname=" + data.nickname });
+		// Set canvas menus
+		canvasMenu( document.getElementById("canvasMenu") );
+		canvasTeam( document.getElementById("canvasTeam") );
+		
+		// Ask for nickname
+		nprompt({
+			title: "Set nickname",
+			message: "Please enter your <b>name</b> at the field below.",
+			input: [{
+				"type": "text",
+				"name": "nickname",
+				"placeholder": "Your name",
+				"value": localStorage.nickname || "",
+				"required": "true"
+			}],
+			//inputSubmit: [], // TEST: Custom prompt body
+			//body: document.getElementsByClassName("nprompt-body")[0].cloneNode(true), //TEST: Custom prompt body
+			animate: "top",
+			onSubmit: function(data) {
+				if (typeof data.nickname !== "undefined" && data.nickname !== null) {
+					// Name min length
+					if (data.nickname.length < 2) {
+						return nalert({
+							message: "Name is too short! 2 min."
+						});
 					}
-				},
-				onCancel: function() {
-					// Init as Anonymous
-					chat.init();
+					// Name max length
+					if (data.nickname.length > 25) {
+						return nalert({
+							message: "Name is too long! 25 max."
+						});
+					}
+					// OK - Initialize socket
+					localStorage.nickname = data.nickname;
+					chat.init({ query: "nickname=" + data.nickname });
 				}
-			});
+			},
+			onCancel: function() {
+				// Init as Anonymous
+				chat.init();
+			}
+		});
+	}
 
-			// Set default volume level: 0.1 - 1.0
-			var vol = localStorage.volume || 0.5;
-			chat.playVolume(vol);
+	// Document is loaded.
+	DOMReady(init);
 
-			// Set canvas menus
-			canvasMenu( doc.getElementById("canvasMenu") );
-			canvasTeam( doc.getElementById("canvasTeam") );
-		}
-
-	}, false); // document ready
-
-	// Window is loaded
-	window.addEventListener('load', function(e) {
-
+	// Window is loaded.
+	window.addEventListener('load', function (e) {
 		// Check if a new cache is available on page load.
-		window.applicationCache.addEventListener('updateready', function(e) {
+		window.applicationCache.addEventListener('updateready', function (e) {
 			if (window.applicationCache.status == window.applicationCache.UPDATEREADY) {
 				// Browser downloaded a new app cache.
 				window.location.reload();
 			}
 		}, false);
-
-	}, false); // window ready
+	}, false);
 
 	// Before leaving page (good for mobiles)
-	/* window.addEventListener("beforeunload", function(e) {
+	/*
+	window.addEventListener("beforeunload", function(e) {
 		var confirmationMessage = "Do you wan't to leave the page?"; // "\o/"
 		e.returnValue = confirmationMessage; // Gecko, Trident, Chrome 34+
 		return confirmationMessage; // Gecko, WebKit, Chrome <34
-	}, false); */
+	}, false);
+	*/
 	</script>
 </head>
 <body>
@@ -360,6 +314,24 @@
 			
 		</form>
 	</footer>
+
+	<!-- TEST: Modal prompt body -->
+	<div class="nprompt-body w3-modal">
+		<div class="w3-modal-content w3-card-8">
+			<header class="w3-container w3-light-green">
+				<h2 class="nprompt-title"></h2>
+			</header>
+			<div class="w3-container w3-padding">
+				<p class="nprompt-message w3-margin"><p>
+			</div>
+			<footer class="w3-container w3-padding-bottom">
+				<form class="w3-container">
+					<input type="submit" class="nprompt-submit w3-input w3-border w3-light-grey" value="Yus!" />
+					<input type="button" class="nprompt-cancel w3-input w3-border w3-light-grey" value="Nah!" />
+				</form>
+			</footer>
+		</div>
+	</div>
 
 	<!-- Sounds -->
 	<div id="sounds" class="hidden">

@@ -10,7 +10,7 @@ var chat = {
 	port: 3000,
 	channel: '/',
 	soundOn: false,
-	debugMode: true,
+	debugMode: false,
 	messageMaxLength: 3000,
 	connectionCount: 0,
 	connectionCountMax: 5
@@ -275,7 +275,7 @@ chat.submitMessage = function(message) {
 		if (messageStr.trim().length > chat.messageMaxLength) {
 			nalert({
 				message: "Message is too long! "+ chat.messageMaxLength +" chars max.",
-				background: true
+				animate: "top"
 			});
 		}
 		else {
@@ -459,7 +459,7 @@ chat.connect = function(callback) {
 	nconfirm({
 		title: "Welcome to chat",
 		message: "Do you wish to <b>connect</b> to the server?",
-		background: true,
+		animate: "top",
 		onSubmit: function() {
 			// Initialize
 			chat.init();
@@ -488,19 +488,17 @@ chat.setNick = function(nameStr) {
 				"value": (localStorage.nickname ? localStorage.nickname : ""),
 				"required": "true"
 			}],
-			background: false,
+			animate: "top",
 			onSubmit: function(data) {
 				if (typeof data.nickname !== "undefined" && data.nickname !== null) {
 					if (data.nickname.length < 2) {
 						return nalert({
-							message: "Name is too short! 2 min.",
-							background: true
+							message: "Name is too short! 2 min."
 						});
 					}
 					if (data.nickname.length > 25) {
 						return nalert({
-							message: "Name is too long! 25 max.",
-							background: true
+							message: "Name is too long! 25 max."
 						});
 					}
 					chat.user.nickname = data.nickname;
@@ -515,13 +513,11 @@ chat.setNick = function(nameStr) {
 	else {
 		if (nameStr.length < 2) {
 			nalert({
-				message: "Name is too short! 2 min.",
-				background: true
+				message: "Name is too short! 2 min."
 			});
 		} else if (nameStr.length > 25) {
 			nalert({
-				message: "Name is too long! 25 max.",
-				background: true
+				message: "Name is too long! 25 max."
 			});
 		} else {
 			chat.user.nickname = nameStr;
@@ -550,7 +546,7 @@ chat.setChannel = function(channelName) {
 				"value": "general",
 				"required": "true"
 			}],
-			background: false,
+			animate: "top",
 			onSubmit: function(data) {
 				if (data.channel !== null) {
 					chat.socket.emit('set-channel', { channel: data.channel.toLowerCase() });
@@ -561,13 +557,11 @@ chat.setChannel = function(channelName) {
 	else {
 		if (channelName.length < 2) {
 			nalert({
-				message: "Channel name is too short! 2 min.",
-				background: true
+				message: "Channel name is too short! 2 min."
 			});
 		} else if (channelName.length > 50) {
 			nalert({
-				message: "Channel name is too long! 50 max.",
-				background: true
+				message: "Channel name is too long! 50 max."
 			});
 		} else {
 			// Send.
@@ -646,8 +640,7 @@ chat.sendWhisper = function(nickname, messageStr) {
 	if (nickname.length && messageStr.length) {
 		if (messageStr.length > chat.messageMaxLength) {
 			nalert({
-				message: "Message is too long! "+ chat.messageMaxLength +" chars max.",
-				background: true
+				message: "Message is too long! "+ chat.messageMaxLength +" chars max."
 			});
 		}
 		else {
@@ -776,7 +769,7 @@ chat.quit = function() {
 	nconfirm({
 		title: "Exit socket",
 		message: "Do you want to <b>reconnect</b> to the server?",
-		background: false,
+		animate: false,
 		onSubmit: function(str) {
 			chat.reconnect();
 		}
