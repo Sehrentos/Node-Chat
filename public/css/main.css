@@ -19,7 +19,6 @@ textarea {
 }
 
 #header {
-	-webkit-app-region: drag; /* nw.js */
 	position: fixed;
 	width: 100%;
 	height: 88px;
@@ -84,7 +83,6 @@ textarea {
 }
 
 #footer {
-	-webkit-app-region: drag; /* nw.js */
 	position: fixed;
 	bottom: 0;
 	width: 100%;
@@ -93,15 +91,10 @@ textarea {
 }
 
 .menu-canvas {
-	-webkit-app-region: no-drag; /* nw.js */
 	display: inline-block;
 	width: 35px;
 	height: 35px;
 	opacity: .6;
-}
-
-#menu-left, #menu-right {
-	-webkit-app-region: no-drag; /* nw.js */
 }
 
 .border {

@@ -7,8 +7,8 @@ var chat = {
 	user: {},
 	method: 'http', // https, http, ws
 	address: window.location.hostname || 'localhost',
-	port: 3000,
-	channel: '/',
+	port: window.location.port || 3000,
+	channel: window.location.pathname || '/',
 	soundOn: false,
 	debugMode: false,
 	messageMaxLength: 3000,
@@ -346,6 +346,31 @@ chat.submitMessage = function(message) {
 };
 
 /*
+* Submit whisper data
+* @require: nickname, messageStr
+*/
+chat.sendWhisper = function(nickname, messageStr) {
+	if (nickname.length && messageStr.length) {
+		if (messageStr.length > chat.messageMaxLength) {
+			nalert({
+				message: "Message is too long! "+ chat.messageMaxLength +" chars max."
+			});
+		}
+		else {
+			chat.socket.emit('whisper', {
+				to: nickname,
+				from: chat.user.nickname,
+				message: messageStr
+			});
+			document.getElementById("chatwhisper").value = nickname;
+			chat.setFocus();
+		}
+	}
+
+	return this;
+};
+
+/*
 * menuAddUser - build user menu
 * @require user: id, name, channel
 */
@@ -470,6 +495,93 @@ chat.connect = function(callback) {
 		}
 	});
 	return this;
+};
+
+/*
+ * UI open new server connection
+ */
+chat.selectServer = function() {
+	if (chat.socket) {
+		chat.socket.close();
+	}
+	nprompt({
+		title: "Setup connection",
+		message: "Please enter your <b>name</b> and <b>server</b> detail at the fields below:",
+		input: [{
+			"type": "text",
+			"name": "nickname",
+			"placeholder": "Your name",
+			"value": localStorage.nickname || "",
+			"required": "true"
+		},{
+			"type": "text",
+			"name": "address",
+			"placeholder": "Server address",
+			"value": localStorage.address || window.location.hostname || "127.0.0.1",
+			"required": "true"
+		},{
+			"type": "text",
+			"name": "port",
+			"placeholder": "Server port",
+			"value": localStorage.port || window.location.port || "3000",
+			"required": "true"
+		}],
+		animate: "top",
+		onSubmit: function(data) {
+			if (typeof data.nickname !== "undefined" && data.nickname !== null) {
+				// Name min length
+				if (data.nickname.length < 2) {
+					return nalert({
+						message: "Name is too short! 2 min."
+					});
+				}
+				// Name max length
+				if (data.nickname.length > 25) {
+					return nalert({
+						message: "Name is too long! 25 max."
+					});
+				}
+				
+				// Address min length
+				if (data.address.length < 2) {
+					return nalert({
+						message: "Address is too short! 2 min."
+					});
+				}
+				// Address max length
+				if (data.address.length > 50) {
+					return nalert({
+						message: "Address is too long! 50 max."
+					});
+				}
+				
+				// Port min length
+				if (data.port.length < 1) {
+					return nalert({
+						message: "Port is too short! 2 min."
+					});
+				}
+				// Port max length
+				if (data.port.length > 50) {
+					return nalert({
+						message: "Port is too long! 50 max."
+					});
+				}
+				
+				// OK - Initialize socket
+				localStorage.nickname = data.nickname;
+				localStorage.address = data.address;
+				localStorage.port = data.port;
+				chat.address = data.address;
+				chat.port = data.port;
+				chat.init({ query: "nickname=" + data.nickname });
+			}
+		},
+		onCancel: function() {
+			// Init as Anonymous
+			chat.init();
+		}
+	});
 };
 
 /*
@@ -633,31 +745,6 @@ chat.setWhisper = function(nickname, messageStr) {
 };
 
 /*
-* Submit whisper data
-* @require: nickname, messageStr
-*/
-chat.sendWhisper = function(nickname, messageStr) {
-	if (nickname.length && messageStr.length) {
-		if (messageStr.length > chat.messageMaxLength) {
-			nalert({
-				message: "Message is too long! "+ chat.messageMaxLength +" chars max."
-			});
-		}
-		else {
-			chat.socket.emit('whisper', {
-				to: nickname,
-				from: chat.user.nickname,
-				message: messageStr
-			});
-			document.getElementById("chatwhisper").value = nickname;
-			chat.setFocus();
-		}
-	}
-
-	return this;
-};
-
-/*
 * Check if post is command
 * @https://regex101.com/
 */
@@ -760,7 +847,9 @@ chat.twoDigits = function(string) {
 */
 chat.quit = function() {
 	if (chat.debugMode) console.log("fn.quit - Socket closed");
-	chat.socket.close();
+	if (chat.socket) {
+		chat.socket.close();
+	}
 	//chat.socket = null;
 
 	chat.mes("(" + chat.connectionCount + "/" + chat.connectionCountMax + ") Socket stop polling.");

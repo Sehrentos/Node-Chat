@@ -179,44 +179,8 @@
 		canvasMenu( document.getElementById("canvasMenu") );
 		canvasTeam( document.getElementById("canvasTeam") );
 		
-		// Ask for nickname
-		nprompt({
-			title: "Set nickname",
-			message: "Please enter your <b>name</b> at the field below.",
-			input: [{
-				"type": "text",
-				"name": "nickname",
-				"placeholder": "Your name",
-				"value": localStorage.nickname || "",
-				"required": "true"
-			}],
-			//inputSubmit: [], // TEST: Custom prompt body
-			//body: document.getElementsByClassName("nprompt-body")[0].cloneNode(true), //TEST: Custom prompt body
-			animate: "top",
-			onSubmit: function(data) {
-				if (typeof data.nickname !== "undefined" && data.nickname !== null) {
-					// Name min length
-					if (data.nickname.length < 2) {
-						return nalert({
-							message: "Name is too short! 2 min."
-						});
-					}
-					// Name max length
-					if (data.nickname.length > 25) {
-						return nalert({
-							message: "Name is too long! 25 max."
-						});
-					}
-					// OK - Initialize socket
-					localStorage.nickname = data.nickname;
-					chat.init({ query: "nickname=" + data.nickname });
-				}
-			},
-			onCancel: function() {
-				// Init as Anonymous
-				chat.init();
-			}
-		});
+		// Ask for nickname & server address
+		chat.selectServer();
 	}
 
 	// Document is loaded.
@@ -244,9 +208,7 @@
 	</script>
 </head>
 <body>
-
 <div id="wrap">
-
 	<!-- Left-nav -->
 	<nav id="menu-left" class="w3-sidenav w3-card-2 w3-white" style="display:none">
 		<a href="javascript:void(0)" onclick="sidenav_left_close()" class="w3-closenav w3-large">Close &times;</a>
@@ -257,6 +219,8 @@
 			<a href="javascript:void(0)" onclick="chat.setNick()">Change name</a> 
 			<a href="javascript:void(0)" onclick="chat.setChannel()">Change channel</a> 
 			<a href="javascript:void(0)" onclick="chat.playSettings()">Sound on/off</a>
+			<hr />
+			<a href="javascript:void(0)" onclick="chat.selectServer()">Server</a>
 		</div>
 	</nav>
 
@@ -315,24 +279,6 @@
 		</form>
 	</footer>
 
-	<!-- TEST: Modal prompt body -->
-	<div class="nprompt-body w3-modal">
-		<div class="w3-modal-content w3-card-8">
-			<header class="w3-container w3-light-green">
-				<h2 class="nprompt-title"></h2>
-			</header>
-			<div class="w3-container w3-padding">
-				<p class="nprompt-message w3-margin"><p>
-			</div>
-			<footer class="w3-container w3-padding-bottom">
-				<form class="w3-container">
-					<input type="submit" class="nprompt-submit w3-input w3-border w3-light-grey" value="Yus!" />
-					<input type="button" class="nprompt-cancel w3-input w3-border w3-light-grey" value="Nah!" />
-				</form>
-			</footer>
-		</div>
-	</div>
-
 	<!-- Sounds -->
 	<div id="sounds" class="hidden">
 		<audio id="audio" controls hidden>
@@ -342,7 +288,6 @@
 			Your browser does not support HTML5 audio.
 		</audio>
 	</div>
-
 </div>
 <script type="text/javascript">
 // Window resize
