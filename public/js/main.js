@@ -8,7 +8,7 @@ var chat = {
 	method: 'http', // https, http, ws
 	address: window.location.hostname || 'localhost',
 	port: window.location.port || 3000,
-	channel: window.location.pathname || '/',
+	channel: '/',
 	soundOn: false,
 	debugMode: false,
 	messageMaxLength: 3000,

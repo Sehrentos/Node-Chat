@@ -14,10 +14,10 @@
 	<link rel="stylesheet" href="css/w3.css" />
 	<link rel="stylesheet" href="css/main.css" />
 	<!-- Javascript libraries -->
-	<script src="js/socket.io.js"></script>
+	<script type="text/javascript" src="js/socket.io.js"></script>
 	<!-- Javascripts -->
-	<script src="js/plugins.js"></script>
-	<script src="js/main.js"></script>
+	<script type="text/javascript" src="js/plugins.js"></script>
+	<script type="text/javascript" src="js/main.js"></script>
 	<script type="text/javascript">
 	// UI W3 Sidenav show/hide
 	function sidenav_left_open () {
@@ -71,7 +71,7 @@
 			elem.appendChild(canvas);
 		}
 		catch(error) {
-			console.error(error);
+			console.error('canvas failed', error);
 		}
 	}
 	/*
@@ -130,7 +130,7 @@
 			elem.appendChild(canvas);
 		}
 		catch(error) {
-			console.error(error);
+			console.error('canvas failed', error);
 		}
 	}
 
@@ -165,11 +165,12 @@
 
 	// Init
 	function init(e) {
-		// Form submit event
-		document.getElementById("chatform").on("submit", formSubmit, false);
-
-		// Form keypush event
-		document.getElementById("chatform").on("keydown", formKeydown, false);
+		// #chatform attach events
+		var chatForm = document.getElementById("chatform");
+		// on submit
+		chatForm.on("submit", formSubmit, false);
+		// on keydown
+		chatForm.on("keydown", formKeydown, false);
 
 		// Set default volume level: 0.1 - 1.0
 		var vol = localStorage.volume || 0.5;
@@ -183,18 +184,27 @@
 		chat.selectServer();
 	}
 
-	// Document is loaded.
-	DOMReady(init);
+	// Document content is loaded.
+	if (typeof(document.addEventListener) !== 'undefined') {
+		DOMReady(init);
+	} else {
+		alert('Some of the native javascript functions are not supported by your browser.');
+		console.error('Function support error');
+	}
 
-	// Window is loaded.
-	window.addEventListener('load', function (e) {
+	// Window on load event
+	window.on('load', function (e) {
+
 		// Check if a new cache is available on page load.
-		window.applicationCache.addEventListener('updateready', function (e) {
-			if (window.applicationCache.status == window.applicationCache.UPDATEREADY) {
-				// Browser downloaded a new app cache.
-				window.location.reload();
-			}
-		}, false);
+		if (typeof(window.applicationCache) !== 'undefined') {
+			window.applicationCache.on('updateready', function (e) {
+				if (window.applicationCache.status == window.applicationCache.UPDATEREADY) {
+					// Browser downloaded a new app cache.
+					window.location.reload();
+				}
+			}, false);
+		}
+
 	}, false);
 
 	// Before leaving page (good for mobiles)
@@ -291,20 +301,17 @@
 </div>
 <script type="text/javascript">
 // Window resize
-window.addEventListener("resize", resizeThrottler, false);
+window.on("resize", resizeThrottler, false);
 var resizeTimeout;
 function resizeThrottler() {
-	// ignore resize events as long as an actualResizeHandler execution is in the queue
-	if ( !resizeTimeout ) {
+	if (!resizeTimeout) {
 		resizeTimeout = setTimeout(function() {
 			resizeTimeout = null;
 			actualResizeHandler();
-			// The actualResizeHandler will execute at a rate of 15fps
 		}, 66);
 	}
 }
-
-// Set content messages height (ui)
+// UI: Set content's #messages height
 function actualResizeHandler() {
 	// handle the resize event
 	var wrap = document.getElementsByTagName("body")[0];
@@ -316,8 +323,6 @@ function actualResizeHandler() {
 	messages.style.height = intHeight + 'px';
 	messages.scrollTop = messages.scrollHeight;
 }
-
-// Set content messages height (ui)
 actualResizeHandler();
 </script>
 </body>

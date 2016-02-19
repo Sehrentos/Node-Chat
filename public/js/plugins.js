@@ -1,23 +1,32 @@
+/**
+ * plugins.js - Just my simple JS lib
+ * Author Niko H. (Sehrentos)
+ */
+'use strict';
+
 /*
- * plugins.js - Just my simple lib
- * Author Niko H.
- *
- * DOM is loaded event
+ * DOMReady()
+ * Document content is loaded and javascript can run.
+ * Fallback to onload event.
  */
 var DOMReady = function(callback) {
-	if (typeof(callback) === "function") {
-		if (document.readyState) {
-			document.onreadystatechange = function () {
-				if (document.readyState == "loaded" || document.readyState == "complete") {
+	if (typeof(callback) === 'function') {
+		if ('DOMContentLoaded' in window) {
+			document.on('DOMContentLoaded', callback, false);
+		}
+		else if (document.readyState) {
+			document.onreadystatechange = function (event) {
+				if (document.readyState == 'loaded' || document.readyState == 'complete') {
 					document.onreadystatechange = null;
 					callback(event);
 				}
 			};
 		} else {
-			document.addEventListener("DOMContentLoaded", callback, false);
+			/* Fallback to onload... */
+			document.on('load', callback, false);
 		}
 	} else {
-		console.log("DOMReady() callback is not is not function.");
+		console.error('DOMReady() callback argument is not is not function');
 	}
 };
 
@@ -157,17 +166,36 @@ if (!Element.prototype.remove) {
 
 /*
  * addEvent() - Event binding function.
- * addEvent(Element, "click", Function, false)
+ * addEvent(Element, Event, Function, useCapture)
+ * For IE 8 and earlier versions
  */
-var addEvent = function(elem, src, callback, extra) {
+var addEvent = function(elem, evt, func, capt) {
 	if (!elem) {
 		return false;
 	} else if (elem.addEventListener) { /* W3C DOM */
-		return elem.addEventListener(src, callback, extra || false);
+		return elem.addEventListener(evt, func, capt || false);
 	} else if (elem.attachEvent) { /* IE DOM */
-		return elem.attachEvent("on"+src, callback);
+		return elem.attachEvent("on"+evt, func);
 	} else {
-		elem[src] = callback;
+		elem[evt] = func;
+	}
+	return elem;
+};
+
+/*
+ * removeEvent() - Event binding function.
+ * removeEvent(Element, Event, Function)
+ * For IE 8 and earlier versions
+ */
+var removeEvent = function(elem, evt, func) {
+	if (!elem) {
+		return false;
+	} else if (elem.removeEventListener) { /* W3C DOM */
+		return elem.removeEventListener(evt, func);
+	} else if (elem.detachEvent) { /* IE DOM */
+		return elem.detachEvent("on"+evt, func);
+	} else {
+		elem[evt] = null;
 	}
 	return elem;
 };
@@ -176,10 +204,11 @@ var addEvent = function(elem, src, callback, extra) {
  * Object.on() - Event binding function.
  * Object.on("click", Function, false)
  * Short-hand for addEventListener
+ * For all major browsers, except IE 8 and earlier
  */
 if (!Object.prototype.on) {
-	Object.prototype.on = function(src, callback, extra) {
-		return addEvent(this, src, callback, extra);
+	Object.prototype.on = function(src, func, capt) {
+		return addEvent(this, src, func, capt);
 	}
 }
 
@@ -661,7 +690,7 @@ var nprompt = function(options, pType) {
 	};
 
 	settings.promptSubmit = function(event) {
-		event.preventDefault();
+		event.preventDefault ? event.preventDefault() : (event.returnValue = false);
 		var inputObject = serialize(settings.promptBody.getElementsByTagName("form")[0]);
 		settings.onSubmit(inputObject);
 		settings.remove(settings.promptBody);
@@ -671,8 +700,8 @@ var nprompt = function(options, pType) {
 	settings.promptCancel = function(event) {
 		settings.onCancel(null);
 		settings.remove(settings.promptBody);
-		settings.promptBody.getElementsByTagName("form")[0].removeEventListener("submit", settings.promptSubmit, false);
-		settings.promptBody.getElementsByTagName("form")[0].querySelector(".nprompt-cancel").removeEventListener("click", settings.promptCancel, false);
+		removeEvent(settings.promptBody.getElementsByTagName("form")[0], "submit", settings.promptSubmit, false);
+		removeEvent(settings.promptBody.getElementsByTagName("form")[0].querySelector(".nprompt-cancel"), "click", settings.promptCancel, false);
 		return this;
 	};
 
@@ -695,7 +724,7 @@ var nprompt = function(options, pType) {
 
 	while (array[i]) {
 		var elem = document.createElement('INPUT');
-		inputElem = Object.extend(elem, array[i]);
+		var inputElem = Object.extend(elem, array[i]);
 		inputElem.className = "w3-input w3-border w3-light-grey";
 		if (array[i].className) {
 			inputElem.className += " " + array[i].className;
@@ -715,7 +744,7 @@ var nprompt = function(options, pType) {
 			switch (type) {
 				case "textarea":
 					var elem = document.createElement('TEXTAREA');
-					inputElem = Object.extend(elem, array[i]);
+					var inputElem = Object.extend(elem, array[i]);
 					inputElem.className = "nprompt-input w3-input w3-margin-bottom w3-border w3-white";
 					if (array[i].className) {
 						inputElem.className += " " + array[i].className;
@@ -728,7 +757,7 @@ var nprompt = function(options, pType) {
 				case "radio":
 				case "checkbox":
 					var elem = document.createElement('INPUT');
-					inputElem = Object.extend(elem, array[i]);
+					var inputElem = Object.extend(elem, array[i]);
 					inputElem.id = array[i].id || Math.random();
 					inputElem.className = "nprompt-input w3-input w3-margin-bottom w3-border w3-white";
 					if (array[i].className) {
@@ -752,7 +781,7 @@ var nprompt = function(options, pType) {
 				
 				default:
 					var elem = document.createElement('INPUT');
-					inputElem = Object.extend(elem, array[i]);
+					var inputElem = Object.extend(elem, array[i]);
 					inputElem.className = "nprompt-input w3-input w3-margin-bottom w3-border w3-white";
 					if (array[i].className) {
 						inputElem.className += " " + array[i].className;
@@ -772,13 +801,13 @@ var nprompt = function(options, pType) {
 	}
 
 	// Bind event submit
-	inputs.addEventListener("submit", settings.promptSubmit, false);
+	addEvent(inputs, "submit", settings.promptSubmit, false);
 
 	// Bind event click cancel
-	settings.promptBody.querySelector(".nprompt-cancel").addEventListener("click", settings.promptCancel, false);
+	addEvent(settings.promptBody.querySelector(".nprompt-cancel"), "click", settings.promptCancel, false);
 
 	// Set animation
-	if (settings.animate) {
+	if (settings.animate && ('className' in window)) {
 		settings.promptBody.childNodes[0].firstChild.nextSibling.className += " w3-animate-" + settings.animate.toString();
 	}
 

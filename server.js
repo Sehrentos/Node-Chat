@@ -1,3 +1,4 @@
+'use strict';
 /*
  * NodeJS & socket.io chat server
  * @http://socket.io/docs/server-api/
@@ -280,9 +281,12 @@ chatData.messages = new Messages();
 //chatData.messages.maxLength = 3000; // max message length
 
 /*
- * Event listener's on socket
+ * Events on default namespace
  */
-io.on('connection', function(socket) {
+var nsp = io.of('/');
+nsp.on('connection', function(socket) {
+	//if (debugMode) console.log('someone connected');
+	//io.on('connection', function(socket) {
 
 	// Set new user data
 	socket.user = addUser(socket);
@@ -305,7 +309,7 @@ io.on('connection', function(socket) {
 	// Console log new connection.
 	//var client = socket.handshake.address;
 	//var client = socket.request.connection;
-	if (debugMode) console.log('Connection '+ socket.id +' '+ socket.user.nickname +' '+ socket.request.connection.remoteAddress);
+	if (debugMode) console.log('Connection:'+ socket.id +' '+ socket.user.nickname +' '+ socket.request.connection.remoteAddress);
 	//if (debugMode) console.log( socket.adapter.rooms ); //{ R5czp2k6xwFBEKK8AAAA: { R5czp2k6xwFBEKK8AAAA: true } }
 
 	// Add new user to the channel
@@ -331,7 +335,7 @@ io.on('connection', function(socket) {
 	// @event: channel-user-list
 	channelListUsers(socket, socket.user.channel);
 	
-	if (debugMode) console.log( socket.adapter.rooms );
+	//if (debugMode) console.log( socket.adapter.rooms );
 	
 	// Message event
 	// @event: message
@@ -499,4 +503,4 @@ io.on('connection', function(socket) {
 		//delete user;
 	});
 
-}); //End io sockets
+}); //End default namespace connection
