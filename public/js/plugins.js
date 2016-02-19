@@ -11,11 +11,12 @@
  */
 var DOMReady = function(callback) {
 	if (typeof(callback) === 'function') {
-		if ('DOMContentLoaded' in window) {
-			document.on('DOMContentLoaded', callback, false);
+		if (document.addEventListener) {
+			document.addEventListener('DOMContentLoaded', callback, false);
 		}
 		else if (document.readyState) {
 			document.onreadystatechange = function (event) {
+				console.log('change');
 				if (document.readyState == 'loaded' || document.readyState == 'complete') {
 					document.onreadystatechange = null;
 					callback(event);
@@ -23,7 +24,7 @@ var DOMReady = function(callback) {
 			};
 		} else {
 			/* Fallback to onload... */
-			document.on('load', callback, false);
+			document.addEventListener('load', callback, false);
 		}
 	} else {
 		console.error('DOMReady() callback argument is not is not function');
